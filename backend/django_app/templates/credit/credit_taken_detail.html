@@ -1,0 +1,252 @@
+{% extends "base/base.html" %}
+{% block title %}Payable Voucher {{ purchase.purchase_number }} - BizFlow{% endblock %}
+{% block page_title %}Payable Voucher #{{ purchase.purchase_number }}{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <h1 class="page-title">{{ purchase.purchase_number }}</h1>
+      <span class="badge {% if purchase.calculated_status == 'Paid' %}badge-success{% elif purchase.calculated_status == 'Overdue' %}badge-danger{% elif purchase.calculated_status == 'Partially Paid' %}badge-info{% else %}badge-warning{% endif %}">
+        {{ purchase.calculated_status }}
+      </span>
+    </div>
+    <p class="page-subtitle">Payable Voucher / Supplier Purchase Credit <span class="badge" style="font-size:11px; margin-left:6px; background:#F5F3FF; color:#6D28D9; border:1px solid #DDD6FE;">Credit (Cr)</span></p>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    {% if purchase.supplier %}
+      <a href="{% url 'credit:supplier_ledger' purchase.supplier.id %}" class="btn btn-secondary btn-sm">View Payables Ledger</a>
+    {% endif %}
+    <a href="{% url 'purchases:detail' purchase.id %}" class="btn btn-secondary btn-sm">Print Purchase Bill</a>
+    <button onclick="window.print();" class="btn btn-secondary btn-sm">Print Statement</button>
+    {% if user.is_manager %}
+      <form method="post" action="{% url 'credit:taken_delete' purchase.id %}" style="display:inline;" onsubmit="return confirm('Cancel this credit purchase? Goods will be deducted from inventory stock atomically.');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost btn-sm" style="color:#DC2626;">Cancel / Delete</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Header Cards Grid -->
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; margin-bottom:24px;">
+  <!-- Supplier & Meta -->
+  <div class="card" style="padding:20px;">
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">Supplier & Bill Information</h3>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+      <div>
+        <span style="color:var(--text-secondary); font-size:12px; display:block;">Supplier:</span>
+        <strong style="font-size:15px;">{{ purchase.supplier.name|default:"Vendor" }}</strong>
+        {% if purchase.supplier.phone %}<div style="color:var(--text-secondary); font-size:13px;">Phone: {{ purchase.supplier.phone }}</div>{% endif %}
+        {% if purchase.supplier.email %}<div style="color:var(--text-secondary); font-size:13px;">Email: {{ purchase.supplier.email }}</div>{% endif %}
+        {% if purchase.supplier.address %}<div style="color:var(--text-secondary); font-size:13px;">Address: {{ purchase.supplier.address }}</div>{% endif %}
+      </div>
+      <div>
+        <div style="margin-bottom:6px;">
+          <span style="color:var(--text-secondary); font-size:12px;">Bill Date:</span>
+          <div><strong>{{ purchase.purchase_date|date:"Y-m-d H:i" }}</strong></div>
+        </div>
+        <div style="margin-bottom:6px;">
+          <span style="color:var(--text-secondary); font-size:12px;">Payable Due Date:</span>
+          <div>
+            {% if purchase.due_date %}
+              <strong {% if purchase.is_overdue %}style="color:#DC2626;"{% endif %}>{{ purchase.due_date|date:"Y-m-d" }}</strong>
+              {% if purchase.is_overdue %}<span class="badge badge-danger" style="margin-left:4px;">OVERDUE</span>{% endif %}
+            {% else %}
+              <span style="color:var(--text-secondary); font-style:italic;">No due date assigned</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if purchase.bill_number %}
+        <div>
+          <span style="color:var(--text-secondary); font-size:12px;">Supplier Bill #:</span>
+          <div><strong>{{ purchase.bill_number }}</strong></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% if purchase.notes %}
+    <div style="margin-top:14px; padding-top:10px; border-top:1px dashed var(--border-color); font-size:13px;">
+      <span style="color:var(--text-secondary);">Notes:</span> {{ purchase.notes }}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Financial Balance Card -->
+  <div class="card" style="padding:20px; display:flex; flex-direction:column; justify-content:space-between; background-color:var(--bg-primary, #F8FAFC);">
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">Financial Balance</h3>
+    <div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+        <span style="color:var(--text-secondary);">Bill Grand Total:</span>
+        <span class="font-mono">Rs. {{ purchase.total|floatformat:2 }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:#16A34A;">
+        <span>Total Paid:</span>
+        <span class="font-mono">Rs. {{ purchase.paid_amount|floatformat:2 }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:700; margin-top:10px; padding-top:10px; border-top:2px solid var(--border-color);">
+        <span style="{% if purchase.remaining_amount > 0 %}color:#DC2626;{% else %}color:#16A34A;{% endif %}">I Owe Supplier:</span>
+        <span class="font-mono" style="{% if purchase.remaining_amount > 0 %}color:#DC2626;{% else %}color:#16A34A;{% endif %}">Rs. {{ purchase.remaining_amount|floatformat:2 }}</span>
+      </div>
+    </div>
+
+    {% if purchase.remaining_amount > 0 %}
+      <a href="#add-payment" class="btn btn-primary" style="margin-top:16px; text-align:center;">+ Record Payment Made</a>
+    {% else %}
+      <div class="alert alert-success" style="margin-top:16px; padding:8px 12px; font-size:13px; text-align:center;">
+        &check; Fully Settled! Zero pending payable.
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Products Table -->
+<div class="card" style="margin-bottom:24px;">
+  <div style="padding:16px 20px; border-bottom:1px solid var(--border-color);">
+    <h3 style="margin:0; font-size:16px; font-weight:700;">Purchased Products</h3>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product Name</th>
+          <th>SKU</th>
+          <th style="text-align:right;">Qty</th>
+          <th style="text-align:right;">Purchase Price</th>
+          <th style="text-align:right;">Tax %</th>
+          <th style="text-align:right;">Discount</th>
+          <th style="text-align:right;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in purchase.items.all %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td><strong>{{ item.product.name }}</strong></td>
+          <td class="font-mono">{{ item.product.sku }}</td>
+          <td style="text-align:right;" class="font-mono">{{ item.quantity }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ item.unit_price|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">{{ item.tax_rate }}%</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ item.discount|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ item.total|floatformat:2 }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="font-weight:600; background-color:var(--bg-primary, #F8FAFC);">
+          <td colspan="7" style="text-align:right;">Subtotal:</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ purchase.subtotal|floatformat:2 }}</td>
+        </tr>
+        {% if purchase.discount > 0 %}
+        <tr style="color:#DC2626;">
+          <td colspan="7" style="text-align:right;">Discount:</td>
+          <td style="text-align:right;" class="font-mono">- Rs. {{ purchase.discount|floatformat:2 }}</td>
+        </tr>
+        {% endif %}
+        {% if purchase.tax > 0 %}
+        <tr>
+          <td colspan="7" style="text-align:right;">Tax:</td>
+          <td style="text-align:right;" class="font-mono">+ Rs. {{ purchase.tax|floatformat:2 }}</td>
+        </tr>
+        {% endif %}
+        <tr style="font-size:16px; font-weight:700;">
+          <td colspan="7" style="text-align:right;">Grand Total:</td>
+          <td style="text-align:right;" class="font-mono" style="color:var(--primary);">Rs. {{ purchase.total|floatformat:2 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- Payments History & Add Payment -->
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; align-items:start;">
+  <!-- Payment History Table -->
+  <div class="card">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border-color);">
+      <h3 style="margin:0; font-size:16px; font-weight:700;">Settlement & Payment History</h3>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Method</th>
+            <th>Reference / Notes</th>
+            <th style="text-align:right;">Amount</th>
+            <th>Added By</th>
+            {% if user.is_manager %}<th>Action</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for pay in purchase.payments.all %}
+          <tr>
+            <td>{{ pay.payment_date|date:"Y-m-d" }}</td>
+            <td><span class="badge badge-info">{{ pay.payment_method }}</span></td>
+            <td>
+              <div>{{ pay.reference|default:"Payment Voucher" }}</div>
+              {% if pay.display_notes %}<small style="color:var(--text-secondary);">{{ pay.display_notes }}</small>{% endif %}
+            </td>
+            <td style="text-align:right;" class="font-mono" style="color:#16A34A;"><strong>Rs. {{ pay.amount|floatformat:2 }}</strong></td>
+            <td>{{ pay.created_by.name|default:"-" }}</td>
+            {% if user.is_manager %}
+            <td>
+              <form method="post" action="{% url 'credit:payment_delete' pay.id %}" style="display:inline;" onsubmit="return confirm('Delete this payment voucher? The payable balance will be restored.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm" style="color:#DC2626; padding:2px 6px;">Delete</button>
+              </form>
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="table-empty">No payments made yet. Full bill amount is outstanding.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add Payment Card -->
+  <div class="card" id="add-payment" style="padding:20px;">
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:12px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">Record Payment Made</h3>
+    
+    {% if purchase.remaining_amount > 0 %}
+      <form method="post" action="{% url 'credit:payment_add' %}">
+        {% csrf_token %}
+        <input type="hidden" name="credit_type" value="taken">
+        <input type="hidden" name="transaction_id" value="{{ purchase.id }}">
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Payment Amount (Rs.) *</label>
+          <input type="number" name="amount" step="0.01" min="0.01" max="{{ purchase.remaining_amount }}" value="{{ purchase.remaining_amount }}" class="form-control font-mono" required>
+          <small style="color:var(--text-secondary); font-size:11px;">Max allowed: Rs. {{ purchase.remaining_amount|floatformat:2 }}</small>
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Payment Date</label>
+          {{ payment_form.payment_date }}
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Method</label>
+          {{ payment_form.payment_method }}
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Reference / Txn #</label>
+          {{ payment_form.reference }}
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">Remarks / Notes</label>
+          {{ payment_form.notes }}
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;">Save Payment Voucher</button>
+      </form>
+    {% else %}
+      <p style="color:var(--text-secondary); font-size:13px;">This purchase bill is fully paid. No further payments can be added.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

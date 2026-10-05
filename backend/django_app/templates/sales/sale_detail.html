@@ -1,0 +1,110 @@
+{% extends "base/base.html" %}
+{% block title %}Invoice {{ sale.invoice_number }} - BizFlow{% endblock %}
+{% block page_title %}Invoice #{{ sale.invoice_number }}{% endblock %}
+
+{% block content %}
+<style>
+@media print {
+  body * { visibility: hidden; }
+  .invoice-box, .invoice-box * { visibility: visible; }
+  .invoice-box { position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow: none !important; }
+  .no-print { display: none !important; }
+}
+</style>
+
+<div class="page-header no-print" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Tax Invoice #{{ sale.invoice_number }}</h1>
+    <p class="page-subtitle">Date: {{ sale.sale_date|date:"Y-m-d" }} | Status: {{ sale.payment_status }}</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button onclick="window.print()" class="btn btn-primary btn-sm">Print Invoice</button>
+    <a href="{% url 'sales:list' %}" class="btn btn-secondary btn-sm">Back to Sales</a>
+  </div>
+</div>
+
+<div class="card invoice-box" style="max-width: 850px; margin: 0 auto; padding: 40px; background:#fff; color:#1e293b;">
+  <!-- Invoice Header -->
+  <div style="display:flex; justify-content:space-between; border-bottom:2px solid #e2e8f0; padding-bottom:24px; margin-bottom:24px;">
+    <div>
+      <h2 style="font-size:24px; font-weight:800; color:#0f172a; margin-bottom:4px;">{{ sale.company.name }}</h2>
+      <p style="margin:0; font-size:13px; color:#64748b;">PAN / VAT: {{ sale.company.pan_vat|default:"N/A" }}</p>
+      <p style="margin:0; font-size:13px; color:#64748b;">{{ sale.company.address|default:"" }}</p>
+      <p style="margin:0; font-size:13px; color:#64748b;">Phone: {{ sale.company.phone|default:"" }}</p>
+    </div>
+    <div style="text-align:right;">
+      <h3 style="font-size:20px; font-weight:700; color:#4f46e5; margin-bottom:4px;">TAX INVOICE</h3>
+      <p style="margin:0; font-weight:600; font-family:monospace;">INV: {{ sale.invoice_number }}</p>
+      <p style="margin:0; font-size:13px; color:#64748b;">Date: {{ sale.sale_date|date:"d M Y" }}</p>
+    </div>
+  </div>
+
+  <!-- Bill To -->
+  <div style="margin-bottom:24px; padding:12px; background:#f8fafc; border-radius:6px;">
+    <strong style="font-size:12px; text-transform:uppercase; color:#64748b;">Billed To:</strong>
+    <h4 style="margin:4px 0 0; font-size:16px;">{{ sale.customer.name|default:"Walk-in Customer" }}</h4>
+    {% if sale.customer %}
+      <p style="margin:2px 0 0; font-size:13px; color:#64748b;">PAN: {{ sale.customer.pan_number|default:"N/A" }} | Phone: {{ sale.customer.phone|default:"N/A" }}</p>
+      <p style="margin:2px 0 0; font-size:13px; color:#64748b;">{{ sale.customer.address|default:"" }}</p>
+    {% endif %}
+  </div>
+
+  <!-- Items Table -->
+  <table style="width:100%; border-collapse:collapse; margin-bottom:24px;">
+    <thead>
+      <tr style="border-bottom:2px solid #cbd5e1; text-align:left; font-size:13px; color:#475569;">
+        <th style="padding:8px;">SN</th>
+        <th style="padding:8px;">Item Description</th>
+        <th style="padding:8px; text-align:center;">Qty</th>
+        <th style="padding:8px; text-align:right;">Rate</th>
+        <th style="padding:8px; text-align:right;">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr style="border-bottom:1px solid #e2e8f0; font-size:14px;">
+        <td style="padding:8px;">{{ forloop.counter }}</td>
+        <td style="padding:8px; font-weight:500;">{{ item.product.name }}</td>
+        <td style="padding:8px; text-align:center;">{{ item.quantity }}</td>
+        <td style="padding:8px; text-align:right; font-family:monospace;">Rs. {{ item.unit_price|floatformat:2 }}</td>
+        <td style="padding:8px; text-align:right; font-family:monospace; font-weight:600;">Rs. {{ item.total|floatformat:2 }}</td>
+      </tr>
+      {% empty %}
+      <tr style="border-bottom:1px solid #e2e8f0; font-size:14px;">
+        <td style="padding:8px;">1</td>
+        <td style="padding:8px; font-weight:500;">General Sale Item</td>
+        <td style="padding:8px; text-align:center;">1</td>
+        <td style="padding:8px; text-align:right; font-family:monospace;">Rs. {{ sale.subtotal|floatformat:2 }}</td>
+        <td style="padding:8px; text-align:right; font-family:monospace; font-weight:600;">Rs. {{ sale.subtotal|floatformat:2 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Calculation Summary -->
+  <div style="display:flex; justify-content:flex-end;">
+    <div style="width:280px;">
+      <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:14px;">
+        <span>Subtotal:</span>
+        <span style="font-family:monospace;">Rs. {{ sale.subtotal|floatformat:2 }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:14px;">
+        <span>Discount:</span>
+        <span style="font-family:monospace;">- Rs. {{ sale.discount_amount|floatformat:2 }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:14px;">
+        <span>VAT / Tax:</span>
+        <span style="font-family:monospace;">Rs. {{ sale.tax_amount|floatformat:2 }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:8px 0; border-top:2px solid #0f172a; font-size:16px; font-weight:700;">
+        <span>Grand Total:</span>
+        <span style="font-family:monospace;">Rs. {{ sale.total|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:40px; border-top:1px dashed #cbd5e1; padding-top:16px; text-align:center; font-size:12px; color:#94a3b8;">
+    Thank you for your business! This is a computer generated invoice.
+  </div>
+</div>
+{% endblock %}

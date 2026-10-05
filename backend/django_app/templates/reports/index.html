@@ -1,0 +1,51 @@
+{% extends "base/base.html" %}
+{% block title %}Financial Reports - BizFlow{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Financial Summary & Reports</h1>
+    <p class="page-subtitle">Period performance, revenue breakdowns, and daybook journals.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'reports:export_summary_csv' %}" class="btn btn-secondary btn-sm">Export Summary CSV</a>
+    <a href="{% url 'reports:daybook' %}" class="btn btn-primary btn-sm">View Daybook</a>
+  </div>
+</div>
+
+<div class="stat-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <span class="stat-label">Total Revenue</span>
+    <span class="stat-value">Rs. {{ total_sales|floatformat:2 }}</span>
+    <span class="stat-badge success">{{ sales_count }} Sales</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Purchases</span>
+    <span class="stat-value">Rs. {{ total_purchases|floatformat:2 }}</span>
+    <span class="stat-badge info">{{ purchases_count }} Purchases</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Operational Overhead</span>
+    <span class="stat-value">Rs. {{ total_expenses|floatformat:2 }}</span>
+    <span class="stat-badge warning">Expenses</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Net Net Margin</span>
+    <span class="stat-value {% if net_profit < 0 %}text-danger{% else %}text-success{% endif %}">
+      Rs. {{ net_profit|floatformat:2 }}
+    </span>
+    <span class="stat-badge {% if net_profit < 0 %}danger{% else %}success{% endif %}">
+      {% if net_profit < 0 %}Loss{% else %}Profit{% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="card" style="padding:24px;">
+  <h3 style="margin-bottom:12px; font-size:16px;">Available Export Documents</h3>
+  <div style="display:flex; gap:12px;">
+    <a href="{% url 'reports:export_summary_csv' %}" class="btn btn-secondary">Financial Overview (CSV)</a>
+    <a href="{% url 'reports:export_daybook_csv' %}" class="btn btn-secondary">Today's Daybook (CSV)</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base/base.html" %}
+{% block title %}Receivables & Payables Reports - BizFlow{% endblock %}
+{% block page_title %}Receivables & Payables Reports Hub{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Receivables & Payables Reports Hub</h1>
+    <p class="page-subtitle">Generate and download financial audit reports for receivables, payables, settlements, and aging debt.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <button onclick="window.print();" class="btn btn-secondary btn-sm">Print Page</button>
+  </div>
+</div>
+
+<!-- Reports Grid -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
+  <!-- Report 1: Credit Given -->
+  <div class="card" style="padding:24px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span class="badge badge-primary">Debit (Dr)</span>
+        <h3 style="margin:0; font-size:16px; font-weight:700;">Receivables Report (Customer Credit)</h3>
+      </div>
+      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
+        Full audit trail of all customer sales invoices issued on credit terms, including settled and pending Debit amounts.
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="{% url 'credit:given_list' %}" class="btn btn-secondary btn-sm">View Table</a>
+      <a href="{% url 'credit:export_csv' 'given' %}" class="btn btn-primary btn-sm">Export CSV</a>
+    </div>
+  </div>
+
+  <!-- Report 2: Credit Taken -->
+  <div class="card" style="padding:24px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span class="badge" style="background:#F5F3FF; color:#6D28D9; border:1px solid #DDD6FE;">Credit (Cr)</span>
+        <h3 style="margin:0; font-size:16px; font-weight:700;">Payables Report (Supplier Credit)</h3>
+      </div>
+      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
+        Complete breakdown of supplier bills purchased on credit, payment status, and outstanding Credit obligations.
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="{% url 'credit:taken_list' %}" class="btn btn-secondary btn-sm">View Table</a>
+      <a href="{% url 'credit:export_csv' 'taken' %}" class="btn btn-primary btn-sm">Export CSV</a>
+    </div>
+  </div>
+
+  <!-- Report 3: Customers' Dues -->
+  <div class="card" style="padding:24px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span class="badge badge-warning">Receivables</span>
+        <h3 style="margin:0; font-size:16px; font-weight:700;">Customer Dues Summary</h3>
+      </div>
+      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
+        Summary report aggregated per customer with total sales, amounts collected, current debt, and overdue portions.
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="{% url 'credit:customers_dues' %}" class="btn btn-secondary btn-sm">View Table</a>
+      <a href="{% url 'credit:export_csv' 'customer_dues' %}" class="btn btn-primary btn-sm">Export CSV</a>
+    </div>
+  </div>
+
+  <!-- Report 4: Suppliers' Dues -->
+  <div class="card" style="padding:24px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span class="badge badge-danger">Payables</span>
+        <h3 style="margin:0; font-size:16px; font-weight:700;">Supplier Payables Summary</h3>
+      </div>
+      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
+        Aggregated vendor-wise report of all credit purchases, total paid, and pending accounts payable liabilities.
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="{% url 'credit:suppliers_dues' %}" class="btn btn-secondary btn-sm">View Table</a>
+      <a href="{% url 'credit:export_csv' 'supplier_dues' %}" class="btn btn-primary btn-sm">Export CSV</a>
+    </div>
+  </div>
+
+  <!-- Report 5: Overdue Report -->
+  <div class="card" style="padding:24px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span class="badge badge-danger">Aging / Overdue</span>
+        <h3 style="margin:0; font-size:16px; font-weight:700;">Overdue Debt Report</h3>
+      </div>
+      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
+        Aging report identifying customers and suppliers whose invoices have exceeded payment due dates.
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="{% url 'credit:overdue_list' %}" class="btn btn-secondary btn-sm">View Overdue</a>
+    </div>
+  </div>
+
+  <!-- Report 6: Payments & Settlements -->
+  <div class="card" style="padding:24px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span class="badge badge-success">Cash Flow</span>
+        <h3 style="margin:0; font-size:16px; font-weight:700;">Settlement & Payment Ledger</h3>
+      </div>
+      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:16px;">
+        Chronological voucher ledger of every cash, QR code, bank transfer, and cheque settlement recorded.
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="{% url 'credit:payment_list' %}" class="btn btn-secondary btn-sm">View Table</a>
+      <a href="{% url 'credit:export_csv' 'payments' %}" class="btn btn-primary btn-sm">Export CSV</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

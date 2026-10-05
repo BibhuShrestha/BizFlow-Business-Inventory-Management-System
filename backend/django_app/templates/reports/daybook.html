@@ -1,0 +1,98 @@
+{% extends "base/base.html" %}
+{% block title %}Daybook - BizFlow{% endblock %}
+{% block page_title %}Daily Transaction Daybook{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Daybook: {{ target_date }}</h1>
+    <p class="page-subtitle">BS Date: {{ bs_date|default:"N/A" }} | Inflows, Outflows, and Net Cash Position.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'reports:export_daybook_csv' %}?date={{ target_date }}" class="btn btn-secondary btn-sm">Export Daybook CSV</a>
+    <a href="{% url 'reports:index' %}" class="btn btn-secondary btn-sm">Reports Overview</a>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:20px; padding:16px;">
+  <form method="get" style="display:flex; gap:12px; align-items:center;">
+    <label class="form-label" style="margin:0;">Select Date:</label>
+    <input type="date" name="date" value="{{ target_date }}" class="form-control" style="width:180px;">
+    <button type="submit" class="btn btn-secondary">Load Daybook</button>
+  </form>
+</div>
+
+<div class="stat-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <span class="stat-label">Day Inflow (Sales)</span>
+    <span class="stat-value text-success">+ Rs. {{ day_sales_total|floatformat:2 }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Day Purchases</span>
+    <span class="stat-value text-danger">- Rs. {{ day_purchases_total|floatformat:2 }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Day Expenses</span>
+    <span class="stat-value text-warning">- Rs. {{ day_expenses_total|floatformat:2 }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Day Net Cash</span>
+    <span class="stat-value {% if day_net < 0 %}text-danger{% else %}text-success{% endif %}">
+      Rs. {{ day_net|floatformat:2 }}
+    </span>
+  </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card">
+  <div class="card-header"><h3 class="card-title">All Journal Entries for {{ target_date }}</h3></div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Reference #</th>
+          <th>Party / Description</th>
+          <th style="text-align:right;">Debit / Outflow</th>
+          <th style="text-align:right;">Credit / Inflow</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sales %}
+        <tr>
+          <td><span class="badge badge-success">SALE</span></td>
+          <td class="font-mono"><a href="{% url 'sales:detail' s.id %}">{{ s.invoice_number }}</a></td>
+          <td>{{ s.customer.name|default:"Cash Sale" }}</td>
+          <td style="text-align:right;">—</td>
+          <td style="text-align:right;" class="font-mono text-success">Rs. {{ s.total|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+
+        {% for p in purchases %}
+        <tr>
+          <td><span class="badge badge-info">PURCHASE</span></td>
+          <td class="font-mono"><a href="{% url 'purchases:detail' p.id %}">{{ p.purchase_number }}</a></td>
+          <td>{{ p.supplier.name|default:"Vendor Bill" }}</td>
+          <td style="text-align:right;" class="font-mono text-danger">Rs. {{ p.total|floatformat:2 }}</td>
+          <td style="text-align:right;">—</td>
+        </tr>
+        {% endfor %}
+
+        {% for e in expenses %}
+        <tr>
+          <td><span class="badge badge-warning">EXPENSE</span></td>
+          <td class="font-mono">EXP-{{ e.id }}</td>
+          <td>{{ e.title }} ({{ e.category }})</td>
+          <td style="text-align:right;" class="font-mono text-danger">Rs. {{ e.amount|floatformat:2 }}</td>
+          <td style="text-align:right;">—</td>
+        </tr>
+        {% endfor %}
+
+        {% if not sales and not purchases and not expenses %}
+        <tr><td colspan="5" class="table-empty">No transactions found for this date</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

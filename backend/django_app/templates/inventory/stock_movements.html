@@ -1,0 +1,54 @@
+{% extends "base/base.html" %}
+{% block title %}Stock Movements - BizFlow{% endblock %}
+{% block page_title %}Stock Ledger Movements{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Stock Ledger & Movements</h1>
+    <p class="page-subtitle">Audit trail of all inbound purchases, outbound sales, and physical adjustments.</p>
+  </div>
+  <a href="{% url 'stock:adjust' %}" class="btn btn-primary btn-sm">+ Manual Stock Adjustment</a>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Product</th>
+          <th>Type</th>
+          <th style="text-align:right;">Quantity</th>
+          <th>Reference / Document</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in page_obj %}
+        <tr>
+          <td>{{ m.created_at|date:"Y-m-d H:i" }}</td>
+          <td style="font-weight:600;">{{ m.product.name }}</td>
+          <td>
+            {% if m.movement_type == 'IN' or m.movement_type == 'PURCHASE' %}
+              <span class="badge badge-success">+ {{ m.movement_type }}</span>
+            {% elif m.movement_type == 'OUT' or m.movement_type == 'SALE' %}
+              <span class="badge badge-danger">- {{ m.movement_type }}</span>
+            {% else %}
+              <span class="badge badge-warning">{{ m.movement_type }}</span>
+            {% endif %}
+          </td>
+          <td style="text-align:right;" class="font-mono">
+            {% if m.quantity > 0 %}+{{ m.quantity }}{% else %}{{ m.quantity }}{% endif %}
+          </td>
+          <td class="font-mono">{{ m.reference_type|default:"—" }}</td>
+          <td>{{ m.description|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="table-empty">No stock movements recorded yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

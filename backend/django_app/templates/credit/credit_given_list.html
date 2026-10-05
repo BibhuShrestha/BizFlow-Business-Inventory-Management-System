@@ -1,0 +1,111 @@
+{% extends "base/base.html" %}
+{% block title %}Receivables Register (Customer Credit Given) - BizFlow{% endblock %}
+{% block page_title %}Receivables Register (Customer Credit Given){% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Receivables Register <span class="badge badge-primary" style="font-size:12px; vertical-align:middle; margin-left:6px;">Debit (Dr)</span></h1>
+    <p class="page-subtitle">All sales invoices issued on credit. Track receivables, debt collections, and pending Debit (Dr) balances.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'credit:export_csv' 'given' %}" class="btn btn-secondary btn-sm">Export CSV</a>
+    <a href="{% url 'credit:create' %}?type=given" class="btn btn-primary btn-sm">+ Record Receivable (Debit / Dr)</a>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search invoice, customer, phone..." class="form-control" style="max-width:280px;">
+    
+    <select name="status" class="form-control" style="max-width:180px;">
+      <option value="">All Statuses</option>
+      <option value="unpaid" {% if status_filter == 'unpaid' %}selected{% endif %}>Unpaid</option>
+      <option value="partially paid" {% if status_filter == 'partially paid' %}selected{% endif %}>Partially Paid</option>
+      <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+      <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+    </select>
+
+    <select name="customer" class="form-control" style="max-width:200px;">
+      <option value="">All Customers</option>
+      {% for c in customers %}
+        <option value="{{ c.id }}" {% if customer_filter == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    {% if search or status_filter or customer_filter %}
+      <a href="{% url 'credit:given_list' %}" class="btn btn-ghost">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Date</th>
+          <th>Due Date</th>
+          <th>Customer</th>
+          <th style="text-align:right;">Debit Amount (Rs.)</th>
+          <th style="text-align:right;">Settled / Paid</th>
+          <th style="text-align:right;">Customer Owes (Dr)</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in page_obj %}
+        <tr {% if s.is_overdue %}style="background-color: rgba(220, 38, 38, 0.03);"{% endif %}>
+          <td class="font-mono">
+            <a href="{% url 'credit:given_detail' s.id %}" style="font-weight:600; color:var(--primary);">{{ s.invoice_number }}</a>
+            {% if s.bill_number %}<br><small style="color:var(--text-secondary);">Ref: {{ s.bill_number }}</small>{% endif %}
+          </td>
+          <td>{{ s.sale_date|date:"Y-m-d" }}</td>
+          <td>
+            {% if s.due_date %}
+              <span {% if s.is_overdue %}style="color:#DC2626; font-weight:600;"{% endif %}>
+                {{ s.due_date|date:"Y-m-d" }}
+                {% if s.is_overdue %}<span class="badge badge-danger" style="margin-left:4px; font-size:10px;">LATE</span>{% endif %}
+              </span>
+            {% else %}
+              <span style="color:var(--text-secondary);">-</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'credit:customer_ledger' s.customer.id %}" style="font-weight:500;">
+              {{ s.customer.name|default:"Walk-in Customer" }}
+            </a>
+            {% if s.customer.phone %}<br><small style="color:var(--text-secondary);">{{ s.customer.phone }}</small>{% endif %}
+          </td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ s.total|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono" style="color:#16A34A;">Rs. {{ s.paid_amount|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">
+            <strong style="{% if s.remaining_amount > 0 %}color:#EA580C;{% else %}color:#16A34A;{% endif %}">
+              Rs. {{ s.remaining_amount|floatformat:2 }}
+            </strong>
+          </td>
+          <td>
+            <span class="badge {% if s.calculated_status == 'Paid' %}badge-success{% elif s.calculated_status == 'Overdue' %}badge-danger{% elif s.calculated_status == 'Partially Paid' %}badge-info{% else %}badge-warning{% endif %}">
+              {{ s.calculated_status }}
+            </span>
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'credit:given_detail' s.id %}" class="btn btn-ghost btn-sm">Details</a>
+              {% if s.remaining_amount > 0 %}
+                <a href="{% url 'credit:given_detail' s.id %}#add-payment" class="btn btn-primary btn-sm" style="font-size:11px; padding:2px 8px;">+ Pay</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="table-empty">No receivables records found matching criteria.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

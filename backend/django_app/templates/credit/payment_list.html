@@ -1,0 +1,136 @@
+{% extends "base/base.html" %}
+{% block title %}Payment Vouchers & Settlements - BizFlow{% endblock %}
+{% block page_title %}Payment Vouchers & Settlements{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Payment Vouchers &amp; Settlements</h1>
+    <p class="page-subtitle">Complete ledger of cash, bank, mobile QR, and cheque settlements across customers and suppliers.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'credit:export_csv' 'payments' %}" class="btn btn-secondary btn-sm">Export Payments CSV</a>
+    <a href="{% url 'credit:dashboard' %}" class="btn btn-ghost btn-sm">&larr; Back to Dashboard</a>
+  </div>
+</div>
+
+<!-- Quick Stat Cards -->
+<div class="stat-grid" style="margin-bottom: 20px;">
+  <div class="stat-card" style="border-left: 4px solid #16A34A;">
+    <span class="stat-label">Total Payment Volume Filtered</span>
+    <span class="stat-value" style="color: #16A34A;">Rs. {{ total_amount|floatformat:2 }}</span>
+    <span class="stat-change" style="color: var(--text-secondary);">Across completed settlement vouchers</span>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search voucher #, customer, supplier, ref..." class="form-control" style="max-width:320px;">
+    
+    <select name="method" class="form-control" style="max-width:180px;">
+      <option value="">All Payment Methods</option>
+      <option value="Cash" {% if method_filter == 'Cash' %}selected{% endif %}>Cash</option>
+      <option value="QR / Mobile Pay" {% if method_filter == 'QR / Mobile Pay' %}selected{% endif %}>QR / Mobile Pay</option>
+      <option value="Bank Transfer" {% if method_filter == 'Bank Transfer' %}selected{% endif %}>Bank Transfer</option>
+      <option value="Cheque" {% if method_filter == 'Cheque' %}selected{% endif %}>Cheque</option>
+    </select>
+
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    {% if search or method_filter %}
+      <a href="{% url 'credit:payment_list' %}" class="btn btn-ghost">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Voucher #</th>
+          <th>Payment Date</th>
+          <th>Party / Account</th>
+          <th>Settlement Direction</th>
+          <th>Linked Transaction</th>
+          <th>Method</th>
+          <th>Remarks / Notes</th>
+          <th style="text-align:right;">Amount (Rs.)</th>
+          <th>Recorded By</th>
+          {% if user.is_manager %}<th style="text-align:right;">Action</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in page_obj %}
+        <tr>
+          <td class="font-mono"><strong>PAY-{{ pay.id }}</strong></td>
+          <td>{{ pay.payment_date|date:"Y-m-d" }}</td>
+          <td>
+            {% if pay.customer %}
+              <a href="{% url 'credit:customer_ledger' pay.customer.id %}" style="font-weight:600; color:var(--primary);">{{ pay.customer.name }}</a>
+              {% if pay.customer.phone %}<br><small style="color:var(--text-secondary);">{{ pay.customer.phone }}</small>{% endif %}
+            {% elif pay.supplier %}
+              <a href="{% url 'credit:supplier_ledger' pay.supplier.id %}" style="font-weight:600; color:#7C3AED;">{{ pay.supplier.name }}</a>
+              {% if pay.supplier.phone %}<br><small style="color:var(--text-secondary);">{{ pay.supplier.phone }}</small>{% endif %}
+            {% else %}
+              <span style="color:var(--text-secondary);">-</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if pay.customer %}
+              <span class="badge badge-success">📥 Received (Settles Dr)</span>
+            {% else %}
+              <span class="badge" style="background:#F5F3FF; color:#6D28D9; border:1px solid #DDD6FE;">📤 Disbursed (Settles Cr)</span>
+            {% endif %}
+          </td>
+          <td class="font-mono">
+            {% if pay.sale %}
+              <a href="{% url 'credit:given_detail' pay.sale.id %}">{{ pay.sale.invoice_number }}</a>
+            {% elif pay.purchase %}
+              <a href="{% url 'credit:taken_detail' pay.purchase.id %}">{{ pay.purchase.purchase_number }}</a>
+            {% else %}
+              {{ pay.reference|default:'-' }}
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge badge-secondary">{{ pay.payment_method }}</span>
+          </td>
+          <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ pay.display_notes }}">
+            {{ pay.display_notes|default:'-' }}
+          </td>
+          <td style="text-align:right;" class="font-mono">
+            <strong style="color:#16A34A; font-size:14px;">Rs. {{ pay.amount|floatformat:2 }}</strong>
+          </td>
+          <td><small style="color:var(--text-secondary);">{{ pay.created_by.name|default:'System' }}</small></td>
+          {% if user.is_manager %}
+          <td style="text-align:right;">
+            <form method="post" action="{% url 'credit:payment_delete' pay.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete payment voucher PAY-{{ pay.id }}? This will restore the outstanding balance on the linked invoice/bill.');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-ghost btn-sm" style="color:#DC2626; padding:2px 8px;" title="Delete Voucher">&times; Delete</button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="table-empty">No payment vouchers found matching your filter criteria.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    <div style="padding:16px 20px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:13px; color:var(--text-secondary);">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+      <div style="display:flex; gap:6px;">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if method_filter %}&method={{ method_filter }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Prev</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if method_filter %}&method={{ method_filter }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

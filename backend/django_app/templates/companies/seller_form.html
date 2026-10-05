@@ -1,0 +1,47 @@
+{% extends "base/base.html" %}
+{% block title %}{{ title }} - BizFlow{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Configure seller credentials and branch assignment.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 640px;">
+  <form method="post" style="padding: 24px;">
+    {% csrf_token %}
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Company *</label>
+      {{ form.company }}
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Seller Name *</label>
+      {{ form.name }}
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">PAN Number</label>
+      {{ form.pan_number }}
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Phone</label>
+      {{ form.phone }}
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Address</label>
+      {{ form.address }}
+    </div>
+    <div class="form-group" style="margin-bottom:24px;">
+      <label style="display:flex; align-items:center; gap:8px;">
+        {{ form.is_active }} Active
+      </label>
+    </div>
+    <div style="display:flex; gap:12px;">
+      <button type="submit" class="btn btn-primary">Save Seller</button>
+      <a href="{% url 'sellers:list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

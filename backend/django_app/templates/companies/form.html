@@ -1,0 +1,41 @@
+{% extends "base/base.html" %}
+{% block title %}{{ title }} - BizFlow{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header"><h1 class="page-title">{{ title }}</h1></div>
+<div class="card" style="max-width: 640px;">
+  <form method="post" style="padding: 24px;">
+    {% csrf_token %}
+    {% if return_to %}
+      <input type="hidden" name="return_to" value="{{ return_to }}">
+    {% endif %}
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Company Name *</label>
+      {{ form.company_name }}
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">VAT / PAN Number</label>
+        {{ form.vat_pan_number }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company Phone</label>
+        {{ form.company_phone }}
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Address</label>
+      {{ form.address }}
+    </div>
+    <div class="form-group" style="margin-bottom:24px;">
+      <label class="form-label">Logo URL</label>
+      {{ form.logo_url }}
+    </div>
+    <div style="display:flex; gap:12px;">
+      <button type="submit" class="btn btn-primary">Save Company</button>
+      <a href="{{ return_to|default:'/companies/' }}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base/base.html" %}
+{% block title %}403 - Access Forbidden | BizFlow{% endblock %}
+{% block page_title %}Access Denied{% endblock %}
+
+{% block content %}
+<div class="empty-state" style="max-width: 520px; margin: 60px auto;">
+  <div style="font-size: 64px; font-weight: 800; color: var(--warning); line-height: 1; margin-bottom: 16px;">403</div>
+  <h2 class="empty-state-title" style="font-size: 20px;">Permission Required</h2>
+  <p class="empty-state-desc">You do not have the required administrative or staff permissions to access this view or resource.</p>
+  <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+    <a href="{% url 'dashboard:index' %}" class="btn btn-primary">Return to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

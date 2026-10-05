@@ -1,0 +1,58 @@
+{% extends "base/base.html" %}
+{% block title %}Sellers - BizFlow{% endblock %}
+{% block page_title %}Authorized Sellers{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Authorized Sellers</h1>
+    <p class="page-subtitle">Sub-entities, branch locations, and seller licenses.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'sellers:export_csv' %}" class="btn btn-secondary btn-sm">Export CSV</a>
+    <a href="{% url 'sellers:export_excel' %}" class="btn btn-secondary btn-sm">Export Excel</a>
+    <a href="{% url 'sellers:create' %}" class="btn btn-primary btn-sm">+ New Seller</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Seller Name</th>
+          <th>Company</th>
+          <th>PAN Number</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sellers %}
+        <tr>
+          <td style="font-weight:600;">{{ s.seller_name }}</td>
+          <td>{{ s.company.company_name }}</td>
+          <td class="font-mono">{{ s.pan_number|default:"—" }}</td>
+          <td>{{ s.seller_phone|default:"—" }}</td>
+          <td>
+            {% if s.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Inactive</span>{% endif %}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'sellers:edit' s.id %}" class="btn btn-ghost btn-sm">Edit</a>
+              <form method="post" action="{% url 'sellers:delete' s.id %}" style="display:inline;" onsubmit="return confirm('Deactivate this seller?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="table-empty">No sellers configured</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

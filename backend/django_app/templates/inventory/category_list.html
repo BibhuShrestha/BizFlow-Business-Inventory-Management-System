@@ -1,0 +1,46 @@
+{% extends "base/base.html" %}
+{% block title %}Categories - BizFlow{% endblock %}
+{% block page_title %}Product Categories{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Categories</h1>
+    <p class="page-subtitle">Group products into hierarchical inventory departments.</p>
+  </div>
+  <a href="{% url 'inventory:category_create' %}" class="btn btn-primary btn-sm">+ New Category</a>
+</div>
+
+<div class="card" style="max-width:800px;">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Category Name</th>
+          <th>Description</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat in categories %}
+        <tr>
+          <td style="font-weight:600;">{{ cat.name }}</td>
+          <td>{{ cat.description|default:"—" }}</td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'inventory:category_edit' cat.id %}" class="btn btn-ghost btn-sm">Edit</a>
+              <form method="post" action="{% url 'inventory:category_delete' cat.id %}" style="display:inline;" onsubmit="return confirm('Delete this category?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="table-empty">No categories created yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

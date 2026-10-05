@@ -1,0 +1,72 @@
+{% extends "base/base.html" %}
+{% block title %}{{ supplier.name }} - Supplier Details{% endblock %}
+{% block page_title %}Supplier Profile{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">{{ supplier.name }}</h1>
+    <p class="page-subtitle">Phone: {{ supplier.phone|default:"N/A" }} | PAN: {{ supplier.pan_number|default:"N/A" }}</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'credit:supplier_ledger' supplier.id %}" class="btn btn-primary btn-sm">View Ledger Statement</a>
+    <a href="{% url 'suppliers:edit' supplier.id %}" class="btn btn-secondary btn-sm">Edit Profile</a>
+  </div>
+</div>
+
+<!-- Payables & Credit Summary Cards -->
+<div class="stat-grid" style="margin-bottom: 24px;">
+  <div class="stat-card">
+    <span class="stat-label">Total Purchase Credit (Payables)</span>
+    <span class="stat-value" style="color: #7C3AED;">Rs. {{ total_credit|floatformat:2 }}</span>
+    <span class="stat-badge info">Credit Purchases</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Paid</span>
+    <span class="stat-value" style="color: #16A34A;">Rs. {{ total_paid|floatformat:2 }}</span>
+    <span class="stat-badge success">Settled</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #DC2626;">
+    <span class="stat-label">Remaining Payable</span>
+    <span class="stat-value" style="color: #DC2626;">Rs. {{ remaining_payable|floatformat:2 }}</span>
+    <span class="stat-badge danger">I Owe Supplier</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #EA580C;">
+    <span class="stat-label">Overdue</span>
+    <span class="stat-value" style="color: #EA580C;">Rs. {{ overdue_amount|floatformat:2 }}</span>
+    <span class="stat-badge warning">Late</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3 class="card-title">Purchase Order History</h3></div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Purchase #</th>
+          <th>Date</th>
+          <th style="text-align:right;">Subtotal</th>
+          <th style="text-align:right;">Tax</th>
+          <th style="text-align:right;">Total</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in purchases %}
+        <tr>
+          <td class="font-mono"><a href="{% url 'purchases:detail' p.id %}">{{ p.purchase_number }}</a></td>
+          <td>{{ p.purchase_date|date:"Y-m-d" }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ p.subtotal|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ p.tax_amount|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ p.total|floatformat:2 }}</strong></td>
+          <td><span class="badge badge-success">{{ p.payment_status|default:"Paid" }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="table-empty">No purchases found for this supplier</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

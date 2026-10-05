@@ -1,0 +1,63 @@
+{% extends "base/base.html" %}
+{% block title %}Expenses - BizFlow{% endblock %}
+{% block page_title %}Operational Expenses{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Operating Expenses</h1>
+    <p class="page-subtitle">Track rent, utilities, salaries, office supplies, and general overhead.</p>
+  </div>
+  <a href="{% url 'expenses:create' %}" class="btn btn-primary btn-sm">+ Record Expense</a>
+</div>
+
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form method="get" style="display:flex; gap:12px;">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search title or payee..." class="form-control" style="width:240px;">
+    <input type="text" name="category" value="{{ category_filter }}" placeholder="Filter category..." class="form-control" style="width:180px;">
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    {% if search_query or category_filter %}<a href="{% url 'expenses:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Title / Description</th>
+          <th>Category</th>
+          <th>Payee</th>
+          <th>Payment Method</th>
+          <th style="text-align:right;">Amount</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in page_obj %}
+        <tr>
+          <td>{{ e.expense_date|date:"Y-m-d" }}</td>
+          <td style="font-weight:600;">{{ e.description|default:e.category }}</td>
+          <td><span class="badge badge-info">{{ e.category }}</span></td>
+          <td>{{ e.reference|default:"—" }}</td>
+          <td>{{ e.payment_method }}</td>
+          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ e.amount|floatformat:2 }}</strong></td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'expenses:edit' e.id %}" class="btn btn-ghost btn-sm">Edit</a>
+              <form method="post" action="{% url 'expenses:delete' e.id %}" style="display:inline;" onsubmit="return confirm('Delete this expense?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="table-empty">No expenses logged yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

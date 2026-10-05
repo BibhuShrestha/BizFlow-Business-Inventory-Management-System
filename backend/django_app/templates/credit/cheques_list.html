@@ -1,0 +1,198 @@
+{% extends "base/base.html" %}
+{% block title %}Cheque Management - Receivables & Payables - BizFlow{% endblock %}
+{% block page_title %}Cheque Management{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Cheque Management (Given & Received)</h1>
+    <p class="page-subtitle">Track customer cheques (receivables) and supplier cheques (payables) with maturity schedules and status tracking.</p>
+  </div>
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <!-- Export dropdown -->
+    <div style="display:inline-flex; gap:6px;">
+      <a href="{% url 'credit:cheques_export' 'csv' %}?{{ request.GET.urlencode }}" class="btn btn-secondary btn-sm">Export CSV</a>
+      <a href="{% url 'credit:cheques_export' 'excel' %}?{{ request.GET.urlencode }}" class="btn btn-secondary btn-sm">Export Excel</a>
+      <a href="{% url 'credit:cheques_export' 'json' %}?{{ request.GET.urlencode }}" class="btn btn-secondary btn-sm">Export JSON</a>
+    </div>
+    <a href="{% url 'credit:cheque_create' %}" class="btn btn-primary btn-sm">
+      + Record Cheque
+    </a>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
+  <div class="stat-card" style="border-left: 4px solid #2563EB;">
+    <span class="stat-label">Pending Cheques</span>
+    <span class="stat-value" style="color: #2563EB;">Rs. {{ summary.pending_amount|floatformat:2 }}</span>
+    <span class="stat-badge info">{{ summary.pending_count }} Pending</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #EF4444;">
+    <span class="stat-label">🚨 Cheques Due Today</span>
+    <span class="stat-value" style="color: #EF4444;">Rs. {{ summary.due_today_amount|floatformat:2 }}</span>
+    <span class="stat-badge danger">{{ summary.due_today_count }} Today</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #DC2626;">
+    <span class="stat-label">⚠️ Overdue Cheques</span>
+    <span class="stat-value" style="color: #DC2626;">Rs. {{ summary.overdue_amount|floatformat:2 }}</span>
+    <span class="stat-badge danger">{{ summary.overdue_count }} Overdue</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #16A34A;">
+    <span class="stat-label">Cleared Cheques</span>
+    <span class="stat-value" style="color: #16A34A;">Rs. {{ summary.cleared_amount|floatformat:2 }}</span>
+    <span class="stat-badge success">{{ summary.cleared_count }} Cleared</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #991B1B;">
+    <span class="stat-label">Bounced Cheques</span>
+    <span class="stat-value" style="color: #991B1B;">Rs. {{ summary.bounced_amount|floatformat:2 }}</span>
+    <span class="stat-badge danger">{{ summary.bounced_count }} Bounced</span>
+  </div>
+</div>
+
+<!-- Filter Tabs & Search -->
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+    <!-- Tabs -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+      <a href="?tab=all{% if search %}&q={{ search }}{% endif %}" class="btn btn-sm {% if current_tab == 'all' %}btn-primary{% else %}btn-ghost{% endif %}">All ({{ summary.total_count }})</a>
+      <a href="?tab=received{% if search %}&q={{ search }}{% endif %}" class="btn btn-sm {% if current_tab == 'received' %}btn-primary{% else %}btn-ghost{% endif %}">📥 Received (Customer)</a>
+      <a href="?tab=given{% if search %}&q={{ search }}{% endif %}" class="btn btn-sm {% if current_tab == 'given' %}btn-primary{% else %}btn-ghost{% endif %}">📤 Given (Supplier)</a>
+      <a href="?tab=due_today{% if search %}&q={{ search }}{% endif %}" class="btn btn-sm {% if current_tab == 'due_today' %}btn-primary{% else %}btn-ghost{% endif %}">Due Today</a>
+      <a href="?tab=due_soon{% if search %}&q={{ search }}{% endif %}" class="btn btn-sm {% if current_tab == 'due_soon' %}btn-primary{% else %}btn-ghost{% endif %}">Due in 7 Days</a>
+      <a href="?tab=overdue{% if search %}&q={{ search }}{% endif %}" class="btn btn-sm {% if current_tab == 'overdue' %}btn-primary{% else %}btn-ghost{% endif %}">Overdue</a>
+      <a href="?tab=cleared{% if search %}&q={{ search }}{% endif %}" class="btn btn-sm {% if current_tab == 'cleared' %}btn-primary{% else %}btn-ghost{% endif %}">Cleared</a>
+      <a href="?tab=bounced{% if search %}&q={{ search }}{% endif %}" class="btn btn-sm {% if current_tab == 'bounced' %}btn-primary{% else %}btn-ghost{% endif %}">Bounced</a>
+    </div>
+
+    <!-- Search Form -->
+    <form method="GET" style="display:flex; gap:8px; margin:0;">
+      <input type="hidden" name="tab" value="{{ current_tab }}">
+      <input type="text" name="q" value="{{ search }}" placeholder="Search cheque #, bank, party..." class="form-control" style="width:240px; padding:6px 12px; font-size:13px;">
+      <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+      {% if search %}
+        <a href="?tab={{ current_tab }}" class="btn btn-ghost btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Cheques Table -->
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Cheque #</th>
+          <th>Type</th>
+          <th>Bank Name</th>
+          <th>Party</th>
+          <th>Amount</th>
+          <th>Cheque Date</th>
+          <th>Maturity / Due</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in cheques %}
+        <tr style="{% if c.is_due_today %}background:rgba(239, 68, 68, 0.06); font-weight:600;{% elif c.is_overdue %}background:rgba(220, 38, 38, 0.04);{% endif %}">
+          <td style="font-weight:700; font-family:var(--font-mono, monospace);">
+            {{ c.cheque_number }}
+          </td>
+          <td>
+            {% if c.cheque_type == 'RECEIVED' %}
+              <span class="badge badge-success">📥 Received</span>
+            {% else %}
+              <span class="badge badge-info">📤 Given</span>
+            {% endif %}
+          </td>
+          <td style="font-weight:600;">{{ c.bank_name }}</td>
+          <td>
+            {% if c.customer %}
+              <a href="/customers/{{ c.customer.id }}/" style="color:inherit; font-weight:600; text-decoration:none;">{{ c.customer.name }}</a>
+              <span style="font-size:11px; color:var(--text-secondary); display:block;">Customer</span>
+            {% elif c.supplier %}
+              <a href="/suppliers/{{ c.supplier.id }}/" style="color:inherit; font-weight:600; text-decoration:none;">{{ c.supplier.name }}</a>
+              <span style="font-size:11px; color:var(--text-secondary); display:block;">Supplier</span>
+            {% else %}
+              <span style="color:var(--text-secondary);">N/A</span>
+            {% endif %}
+          </td>
+          <td style="font-weight:700; font-size:14px; white-space:nowrap;">
+            Rs. {{ c.amount|floatformat:2 }}
+          </td>
+          <td style="white-space:nowrap; font-size:13px;">
+            {{ c.cheque_date|date:"Y-m-d" }}
+          </td>
+          <td>
+            <span class="badge {{ c.status_badge_class }}">
+              {{ c.due_status_display }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if c.status == 'CLEARED' %}badge-success{% elif c.status == 'BOUNCED' %}badge-danger{% elif c.status == 'CANCELLED' %}badge-secondary{% else %}badge-warning{% endif %}">
+              {{ c.get_status_display }}
+            </span>
+          </td>
+          <td style="text-align:right; white-space:nowrap;">
+            {% if c.status == 'PENDING' %}
+              <!-- Status Action Buttons -->
+              <div style="display:inline-flex; gap:6px;">
+                <form method="POST" action="{% url 'credit:cheque_update_status' c.id %}" style="display:inline; margin:0;">
+                  {% csrf_token %}
+                  <input type="hidden" name="status" value="CLEARED">
+                  <button type="submit" class="btn btn-ghost btn-sm" style="color:#16A34A; font-weight:600;" onclick="return confirm('Confirm marking Cheque #{{ c.cheque_number }} as CLEARED?');" title="Mark as Cleared">
+                    ✓ Clear
+                  </button>
+                </form>
+                <form method="POST" action="{% url 'credit:cheque_update_status' c.id %}" style="display:inline; margin:0;">
+                  {% csrf_token %}
+                  <input type="hidden" name="status" value="BOUNCED">
+                  <button type="submit" class="btn btn-ghost btn-sm" style="color:#DC2626; font-weight:600;" onclick="return confirm('Confirm marking Cheque #{{ c.cheque_number }} as BOUNCED?');" title="Mark as Bounced">
+                    ✕ Bounce
+                  </button>
+                </form>
+                <form method="POST" action="{% url 'credit:cheque_update_status' c.id %}" style="display:inline; margin:0;">
+                  {% csrf_token %}
+                  <input type="hidden" name="status" value="CANCELLED">
+                  <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--text-secondary);" onclick="return confirm('Cancel Cheque #{{ c.cheque_number }}?');" title="Cancel Cheque">
+                    Cancel
+                  </button>
+                </form>
+              </div>
+            {% else %}
+              <span style="font-size:12px; color:var(--text-secondary);">Updated</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="table-empty" style="text-align:center; padding:48px 16px;">
+            <div style="font-size:32px; margin-bottom:8px;">🧾</div>
+            <div style="font-weight:600; font-size:16px;">No cheques found</div>
+            <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Record incoming or outgoing cheques to manage clearance and reminders.</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-top:1px solid var(--border);">
+    <span style="font-size:13px; color:var(--text-secondary);">
+      Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} cheques
+    </span>
+    <div style="display:flex; gap:6px;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&tab={{ current_tab }}{% if search %}&q={{ search }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&tab={{ current_tab }}{% if search %}&q={{ search }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

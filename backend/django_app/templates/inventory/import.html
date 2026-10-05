@@ -1,0 +1,32 @@
+{% extends "base/base.html" %}
+{% block title %}Import Products - BizFlow{% endblock %}
+{% block page_title %}Bulk Product Import{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Bulk Import Products</h1>
+    <p class="page-subtitle">Upload inventory data using CSV or Excel (.xlsx) spreadsheets.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 640px; margin-bottom: 24px;">
+  <div style="padding: 24px;">
+    <h3 style="margin-bottom: 12px; font-size:16px;">Step 1: Download Template</h3>
+    <p style="color:var(--text-secondary); margin-bottom: 16px;">Use our formatted spreadsheet template to ensure column headers align with the system schema.</p>
+    <a href="{% url 'inventory:sample_template' %}" class="btn btn-secondary">Download CSV Template</a>
+  </div>
+</div>
+
+<div class="card" style="max-width: 640px;">
+  <form method="post" enctype="multipart/form-data" style="padding: 24px;">
+    {% csrf_token %}
+    <h3 style="margin-bottom: 16px; font-size:16px;">Step 2: Upload File</h3>
+    <div class="form-group" style="margin-bottom:24px;">
+      <label class="form-label">Select File (.csv or .xlsx) *</label>
+      <input type="file" name="file" accept=".csv, .xlsx" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Process Import</button>
+  </form>
+</div>
+{% endblock %}

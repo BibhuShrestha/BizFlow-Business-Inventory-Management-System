@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — BizFlow</title>
+  <meta name="description" content="Create your BizFlow business management account.">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card" style="max-width:460px;">
+    <div class="auth-logo">
+      <h1>BizFlow</h1>
+      <p>Business Management System</p>
+    </div>
+
+    <h2 class="auth-title">Create your account</h2>
+    <p class="auth-subtitle">Fill in your details to get started</p>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors.0 }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'accounts:register' %}" id="register-form">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label" for="id_name">Full Name <span class="required">*</span></label>
+        {{ form.name }}
+        {% if form.name.errors %}<p class="form-error">{{ form.name.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_email">Email Address <span class="required">*</span></label>
+        {{ form.email }}
+        {% if form.email.errors %}<p class="form-error">{{ form.email.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_password">Password <span class="required">*</span></label>
+        {{ form.password }}
+        <p class="form-hint">Min 8 characters with uppercase, lowercase, digit, and special character.</p>
+        {% if form.password.errors %}<p class="form-error">{{ form.password.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_password_confirm">Confirm Password <span class="required">*</span></label>
+        {{ form.password_confirm }}
+        {% if form.password_confirm.errors %}<p class="form-error">{{ form.password_confirm.errors.0 }}</p>{% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full btn-lg" id="register-submit">
+        Create Account
+      </button>
+    </form>
+
+    <div class="auth-link">
+      Already have an account?
+      <a href="{% url 'accounts:login' %}">Sign in</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

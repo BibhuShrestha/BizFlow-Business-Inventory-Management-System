@@ -1,0 +1,340 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}{{ title }} - BizFlow{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Record bill of supply or tax invoice with automatic stock deduction.</p>
+  </div>
+</div>
+
+{% if not companies_exist %}
+  <div class="alert alert-warning" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-left:4px solid #F59E0B;">
+    <div>
+      <strong>⚠️ No Company Profile Registered Yet</strong>
+      <p style="margin:4px 0 0; font-size:13px;">Invoices must be associated with a company. You can create your company profile right now without losing any form details.</p>
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" onclick="openQuickModal('modal-add-company')">+ Add Company Now</button>
+  </div>
+{% endif %}
+
+<div class="card" style="max-width: 960px; margin-bottom: 40px;">
+  <form method="post" id="saleForm" style="padding: 24px;">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger" style="margin-bottom:16px;">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <!-- Party & Company Row -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:18px;">
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;" for="id_customer">Customer *</label>
+          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-customer')">+ New Customer</button>
+        </div>
+        {{ form.customer }}
+        {% if form.customer.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.customer.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;" for="id_company">Company</label>
+          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-company')">+ New Company</button>
+        </div>
+        {{ form.company }}
+        {% if form.company.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.company.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_bill_number">Bill / Slip Number (Optional)</label>
+        {{ form.bill_number }}
+        {% if form.bill_number.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.bill_number.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Product & Quantity Row -->
+    <div style="background-color: var(--bg-primary, #F8FAFC); padding: 18px; border-radius: 8px; border: 1px solid var(--border, #E2E8F0); margin-bottom: 20px;">
+      <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:14px; align-items:flex-start;">
+        <div class="form-group">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label class="form-label" style="margin-bottom:0;" for="id_product">Product / Item *</label>
+            <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-product')">+ New Product</button>
+          </div>
+          {{ form.product }}
+          {% if form.product.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.product.errors }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_quantity">Quantity *</label>
+          {{ form.quantity }}
+          {% if form.quantity.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.quantity.errors }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_unit_price">Unit Price (Rs.)</label>
+          {{ form.unit_price }}
+          {% if form.unit_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.unit_price.errors }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="id_discount">Discount (Rs.)</label>
+          {{ form.discount }}
+          {% if form.discount.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.discount.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Row -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:18px;">
+      <div class="form-group">
+        <label class="form-label" for="id_payment_method">Payment Method</label>
+        {{ form.payment_method }}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="id_payment_status">Payment Status</label>
+        {{ form.payment_status }}
+      </div>
+    </div>
+
+    <!-- Conditional Cheque Row -->
+    <div id="cheque_details_group" style="display:none; background:#F1F5F9; padding:16px; border-radius:6px; border:1px solid #CBD5E1; margin-bottom:18px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        <div class="form-group">
+          <label class="form-label" for="id_cheque_number">Cheque Number</label>
+          {{ form.cheque_number }}
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_cheque_date">Cheque Clearing Date</label>
+          {{ form.cheque_date }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="form-group" style="margin-bottom:20px;">
+      <label class="form-label" for="id_notes">Notes / Special Remarks</label>
+      {{ form.notes }}
+    </div>
+
+    <!-- Live Financial Summary Card -->
+    <div style="background:#FFFFFF; border:1px solid var(--border, #E2E8F0); border-radius:8px; padding:18px; margin-bottom:24px; display:flex; justify-content:flex-end;">
+      <div style="width:280px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px; color:var(--text-secondary);">
+          <span>Subtotal:</span>
+          <span id="preview_subtotal">Rs. 0.00</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px; color:var(--text-secondary);">
+          <span>Discount:</span>
+          <span id="preview_discount">- Rs. 0.00</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; color:var(--text-secondary);">
+          <span>Tax:</span>
+          <span id="preview_tax">+ Rs. 0.00</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding-top:8px; border-top:2px solid var(--border, #E2E8F0); font-size:18px; font-weight:700; color:#1E40AF;">
+          <span>Grand Total:</span>
+          <span id="preview_grand_total">Rs. 0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <button type="submit" class="btn btn-primary" id="submitBtn">Generate Invoice</button>
+      <a href="{% url 'sales:list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<!-- ========================================== -->
+<!-- 1. Quick Add Customer Modal -->
+<!-- ========================================== -->
+<div id="modal-add-customer" class="quick-modal">
+  <div class="quick-modal-dialog">
+    <div class="quick-modal-header">
+      <h3 class="quick-modal-title">👤 Add New Customer</h3>
+      <button type="button" class="quick-modal-close" onclick="closeQuickModal('modal-add-customer')">&times;</button>
+    </div>
+    <form action="{% url 'customers:create' %}" method="post" onsubmit="submitQuickForm(event, this, 'id_customer', 'modal-add-customer')">
+      {% csrf_token %}
+      <div class="quick-modal-body">
+        <div class="quick-form-errors"></div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Full Name *</label>
+          <input type="text" name="name" class="form-control" required placeholder="e.g. Ram Kumar Shrestha">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Phone Number</label>
+          <input type="text" name="phone" class="form-control" placeholder="e.g. 9841000000">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control" placeholder="customer@example.com">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Address</label>
+          <textarea name="address" class="form-control" rows="2" placeholder="Street, City"></textarea>
+        </div>
+      </div>
+      <div class="quick-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeQuickModal('modal-add-customer')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save & Select</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 2. Quick Add Company Modal -->
+<!-- ========================================== -->
+<div id="modal-add-company" class="quick-modal">
+  <div class="quick-modal-dialog">
+    <div class="quick-modal-header">
+      <h3 class="quick-modal-title">🏢 Add New Company Profile</h3>
+      <button type="button" class="quick-modal-close" onclick="closeQuickModal('modal-add-company')">&times;</button>
+    </div>
+    <form action="{% url 'companies:create' %}" method="post" onsubmit="submitQuickForm(event, this, 'id_company', 'modal-add-company')">
+      {% csrf_token %}
+      <div class="quick-modal-body">
+        <div class="quick-form-errors"></div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Company Name *</label>
+          <input type="text" name="company_name" class="form-control" required placeholder="e.g. Kathmandu Trading Pvt Ltd">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">VAT / PAN Number</label>
+          <input type="text" name="vat_pan_number" class="form-control" placeholder="9-digit PAN or VAT #">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Company Phone</label>
+          <input type="text" name="company_phone" class="form-control" placeholder="Phone Number">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Address</label>
+          <textarea name="address" class="form-control" rows="2" placeholder="Company Address"></textarea>
+        </div>
+      </div>
+      <div class="quick-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeQuickModal('modal-add-company')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save & Select</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 3. Quick Add Product Modal -->
+<!-- ========================================== -->
+<div id="modal-add-product" class="quick-modal">
+  <div class="quick-modal-dialog">
+    <div class="quick-modal-header">
+      <h3 class="quick-modal-title">📦 Add New Product</h3>
+      <button type="button" class="quick-modal-close" onclick="closeQuickModal('modal-add-product')">&times;</button>
+    </div>
+    <form action="{% url 'inventory:product_create' %}" method="post" onsubmit="submitQuickForm(event, this, 'id_product', 'modal-add-product', handleProductQuickAdded)">
+      {% csrf_token %}
+      <div class="quick-modal-body">
+        <div class="quick-form-errors"></div>
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">Product Name *</label>
+            <input type="text" name="name" class="form-control" required placeholder="Product Name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">SKU / Code</label>
+            <input type="text" name="sku" class="form-control" placeholder="Auto-generated if empty">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">Selling Price (Rs.) *</label>
+            <input type="number" step="0.01" name="selling_price" class="form-control" required placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cost Price (Rs.)</label>
+            <input type="number" step="0.01" name="purchase_price" class="form-control" value="0.00">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">Initial Stock *</label>
+            <input type="number" name="current_stock" class="form-control" value="10" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit of Measure</label>
+            <input type="text" name="unit" class="form-control" value="pcs">
+          </div>
+        </div>
+      </div>
+      <div class="quick-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeQuickModal('modal-add-product')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save & Select</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/quick_add.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize form state persistence (Draft save in sessionStorage)
+    initFormStatePersistence('saleForm', 'bizflow_sale_draft');
+
+    // 2. Elements for real-time live calculations
+    const productSelect = document.getElementById('id_product');
+    const qtyInput = document.getElementById('id_quantity');
+    const priceInput = document.getElementById('id_unit_price');
+    const discountInput = document.getElementById('id_discount');
+    const paymentMethodSelect = document.getElementById('id_payment_method');
+    const chequeGroup = document.getElementById('cheque_details_group');
+
+    // Toggle cheque inputs
+    function checkPaymentMethod() {
+      if (paymentMethodSelect && chequeGroup) {
+        chequeGroup.style.display = paymentMethodSelect.value === 'Cheque' ? 'block' : 'none';
+      }
+    }
+    if (paymentMethodSelect) {
+      paymentMethodSelect.addEventListener('change', checkPaymentMethod);
+      checkPaymentMethod();
+    }
+
+    // Live calculation
+    function recalculate() {
+      const qty = parseFloat(qtyInput?.value) || 0;
+      const unitPrice = parseFloat(priceInput?.value) || 0;
+      const discount = parseFloat(discountInput?.value) || 0;
+
+      const subtotal = Math.max(0, qty * unitPrice);
+      const net = Math.max(0, subtotal - discount);
+      const tax = 0; // Tax is auto computed on backend per product rate
+      const total = net + tax;
+
+      document.getElementById('preview_subtotal').textContent = `Rs. ${subtotal.toFixed(2)}`;
+      document.getElementById('preview_discount').textContent = `- Rs. ${discount.toFixed(2)}`;
+      document.getElementById('preview_tax').textContent = `+ Rs. ${tax.toFixed(2)}`;
+      document.getElementById('preview_grand_total').textContent = `Rs. ${total.toFixed(2)}`;
+    }
+
+    [qtyInput, priceInput, discountInput].forEach(el => {
+      if (el) el.addEventListener('input', recalculate);
+    });
+
+    recalculate();
+  });
+
+  function handleProductQuickAdded(data) {
+    if (data && data.selling_price) {
+      const priceInput = document.getElementById('id_unit_price');
+      if (priceInput && (!priceInput.value || parseFloat(priceInput.value) === 0)) {
+        priceInput.value = data.selling_price;
+        priceInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
+  }
+</script>
+{% endblock %}

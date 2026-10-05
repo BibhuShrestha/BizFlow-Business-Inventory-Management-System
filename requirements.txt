@@ -1,0 +1,53 @@
+﻿# =============================================================================
+# Business Inventory Management System -- Python Dependencies
+# Django + FastAPI Edition
+# =============================================================================
+
+# Django -- Web UI / Admin / ORM
+Django==5.1.4
+django-environ==0.11.2
+Pillow==11.0.0
+django-crispy-forms==2.3
+crispy-bootstrap5==2024.10
+
+# FastAPI -- REST API layer
+fastapi==0.115.4
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-multipart==0.0.19
+
+# JWT Auth (FastAPI)
+PyJWT==2.10.1
+bcrypt==4.2.1
+itsdangerous==2.2.0
+cryptography==44.0.0
+
+# Database drivers (choose one, default: mysql-connector-python)
+mysql-connector-python==8.1.0
+# mysqlclient==2.2.4
+# PyMySQL==1.1.0
+# psycopg2-binary==2.9.10
+
+# Shared utilities
+python-dotenv==1.0.1
+openpyxl==3.1.5
+reportlab==4.2.5
+nepali_datetime==1.0.8.5
+pytz==2024.2
+python-dateutil==2.9.0
+email-validator==2.2.0
+markdown2==2.5.3
+
+# External integrations
+requests==2.32.3
+google-auth==2.37.0
+google-auth-oauthlib==1.2.1
+
+# Production server
+waitress==3.0.1
+
+# Development & Testing
+pytest==8.3.4
+pytest-django==4.9.0
+httpx==0.28.1

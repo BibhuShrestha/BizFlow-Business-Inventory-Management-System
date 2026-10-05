@@ -1,0 +1,58 @@
+{% extends "base/base.html" %}
+{% block title %}User Management - BizFlow{% endblock %}
+{% block page_title %}System Users{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">User Accounts</h1>
+    <p class="page-subtitle">Configure administrative roles, staff access, and credentials.</p>
+  </div>
+  <a href="{% url 'users:create' %}" class="btn btn-primary btn-sm">+ Add User</a>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Role</th>
+          <th>Active Company</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td style="font-weight:600;">{{ u.name }}</td>
+          <td class="font-mono">{{ u.email }}</td>
+          <td>{{ u.phone|default:"—" }}</td>
+          <td><span class="badge badge-info">{{ u.role_name|title }}</span></td>
+          <td>{{ u.active_company.company_name|default:"None" }}</td>
+          <td>
+            {% if u.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-danger">Inactive</span>{% endif %}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'users:edit' u.id %}" class="btn btn-ghost btn-sm">Edit</a>
+              {% if u.id != request.user.id %}
+              <form method="post" action="{% url 'users:delete' u.id %}" style="display:inline;" onsubmit="return confirm('Deactivate this user?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="table-empty">No users found</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

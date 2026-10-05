@@ -1,0 +1,61 @@
+{% extends "base/base.html" %}
+{% block title %}Customers - BizFlow{% endblock %}
+{% block page_title %}Customers Directory{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Customers</h1>
+    <p class="page-subtitle">Customer accounts, receivables, contact directory, and sales ledgers.</p>
+  </div>
+  <a href="{% url 'customers:create' %}" class="btn btn-primary btn-sm">+ New Customer</a>
+</div>
+
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form method="get" style="display:flex; gap:12px;">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search customer name, phone, PAN..." class="form-control" style="max-width:320px;">
+    <button type="submit" class="btn btn-secondary">Search</button>
+    {% if search_query %}<a href="{% url 'customers:list' %}" class="btn btn-ghost">Clear</a>{% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Customer Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>PAN Number</th>
+          <th>Address</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td style="font-weight:600;"><a href="{% url 'customers:detail' c.id %}">{{ c.name }}</a></td>
+          <td>{{ c.phone|default:"—" }}</td>
+          <td>{{ c.email|default:"—" }}</td>
+          <td class="font-mono">{{ c.pan_number|default:"—" }}</td>
+          <td>{{ c.address|default:"—" }}</td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'customers:detail' c.id %}" class="btn btn-ghost btn-sm">Ledger</a>
+              <a href="{% url 'customers:edit' c.id %}" class="btn btn-ghost btn-sm">Edit</a>
+              <form method="post" action="{% url 'customers:delete' c.id %}" style="display:inline;" onsubmit="return confirm('Delete this customer?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="table-empty">No customers registered</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

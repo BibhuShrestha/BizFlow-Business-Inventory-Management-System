@@ -1,0 +1,134 @@
+{% extends "base/base.html" %}
+{% block title %}Notifications & Business Alerts - BizFlow{% endblock %}
+{% block page_title %}Notification Center{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Business Alerts & Notifications</h1>
+    <p class="page-subtitle">Real-time alerts for stock levels, payment dues, cheque dates, and financial receivables.</p>
+  </div>
+  <div style="display:flex; gap:10px; align-items:center;">
+    {% if unread_count > 0 %}
+    <form method="POST" action="{% url 'dashboard:mark_all_notifications_read' %}" style="margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-secondary btn-sm">Mark All as Read ({{ unread_count }})</button>
+    </form>
+    {% endif %}
+    <a href="{% url 'dashboard:notification_settings' %}" class="btn btn-primary btn-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="vertical-align:middle; margin-right:4px;">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      Notification Settings
+    </a>
+  </div>
+</div>
+
+<!-- Tabs Filter Bar -->
+<div style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding-bottom:4px;">
+  <a href="?tab=all" class="btn btn-sm {% if current_tab == 'all' %}btn-primary{% else %}btn-ghost{% endif %}">All Notifications</a>
+  <a href="?tab=unread" class="btn btn-sm {% if current_tab == 'unread' %}btn-primary{% else %}btn-ghost{% endif %}">
+    Unread {% if unread_count > 0 %}<span class="badge badge-warning" style="margin-left:4px;">{{ unread_count }}</span>{% endif %}
+  </a>
+  <a href="?tab=stock" class="btn btn-sm {% if current_tab == 'stock' %}btn-primary{% else %}btn-ghost{% endif %}">📦 Stock Alerts</a>
+  <a href="?tab=payments" class="btn btn-sm {% if current_tab == 'payments' %}btn-primary{% else %}btn-ghost{% endif %}">💳 Payment Due</a>
+  <a href="?tab=cheques" class="btn btn-sm {% if current_tab == 'cheques' %}btn-primary{% else %}btn-ghost{% endif %}">🧾 Cheque Reminders</a>
+  <a href="?tab=overdue" class="btn btn-sm {% if current_tab == 'overdue' %}btn-primary{% else %}btn-ghost{% endif %}">🚨 Overdue</a>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Priority</th>
+          <th>Type</th>
+          <th>Title & Message</th>
+          <th>Related Module</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for n in notifications %}
+        <tr style="{% if not n.is_read %}background: rgba(30, 64, 175, 0.04); font-weight:500;{% endif %}">
+          <td>
+            <span class="badge {{ n.badge_class }}">{{ n.get_priority_display|default:n.priority|title }}</span>
+          </td>
+          <td>
+            <span style="font-size:12px; color:var(--text-secondary); text-transform:capitalize;">
+              {{ n.notification_type|cut:"_"|title }}
+            </span>
+          </td>
+          <td style="max-width:380px;">
+            <div style="font-weight:600; color:var(--text-primary); margin-bottom:2px;">{{ n.title }}</div>
+            <div style="font-size:13px; color:var(--text-secondary); line-height:1.4;">{{ n.message }}</div>
+          </td>
+          <td>
+            <span class="badge badge-secondary" style="text-transform:uppercase; font-size:11px;">
+              {{ n.module|default:"General" }}
+            </span>
+          </td>
+          <td style="font-size:12px; color:var(--text-secondary); white-space:nowrap;">
+            {{ n.created_at|date:"M d, Y H:i" }}
+          </td>
+          <td>
+            {% if n.is_read %}
+              <span class="badge badge-secondary" style="opacity:0.8;">Read</span>
+            {% else %}
+              <span class="badge badge-warning">Unread</span>
+            {% endif %}
+          </td>
+          <td style="text-align:right; white-space:nowrap;">
+            <div style="display:inline-flex; gap:6px; align-items:center;">
+              {% if n.link %}
+                <a href="{{ n.link }}" class="btn btn-ghost btn-sm" style="color:var(--primary); font-weight:600;">View &rarr;</a>
+              {% endif %}
+              {% if not n.is_read %}
+                <button type="button" class="btn btn-ghost btn-sm" onclick="markRead({{ n.id }}, this)">Mark Read</button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="table-empty" style="padding:48px 16px; text-align:center;">
+            <div style="font-size:32px; margin-bottom:8px;">🔔</div>
+            <div style="font-weight:600; font-size:16px;">No notifications found</div>
+            <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">You're completely caught up! New business alerts will appear here.</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function markRead(id, btn) {
+  fetch('/dashboard/notifications/' + id + '/read/', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': '{{ csrf_token }}',
+      'Content-Type': 'application/json'
+    }
+  }).then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.success) {
+        var tr = btn.closest('tr');
+        if (tr) {
+          tr.style.background = 'transparent';
+          tr.style.fontWeight = 'normal';
+          var statusCell = tr.cells[5];
+          if (statusCell) {
+            statusCell.innerHTML = '<span class="badge badge-secondary" style="opacity:0.8;">Read</span>';
+          }
+        }
+        btn.remove();
+      }
+    });
+}
+</script>
+{% endblock %}

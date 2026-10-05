@@ -1,0 +1,100 @@
+{% extends "base/base.html" %}
+{% block title %}Record Cheque - BizFlow{% endblock %}
+{% block page_title %}Record Cheque{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Record Cheque Entry</h1>
+    <p class="page-subtitle">Add a cheque given to a vendor/supplier (Payable) or received from a customer (Receivable).</p>
+  </div>
+  <div>
+    <a href="{% url 'credit:cheques_list' %}" class="btn btn-secondary btn-sm">&larr; Back to Cheques</a>
+  </div>
+</div>
+
+<div class="card" style="max-width:760px; margin: 0 auto; padding: 24px;">
+  <form method="POST">
+    {% csrf_token %}
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div>
+        <label class="form-label">1. Cheque Direction *</label>
+        {{ form.cheque_type }}
+        {% if form.cheque_type.errors %}<div class="text-danger" style="font-size:12px;">{{ form.cheque_type.errors }}</div>{% endif %}
+      </div>
+      <div>
+        <label class="form-label">2. Cheque Amount (Rs.) *</label>
+        {{ form.amount }}
+        {% if form.amount.errors %}<div class="text-danger" style="font-size:12px;">{{ form.amount.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div>
+        <label class="form-label">3. Cheque Number *</label>
+        {{ form.cheque_number }}
+        {% if form.cheque_number.errors %}<div class="text-danger" style="font-size:12px;">{{ form.cheque_number.errors }}</div>{% endif %}
+      </div>
+      <div>
+        <label class="form-label">4. Bank Name *</label>
+        {{ form.bank_name }}
+        {% if form.bank_name.errors %}<div class="text-danger" style="font-size:12px;">{{ form.bank_name.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div>
+        <label class="form-label">5. Cheque Date (Maturity Date) *</label>
+        {{ form.cheque_date }}
+        {% if form.cheque_date.errors %}<div class="text-danger" style="font-size:12px;">{{ form.cheque_date.errors }}</div>{% endif %}
+      </div>
+      <div id="customer_group">
+        <label class="form-label">6. Customer (Payer)</label>
+        {{ form.customer }}
+        {% if form.customer.errors %}<div class="text-danger" style="font-size:12px;">{{ form.customer.errors }}</div>{% endif %}
+      </div>
+      <div id="supplier_group" style="display:none;">
+        <label class="form-label">6. Supplier (Payee)</label>
+        {{ form.supplier }}
+        {% if form.supplier.errors %}<div class="text-danger" style="font-size:12px;">{{ form.supplier.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label class="form-label">7. Notes / Reference</label>
+      {{ form.notes }}
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid var(--border); padding-top:16px;">
+      <a href="{% url 'credit:cheques_list' %}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary" style="padding:10px 24px;">Save Cheque Record</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function updatePartyVisibility() {
+    var typeSelect = document.getElementById('cheque_type_select');
+    var custGroup = document.getElementById('customer_group');
+    var suppGroup = document.getElementById('supplier_group');
+    if (!typeSelect || !custGroup || !suppGroup) return;
+
+    if (typeSelect.value === 'GIVEN') {
+      custGroup.style.display = 'none';
+      suppGroup.style.display = 'block';
+    } else {
+      custGroup.style.display = 'block';
+      suppGroup.style.display = 'none';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var typeSelect = document.getElementById('cheque_type_select');
+    if (typeSelect) {
+      typeSelect.addEventListener('change', updatePartyVisibility);
+      updatePartyVisibility();
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends "base/base.html" %}
+{% block title %}Receivables & Payables (Debit & Credit) - BizFlow{% endblock %}
+{% block page_title %}Receivables & Payables (Debit & Credit){% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Receivables & Payables Overview <span class="badge" style="font-size:13px; font-weight:600; background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; vertical-align:middle; margin-left:8px;">Debit & Credit Ledger</span></h1>
+    <p class="page-subtitle">Track Debit (Dr / Customer Receivables), Credit (Cr / Supplier Payables), and real-time cash flow settlements.</p>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="{% url 'credit:create' %}?type=given" class="btn btn-primary btn-sm">+ Record Receivable (Debit / Dr)</a>
+    <a href="{% url 'credit:create' %}?type=taken" class="btn btn-secondary btn-sm">+ Record Payable (Credit / Cr)</a>
+    <a href="{% url 'credit:customers_dues' %}" class="btn btn-secondary btn-sm">Customer Receivables (Dr)</a>
+    <a href="{% url 'credit:suppliers_dues' %}" class="btn btn-secondary btn-sm">Supplier Payables (Cr)</a>
+    <a href="{% url 'credit:overdue_list' %}" class="btn btn-secondary btn-sm" style="color:var(--danger, #DC2626);">View Overdue</a>
+  </div>
+</div>
+
+<!-- Financial Summary KPI Cards (Organized into Debit vs Credit) -->
+<div class="stat-grid" style="margin-bottom: 20px;">
+  <!-- Section 1: Debit / Receivables -->
+  <div class="stat-card" style="border-top: 3px solid #2563EB;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <span class="stat-label">Credit Given (Receivable)</span>
+      <span class="badge badge-primary" style="font-size:10px; padding:1px 6px;">Debit (Dr)</span>
+    </div>
+    <span class="stat-value" style="color: #2563EB;">Rs. {{ summary.credit_given_total|floatformat:2 }}</span>
+    <span class="stat-change" style="color: var(--text-secondary);">Total goods sold on credit</span>
+  </div>
+
+  <div class="stat-card" style="border-top: 3px solid #16A34A;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <span class="stat-label">Received from Customers</span>
+      <span class="badge badge-success" style="font-size:10px; padding:1px 6px;">Inflow</span>
+    </div>
+    <span class="stat-value" style="color: #16A34A;">Rs. {{ summary.credit_given_received|floatformat:2 }}</span>
+    <span class="stat-change" style="color: #16A34A;">Settled customer payments</span>
+  </div>
+
+  <div class="stat-card" style="border-left: 4px solid #EA580C; border-top: 3px solid #EA580C;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <span class="stat-label">Customer Due (Customer Owes Me)</span>
+      <span class="badge" style="background:#FFF7ED; color:#C2410C; border:1px solid #FFEDD5; font-size:10px; padding:1px 6px;">Net Dr Due</span>
+    </div>
+    <span class="stat-value" style="color: #EA580C;">Rs. {{ summary.customer_due|floatformat:2 }}</span>
+    <span class="stat-change" style="color: var(--text-secondary); font-weight:600;">Net pending receivables</span>
+  </div>
+
+  <!-- Section 2: Credit / Payables -->
+  <div class="stat-card" style="border-top: 3px solid #7C3AED;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <span class="stat-label">Credit Taken (Payable)</span>
+      <span class="badge" style="background:#F5F3FF; color:#6D28D9; border:1px solid #DDD6FE; font-size:10px; padding:1px 6px;">Credit (Cr)</span>
+    </div>
+    <span class="stat-value" style="color: #7C3AED;">Rs. {{ summary.credit_taken_total|floatformat:2 }}</span>
+    <span class="stat-change" style="color: var(--text-secondary);">Total purchases on credit</span>
+  </div>
+
+  <div class="stat-card" style="border-top: 3px solid #16A34A;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <span class="stat-label">Paid to Suppliers</span>
+      <span class="badge badge-success" style="font-size:10px; padding:1px 6px;">Outflow</span>
+    </div>
+    <span class="stat-value" style="color: #16A34A;">Rs. {{ summary.credit_taken_paid|floatformat:2 }}</span>
+    <span class="stat-change" style="color: #16A34A;">Settled supplier payments</span>
+  </div>
+
+  <div class="stat-card" style="border-left: 4px solid #DC2626; border-top: 3px solid #DC2626;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <span class="stat-label">Supplier Due (I Owe Supplier)</span>
+      <span class="badge" style="background:#FEF2F2; color:#B91C1C; border:1px solid #FEE2E2; font-size:10px; padding:1px 6px;">Net Cr Due</span>
+    </div>
+    <span class="stat-value" style="color: #DC2626;">Rs. {{ summary.supplier_due|floatformat:2 }}</span>
+    <span class="stat-change" style="color: var(--text-secondary); font-weight:600;">Net pending payables</span>
+  </div>
+</div>
+
+<!-- Net Debit / Credit Position Bar -->
+<div class="card" style="padding:14px 20px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:linear-gradient(to right, #F8FAFC, #FFFFFF); border-left:4px solid #2563EB;">
+  <div>
+    <span style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-secondary); font-weight:700;">Net Debit / Credit Balance Position</span>
+    <div style="font-size:13.5px; color:var(--text); margin-top:2px;">
+      Receivables Due: <strong style="color:#2563EB;">Dr. Rs. {{ summary.customer_due|floatformat:2 }}</strong> &nbsp;|&nbsp; 
+      Payables Due: <strong style="color:#7C3AED;">Cr. Rs. {{ summary.supplier_due|floatformat:2 }}</strong>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:10px;">
+    {% if summary.customer_due >= summary.supplier_due %}
+      <span class="badge badge-success" style="font-size:12px; padding:6px 12px; font-weight:600;">Net Debit Position (Assets Exceed Payables)</span>
+    {% else %}
+      <span class="badge badge-warning" style="font-size:12px; padding:6px 12px; font-weight:600;">Net Credit Position (Payables Exceed Receivables)</span>
+    {% endif %}
+  </div>
+</div>
+
+{% if summary.overdue_given_count > 0 or summary.overdue_taken_count > 0 %}
+<div class="alert alert-warning" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <strong>Attention: Overdue Receivables & Payables Alert!</strong>
+    You have {{ summary.overdue_given_count }} customer invoices overdue (Rs. {{ summary.overdue_given_amount|floatformat:2 }}) and
+    {{ summary.overdue_taken_count }} supplier bills overdue (Rs. {{ summary.overdue_taken_amount|floatformat:2 }}).
+  </div>
+  <a href="{% url 'credit:overdue_list' %}" class="btn btn-secondary btn-sm" style="font-weight:600;">View Overdue List</a>
+</div>
+{% endif %}
+
+<!-- Quick Hub Links -->
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:28px;">
+  <a href="{% url 'credit:given_list' %}" class="card" style="padding:16px; text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:6px;">
+    <span style="font-weight:600; font-size:15px; color:#2563EB;">Receivables Register (Dr) &rarr;</span>
+    <span style="font-size:13px; color:var(--text-secondary);">Manage customer credit vouchers</span>
+  </a>
+  <a href="{% url 'credit:taken_list' %}" class="card" style="padding:16px; text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:6px;">
+    <span style="font-weight:600; font-size:15px; color:#7C3AED;">Payables Register (Cr) &rarr;</span>
+    <span style="font-size:13px; color:var(--text-secondary);">Manage supplier purchase credit</span>
+  </a>
+  <a href="{% url 'credit:payment_list' %}" class="card" style="padding:16px; text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:6px;">
+    <span style="font-weight:600; font-size:15px; color:#16A34A;">Payment Settlements &rarr;</span>
+    <span style="font-size:13px; color:var(--text-secondary);">View all settlement records</span>
+  </a>
+  <a href="{% url 'credit:ledger_select' %}" class="card" style="padding:16px; text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:6px;">
+    <span style="font-weight:600; font-size:15px; color:#0F172A;">Party Ledgers (Statement of Accounts) &rarr;</span>
+    <span style="font-size:13px; color:var(--text-secondary);">Customer & Supplier statements</span>
+  </a>
+  <a href="{% url 'credit:reports' %}" class="card" style="padding:16px; text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:6px;">
+    <span style="font-weight:600; font-size:15px; color:#475569;">Receivables & Payables Reports &rarr;</span>
+    <span style="font-size:13px; color:var(--text-secondary);">Aging, dues, and export logs</span>
+  </a>
+</div>
+
+<!-- Recent Transactions Grid -->
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:24px;">
+  <!-- Recent Credit Given -->
+  <div class="card">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:600;">Recent Receivables (Customer Credit)</h3>
+      <a href="{% url 'credit:given_list' %}" style="font-size:13px; color:var(--primary); text-decoration:none;">View all</a>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Invoice</th>
+            <th>Customer</th>
+            <th style="text-align:right;">Debit Due</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in recent_given %}
+          <tr>
+            <td class="font-mono"><a href="{% url 'credit:given_detail' s.id %}" style="font-weight:600;">{{ s.invoice_number }}</a></td>
+            <td>{{ s.customer.name|default:"Walk-in" }}</td>
+            <td style="text-align:right;" class="font-mono"><strong>Rs. {{ s.remaining_amount|floatformat:2 }}</strong></td>
+            <td>
+              <span class="badge {% if s.calculated_status == 'Paid' %}badge-success{% elif s.calculated_status == 'Overdue' %}badge-danger{% else %}badge-warning{% endif %}">
+                {{ s.calculated_status }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="table-empty">No receivables recorded yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Credit Taken -->
+  <div class="card">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:600;">Recent Payables (Supplier Credit)</h3>
+      <a href="{% url 'credit:taken_list' %}" style="font-size:13px; color:var(--primary); text-decoration:none;">View all</a>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>PO / Bill</th>
+            <th>Supplier</th>
+            <th style="text-align:right;">Remaining</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in recent_taken %}
+          <tr>
+            <td class="font-mono"><a href="{% url 'credit:taken_detail' p.id %}" style="font-weight:600;">{{ p.purchase_number }}</a></td>
+            <td>{{ p.supplier.name|default:"Vendor" }}</td>
+            <td style="text-align:right;" class="font-mono"><strong>Rs. {{ p.remaining_amount|floatformat:2 }}</strong></td>
+            <td>
+              <span class="badge {% if p.calculated_status == 'Paid' %}badge-success{% elif p.calculated_status == 'Overdue' %}badge-danger{% else %}badge-warning{% endif %}">
+                {{ p.calculated_status }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="table-empty">No payables recorded yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Payments -->
+<div class="card">
+  <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+    <h3 style="margin:0; font-size:16px; font-weight:600;">Recent Settlement Payments</h3>
+    <a href="{% url 'credit:payment_list' %}" style="font-size:13px; color:var(--primary); text-decoration:none;">View payment history</a>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Party</th>
+          <th>Type</th>
+          <th>Method</th>
+          <th>Reference</th>
+          <th style="text-align:right;">Amount</th>
+          <th>Added By</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in recent_payments %}
+        <tr>
+          <td>{{ pay.payment_date|date:"Y-m-d" }}</td>
+          <td>
+            {% if pay.customer %}
+              <a href="{% url 'credit:customer_ledger' pay.customer.id %}">{{ pay.customer.name }}</a>
+            {% elif pay.supplier %}
+              <a href="{% url 'credit:supplier_ledger' pay.supplier.id %}">{{ pay.supplier.name }}</a>
+            {% else %}-{% endif %}
+          </td>
+          <td>
+            {% if pay.customer %}
+              <span class="badge badge-success">Received (Customer)</span>
+            {% else %}
+              <span class="badge badge-info">Paid (Supplier)</span>
+            {% endif %}
+          </td>
+          <td>{{ pay.payment_method }}</td>
+          <td>{{ pay.reference|default:"-" }}</td>
+          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ pay.amount|floatformat:2 }}</strong></td>
+          <td>{{ pay.created_by.name|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="table-empty">No payments recorded yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

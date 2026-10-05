@@ -1,0 +1,74 @@
+{% extends "base/base.html" %}
+{% block title %}Purchases - BizFlow{% endblock %}
+{% block page_title %}Purchase Bills{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Purchase Bills</h1>
+    <p class="page-subtitle">Record supplier purchase bills with automatic inventory stock replenishment.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'purchases:export_csv' %}" class="btn btn-secondary btn-sm">Export CSV</a>
+    <a href="{% url 'purchases:export_excel' %}" class="btn btn-secondary btn-sm">Export Excel</a>
+    <a href="{% url 'purchases:create' %}" class="btn btn-primary btn-sm">+ Record Purchase</a>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form method="get" style="display:flex; gap:12px;">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search PO number, supplier..." class="form-control" style="max-width:320px;">
+    <button type="submit" class="btn btn-secondary">Search</button>
+    {% if search_query %}<a href="{% url 'purchases:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>PO Number</th>
+          <th>Date</th>
+          <th>Supplier</th>
+          <th style="text-align:right;">Subtotal</th>
+          <th style="text-align:right;">Discount</th>
+          <th style="text-align:right;">Tax</th>
+          <th style="text-align:right;">Grand Total</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in page_obj %}
+        <tr>
+          <td class="font-mono"><a href="{% url 'purchases:detail' p.id %}" style="font-weight:600;">{{ p.purchase_number }}</a></td>
+          <td>{{ p.purchase_date|date:"Y-m-d" }}</td>
+          <td>{{ p.supplier.name|default:"General Supplier" }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ p.subtotal|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ p.discount|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ p.tax|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ p.total|floatformat:2 }}</strong></td>
+          <td>
+            <span class="badge {% if p.payment_status == 'Paid' %}badge-success{% else %}badge-warning{% endif %}">
+              {{ p.payment_status }}
+            </span>
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'purchases:detail' p.id %}" class="btn btn-ghost btn-sm">View</a>
+              <form method="post" action="{% url 'purchases:cancel' p.id %}" style="display:inline;" onsubmit="return confirm('Cancel this purchase? Stock will be reversed.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger">Cancel</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="table-empty">No purchase records found</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

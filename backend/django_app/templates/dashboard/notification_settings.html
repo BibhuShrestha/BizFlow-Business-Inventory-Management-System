@@ -1,0 +1,202 @@
+{% extends "base/base.html" %}
+{% block title %}Notification & Alert Settings - BizFlow{% endblock %}
+{% block page_title %}Notification Settings{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Notification & Alert Preferences</h1>
+    <p class="page-subtitle">Configure which business events trigger in-app alerts, popups, and optional SMS notifications.</p>
+  </div>
+  <div>
+    <a href="{% url 'dashboard:notifications' %}" class="btn btn-secondary btn-sm">&larr; Back to Notification Center</a>
+  </div>
+</div>
+
+<form method="POST" action="{% url 'dashboard:notification_settings' %}">
+  {% csrf_token %}
+
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:24px; margin-bottom:24px;">
+
+    <!-- 1. Stock Notifications -->
+    <div class="card" style="padding:24px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+        <span style="font-size:22px;">📦</span>
+        <div>
+          <h2 style="font-size:16px; font-weight:700; margin:0;">Inventory & Stock Alerts</h2>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0;">Threshold triggers and inward receipts</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_low_stock" value="1" {% if pref.notify_low_stock %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">⚠️ Low Stock Alert</div>
+            <div style="font-size:12px; color:var(--text-secondary);">When current stock falls to or below product minimum threshold.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_critical_stock" value="1" {% if pref.notify_critical_stock %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">🚨 Critical Stock Alert</div>
+            <div style="font-size:12px; color:var(--text-secondary);">When current stock reaches danger level (~33% of minimum).</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_out_of_stock" value="1" {% if pref.notify_out_of_stock %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">⛔ Out of Stock Alert</div>
+            <div style="font-size:12px; color:var(--text-secondary);">When product inventory quantity reaches 0 units.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_stock_received" value="1" {% if pref.notify_stock_received %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">📥 Stock Received</div>
+            <div style="font-size:12px; color:var(--text-secondary);">When purchase orders or inward stock adjustments are recorded.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_stock_restored" value="1" {% if pref.notify_stock_restored %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">✅ Stock Restored (Restocked)</div>
+            <div style="font-size:12px; color:var(--text-secondary);">When an out-of-stock product becomes available again.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 2. Cheque Reminders -->
+    <div class="card" style="padding:24px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+        <span style="font-size:22px;">🧾</span>
+        <div>
+          <h2 style="font-size:16px; font-weight:700; margin:0;">Cheque Management Reminders</h2>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0;">Supplier (Given) and Customer (Received) cheques</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_cheque_due_soon" value="1" {% if pref.notify_cheque_due_soon %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">🗓️ Cheque Due Soon</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Upcoming cheques due in 7, 3, 2, or 1 days.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_cheque_due_today" value="1" {% if pref.notify_cheque_due_today %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">🚨 Cheque Due Today</div>
+            <div style="font-size:12px; color:var(--text-secondary);">High priority alert on the exact maturity date of the cheque.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_cheque_overdue" value="1" {% if pref.notify_cheque_overdue %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">⚠️ Cheque Overdue</div>
+            <div style="font-size:12px; color:var(--text-secondary);">When an uncleared cheque has passed its designated date.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 3. Payment & Due Reminders -->
+    <div class="card" style="padding:24px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+        <span style="font-size:22px;">💳</span>
+        <div>
+          <h2 style="font-size:16px; font-weight:700; margin:0;">Payments, Receivables & Payables</h2>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0;">Invoices, bills, and credit due schedules</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_payment_due" value="1" {% if pref.notify_payment_due %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">⏰ Payment Due Reminders</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Alerts at 7, 3, 2, 1 days, and Due Today for bills & invoices.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_payment_overdue" value="1" {% if pref.notify_payment_overdue %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">⚠️ Payment Overdue</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Critical alert when payments pass due date without settlement.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_receivable_overdue" value="1" {% if pref.notify_receivable_overdue %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">💰 Receivables Overdue (Customer Credit)</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Money customers owe the business past credit agreement.</div>
+          </div>
+        </label>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="notify_payable_overdue" value="1" {% if pref.notify_payable_overdue %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">💸 Payables Overdue (Supplier Credit)</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Money the business owes suppliers past agreed terms.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 4. Channels (Popup & Optional SMS) -->
+    <div class="card" style="padding:24px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+        <span style="font-size:22px;">📱</span>
+        <div>
+          <h2 style="font-size:16px; font-weight:700; margin:0;">Channels: In-App Popups & SMS</h2>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0;">Multi-channel notification delivery</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="popup_enabled" value="1" {% if pref.popup_enabled %}checked{% endif %} style="margin-top:3px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">🔔 In-App Popup Notifications</div>
+            <div style="font-size:12px; color:var(--text-secondary);">Display dismissible high-priority banners when active on website.</div>
+          </div>
+        </label>
+
+        <div style="background:var(--bg-secondary); padding:16px; border-radius:8px; border:1px solid var(--border);">
+          <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-bottom:12px;">
+            <input type="checkbox" name="sms_enabled" id="sms_enabled" value="1" {% if pref.sms_enabled %}checked{% endif %} style="margin-top:3px;">
+            <div>
+              <div style="font-weight:600; font-size:14px;">💬 Enable SMS Notifications</div>
+              <div style="font-size:12px; color:var(--text-secondary);">Receive critical alerts via SMS (Cost controlled, deduplicated).</div>
+            </div>
+          </label>
+
+          <div style="margin-top:10px;">
+            <label class="form-label" style="font-size:13px; font-weight:600;">Authorized Recipient Phone Number:</label>
+            <input type="text" name="sms_phone_number" value="{{ pref.sms_phone_number }}" class="form-control" placeholder="+977-9800000000 or 98XXXXXXXX" style="max-width:320px;">
+            <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">SMS will only be sent for enabled notification categories.</div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <button type="submit" name="action" value="test_sms" class="btn btn-ghost btn-sm" style="font-weight:600;">
+              📨 Send Test SMS
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display:flex; justify-content:flex-end; gap:12px; padding:16px 0; border-top:1px solid var(--border);">
+    <a href="{% url 'dashboard:notifications' %}" class="btn btn-secondary">Cancel</a>
+    <button type="submit" name="action" value="save" class="btn btn-primary" style="padding:10px 24px;">Save Notification Preferences</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base/base.html" %}
+{% block title %}Sales Invoices - BizFlow{% endblock %}
+{% block page_title %}Sales Invoices{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Sales Invoices</h1>
+    <p class="page-subtitle">Create and manage tax invoices, bill printouts, and payment receipts.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'sales:export_csv' %}" class="btn btn-secondary btn-sm">Export CSV</a>
+    <a href="{% url 'sales:export_excel' %}" class="btn btn-secondary btn-sm">Export Excel</a>
+    <a href="{% url 'sales:create' %}" class="btn btn-primary btn-sm">+ Create Invoice</a>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form method="get" style="display:flex; gap:12px;">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search invoice number, customer..." class="form-control" style="max-width:320px;">
+    <button type="submit" class="btn btn-secondary">Search</button>
+    {% if search_query %}<a href="{% url 'sales:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th style="text-align:right;">Subtotal</th>
+          <th style="text-align:right;">Discount</th>
+          <th style="text-align:right;">Tax</th>
+          <th style="text-align:right;">Grand Total</th>
+          <th>Payment</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in page_obj %}
+        <tr>
+          <td class="font-mono"><a href="{% url 'sales:detail' s.id %}" style="font-weight:600;">{{ s.invoice_number }}</a></td>
+          <td>{{ s.sale_date|date:"Y-m-d" }}</td>
+          <td>{{ s.customer.name|default:"Walk-in Customer" }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ s.subtotal|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ s.discount|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ s.tax|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ s.total|floatformat:2 }}</strong></td>
+          <td>
+            <span class="badge {% if s.payment_status == 'Paid' %}badge-success{% else %}badge-warning{% endif %}">
+              {{ s.payment_status }}
+            </span>
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'sales:detail' s.id %}" class="btn btn-ghost btn-sm">View / Print</a>
+              <form method="post" action="{% url 'sales:cancel' s.id %}" style="display:inline;" onsubmit="return confirm('Cancel this invoice? Stock will be restored.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger">Cancel</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="table-empty">No sales invoices recorded yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

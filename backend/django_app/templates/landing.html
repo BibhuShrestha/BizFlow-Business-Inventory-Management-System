@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BizFlow — Modern, clean, minimal ERP and Inventory Management platform for SMEs in Nepal. Manage inventory, sales, purchases, and finances in one place.">
+  <title>BizFlow — Smart Business &amp; Inventory Management Platform</title>
+
+  {# Public landing page: allow indexing #}
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="{{ request.build_absolute_uri|cut:'?' }}">
+
+  {# Open Graph metadata #}
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BizFlow — Smart Business &amp; Inventory Management Platform">
+  <meta property="og:description" content="Modern, clean, minimal ERP and Inventory Management platform for SMEs in Nepal.">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:site_name" content="BizFlow">
+
+  {# Twitter/X card #}
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="BizFlow — Business Management Platform">
+  <meta name="twitter:description" content="Inventory, Sales, Purchases, and Finance management for SMEs in Nepal.">
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    .hero-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 24px 60px;
+      text-align: center;
+    }
+    .hero-title {
+      font-size: 2.75rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .hero-sub {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 640px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+    .features-section {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+  </style>
+</head>
+<body style="background-color: var(--bg); color: var(--text); margin: 0; font-family: 'Inter', sans-serif;">
+  <!-- Public Top Navigation -->
+  <header style="background: var(--white); border-bottom: 1px solid var(--border); padding: 14px 32px;">
+    <div style="max-width: 1040px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: -0.02em;">BizFlow</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-sm">Sign In</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Get Started</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Minimal Clean Hero -->
+    <section class="hero-container">
+      <div style="display: inline-block; margin-bottom: 12px;">
+        <span class="badge badge-primary">Enterprise ERP & Inventory Suite</span>
+      </div>
+      <h1 class="hero-title">Simple, Fast Business Management</h1>
+      <p class="hero-sub">Multi-tenant accounting, automated stock auditing, dual AD/BS Bikram Sambat date conversion, real-time analytics, and role-based operational controls.</p>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg">Create Free Account</a>
+        <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-lg">Live Dashboard</a>
+      </div>
+    </section>
+
+    <!-- Content-Focused Features Grid -->
+    <section class="features-section">
+      <div class="features-grid">
+        <div class="card" style="padding: 24px;">
+          <h3 style="font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Multi-Tenant Workspaces</h3>
+          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">Segregated company profiles, PAN/VAT credentials, and branch seller entities with independent sequential invoices.</p>
+        </div>
+        <div class="card" style="padding: 24px;">
+          <h3 style="font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Bikram Sambat (BS) Support</h3>
+          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">Dual Gregorian (AD) and Nepali (BS) date conversion with localized financial year reporting and fiscal audit readiness.</p>
+        </div>
+        <div class="card" style="padding: 24px;">
+          <h3 style="font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Real-time Stock Tracking</h3>
+          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">Automated stock ledger journal, low stock alert triggers, CSV/Excel bulk imports, and physical inventory reconciliations.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Clean Footer -->
+  <footer style="background: var(--white); border-top: 1px solid var(--border); padding: 24px; text-align: center; color: var(--text-secondary); font-size: 12px;">
+    &copy; 2026 BizFlow Platform. Built with Django 6 and modern high-performance architecture.
+  </footer>
+</body>
+</html>

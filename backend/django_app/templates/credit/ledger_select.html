@@ -1,0 +1,189 @@
+{% extends "base/base.html" %}
+{% block title %}Receivables & Payables Ledgers - BizFlow{% endblock %}
+{% block page_title %}Receivables & Payables Party Ledgers{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Receivables & Payables Party Ledger Statements</h1>
+    <p class="page-subtitle">Chronological audit statements with running Debit (Dr / Receivables) and Credit (Cr / Payables) balances.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'credit:dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back to Dashboard</a>
+    <a href="{% url 'credit:overdue_list' %}" class="btn btn-ghost btn-sm">View Overdue (Dr &amp; Cr)</a>
+  </div>
+</div>
+
+<!-- Accounting Guide Callout -->
+<div class="card" style="padding:14px 18px; margin-bottom:24px; border-left:4px solid var(--primary); background:rgba(30, 64, 175, 0.03);">
+  <div style="display:flex; align-items:flex-start; gap:12px;">
+    <span style="font-size:18px;">💡</span>
+    <div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
+      <strong style="color:var(--text-primary);">Standard Accounting Distinction:</strong>
+      <strong>Customer Ledgers</strong> track <span class="badge badge-primary" style="font-size:11px;">Debit (Dr)</span> &mdash; amounts customers owe your business for goods sold on credit. 
+      <strong>Supplier Ledgers</strong> track <span class="badge" style="font-size:11px; background:#F5F3FF; color:#6D28D9; border:1px solid #DDD6FE;">Credit (Cr)</span> &mdash; amounts your business owes to suppliers for inventory acquired on credit.
+    </div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap:24px; margin-bottom:24px;">
+  
+  <!-- 1. Customer Selector Card (Debit / Dr) -->
+  <div class="card" style="padding:24px; border-top:3px solid #2563EB;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="font-size:17px; font-weight:700; margin:0; color:#2563EB;">Customer Ledgers</h3>
+      <span class="badge badge-primary">Debit (Dr) &bull; Receivables</span>
+    </div>
+    <p style="color:var(--text-secondary); font-size:13px; margin-bottom:18px; line-height:1.5;">
+      Inspect sales invoices, payments received, credit limits, and running debit balances for individual customers.
+    </p>
+
+    <!-- Quick Search / Filter Input -->
+    <div class="form-group" style="margin-bottom:12px;">
+      <label class="form-label" for="custFilterInput" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary);">Quick Filter:</label>
+      <input type="text" id="custFilterInput" class="form-control" placeholder="Type customer name or phone..." onkeyup="filterCustomerDropdown()" style="margin-bottom:8px;">
+    </div>
+
+    <div class="form-group" style="margin-bottom:18px;">
+      <label class="form-label" for="customerSelect" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary);">Choose Customer:</label>
+      <select id="customerSelect" class="form-control" size="6" style="height:auto; min-height:160px; font-size:13px;">
+        {% for c in customers %}
+          <option value="{{ c.id }}">{{ c.name }} ({{ c.phone|default:'No Phone' }})</option>
+        {% empty %}
+          <option value="" disabled>No active customers found.</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="button" class="btn btn-primary" id="viewCustBtn" style="width:100%; justify-content:center; padding:10px 16px;">
+      View Customer Ledger &rarr;
+    </button>
+
+    <!-- Top Debtors Quick Shortcuts -->
+    {% if top_customers %}
+      <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border-color);">
+        <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-secondary); margin-bottom:10px;">
+          Top Outstanding Debtors (Dr):
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          {% for tc in top_customers %}
+            {% if tc.remaining_due > 0 %}
+              <a href="{% url 'credit:customer_ledger' tc.customer.id %}" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg-primary, #F8FAFC); border-radius:6px; font-size:13px; text-decoration:none; color:inherit; border:1px solid var(--border-color); transition:all 0.15s ease;" onmouseover="this.style.borderColor='#2563EB'; this.style.backgroundColor='#EFF6FF';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.backgroundColor='var(--bg-primary, #F8FAFC)';">
+                <span style="font-weight:600; color:var(--text-primary);">{{ tc.customer.name }}</span>
+                <span class="font-mono" style="font-weight:700; color:#2563EB;">Rs. {{ tc.remaining_due|floatformat:2 }}</span>
+              </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- 2. Supplier Selector Card (Credit / Cr) -->
+  <div class="card" style="padding:24px; border-top:3px solid #7C3AED;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="font-size:17px; font-weight:700; margin:0; color:#7C3AED;">Supplier Ledgers</h3>
+      <span class="badge" style="background:#F5F3FF; color:#6D28D9; border:1px solid #DDD6FE;">Credit (Cr) &bull; Payables</span>
+    </div>
+    <p style="color:var(--text-secondary); font-size:13px; margin-bottom:18px; line-height:1.5;">
+      Inspect purchase bills, payment vouchers, settlements, and running credit liabilities owed to vendors.
+    </p>
+
+    <!-- Quick Search / Filter Input -->
+    <div class="form-group" style="margin-bottom:12px;">
+      <label class="form-label" for="suppFilterInput" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary);">Quick Filter:</label>
+      <input type="text" id="suppFilterInput" class="form-control" placeholder="Type supplier name or phone..." onkeyup="filterSupplierDropdown()" style="margin-bottom:8px;">
+    </div>
+
+    <div class="form-group" style="margin-bottom:18px;">
+      <label class="form-label" for="supplierSelect" style="font-size:12px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary);">Choose Supplier:</label>
+      <select id="supplierSelect" class="form-control" size="6" style="height:auto; min-height:160px; font-size:13px;">
+        {% for sp in suppliers %}
+          <option value="{{ sp.id }}">{{ sp.name }} ({{ sp.phone|default:'No Phone' }})</option>
+        {% empty %}
+          <option value="" disabled>No active suppliers found.</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="button" class="btn btn-secondary" id="viewSuppBtn" style="width:100%; justify-content:center; padding:10px 16px; background:#7C3AED; color:#fff; border-color:#6D28D9;">
+      View Supplier Ledger &rarr;
+    </button>
+
+    <!-- Top Creditors Quick Shortcuts -->
+    {% if top_suppliers %}
+      <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border-color);">
+        <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-secondary); margin-bottom:10px;">
+          Top Outstanding Creditors (Cr):
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          {% for ts in top_suppliers %}
+            {% if ts.remaining_payable > 0 %}
+              <a href="{% url 'credit:supplier_ledger' ts.supplier.id %}" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg-primary, #F8FAFC); border-radius:6px; font-size:13px; text-decoration:none; color:inherit; border:1px solid var(--border-color); transition:all 0.15s ease;" onmouseover="this.style.borderColor='#7C3AED'; this.style.backgroundColor='#F5F3FF';" onmouseout="this.style.borderColor='var(--border-color)'; this.style.backgroundColor='var(--bg-primary, #F8FAFC)';">
+                <span style="font-weight:600; color:var(--text-primary);">{{ ts.supplier.name }}</span>
+                <span class="font-mono" style="font-weight:700; color:#7C3AED;">Rs. {{ ts.remaining_payable|floatformat:2 }}</span>
+              </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function filterCustomerDropdown() {
+  const query = document.getElementById("custFilterInput").value.toLowerCase();
+  const select = document.getElementById("customerSelect");
+  const options = select.getElementsByTagName("option");
+  for (let i = 0; i < options.length; i++) {
+    const text = options[i].text.toLowerCase();
+    options[i].style.display = text.includes(query) ? "" : "none";
+  }
+}
+
+function filterSupplierDropdown() {
+  const query = document.getElementById("suppFilterInput").value.toLowerCase();
+  const select = document.getElementById("supplierSelect");
+  const options = select.getElementsByTagName("option");
+  for (let i = 0; i < options.length; i++) {
+    const text = options[i].text.toLowerCase();
+    options[i].style.display = text.includes(query) ? "" : "none";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  document.getElementById("viewCustBtn").addEventListener("click", function () {
+    const val = document.getElementById("customerSelect").value;
+    if (val) {
+      window.location.href = "/credit/ledger/customer/" + val + "/";
+    } else {
+      alert("Please select a customer from the list.");
+    }
+  });
+
+  document.getElementById("viewSuppBtn").addEventListener("click", function () {
+    const val = document.getElementById("supplierSelect").value;
+    if (val) {
+      window.location.href = "/credit/ledger/supplier/" + val + "/";
+    } else {
+      alert("Please select a supplier from the list.");
+    }
+  });
+
+  // Double click auto-submits
+  document.getElementById("customerSelect").addEventListener("dblclick", function() {
+    if (this.value) {
+      window.location.href = "/credit/ledger/customer/" + this.value + "/";
+    }
+  });
+
+  document.getElementById("supplierSelect").addEventListener("dblclick", function() {
+    if (this.value) {
+      window.location.href = "/credit/ledger/supplier/" + this.value + "/";
+    }
+  });
+});
+</script>
+{% endblock %}

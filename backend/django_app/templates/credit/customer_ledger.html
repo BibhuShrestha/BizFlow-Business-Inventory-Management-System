@@ -1,0 +1,177 @@
+{% extends "base/base.html" %}
+{% block title %}Ledger: {{ customer.name }} (Debit / Dr) - BizFlow{% endblock %}
+{% block page_title %}Customer Ledger: {{ customer.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">
+      {{ customer.name }}
+      <span class="badge badge-primary" style="font-size:12px; vertical-align:middle; margin-left:6px;">Debit (Dr) &bull; Receivable</span>
+    </h1>
+    <p class="page-subtitle">Chronological ledger statement of credit sales, payment vouchers, and running debit balances.</p>
+  </div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;" class="no-print">
+    <button onclick="window.print();" class="btn btn-secondary btn-sm">🖨️ Print Statement</button>
+    <a href="{% url 'credit:create' %}?type=given" class="btn btn-primary btn-sm">+ Record Receivable</a>
+    <a href="{% url 'credit:ledger_select' %}" class="btn btn-ghost btn-sm">&larr; Back to Ledgers</a>
+  </div>
+</div>
+
+<!-- Customer Profile Summary Grid -->
+<div class="card" style="padding:20px; margin-bottom:24px;">
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+    <div>
+      <span style="color:var(--text-secondary); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Customer Name:</span>
+      <strong style="display:block; font-size:16px; margin-top:2px;">{{ customer.name }}</strong>
+      <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Phone: {{ customer.phone|default:'-' }}</div>
+      <div style="font-size:13px; color:var(--text-secondary);">Email: {{ customer.email|default:'-' }}</div>
+    </div>
+    <div>
+      <span style="color:var(--text-secondary); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Address &amp; Limit:</span>
+      <div style="font-size:13px; margin-top:2px;">{{ customer.address|default:'-' }}</div>
+      <div style="font-size:13px; margin-top:4px;">Credit Limit: <span class="font-mono">Rs. {{ customer.credit_limit|floatformat:2 }}</span></div>
+    </div>
+    <div>
+      <span style="color:var(--text-secondary); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Opening Balance (Dr):</span>
+      <div class="font-mono" style="font-size:16px; font-weight:600; margin-top:2px;">Rs. {{ opening_balance|floatformat:2 }}</div>
+      <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">Initial balance recorded</div>
+    </div>
+    <div>
+      <span style="color:var(--text-secondary); font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Net Outstanding Due (Dr):</span>
+      <div class="font-mono" style="font-size:20px; font-weight:700; margin-top:2px; {% if remaining_due > 0 %}color:#DC2626;{% else %}color:#16A34A;{% endif %}">
+        Rs. {{ remaining_due|floatformat:2 }}
+      </div>
+      {% if overdue_amount > 0 %}
+        <span class="badge badge-danger" style="margin-top:4px;">Rs. {{ overdue_amount|floatformat:2 }} Overdue</span>
+      {% else %}
+        <span class="badge badge-success" style="margin-top:4px;">No Overdue</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Summary Metrics Bar -->
+<div class="stat-grid" style="margin-bottom:24px;">
+  <div class="stat-card" style="border-left:4px solid #2563EB;">
+    <span class="stat-label">Total Credit Sales (Debit / Dr)</span>
+    <span class="stat-value" style="color: #2563EB;">Rs. {{ total_credit_given|floatformat:2 }}</span>
+    <span class="stat-change" style="color:var(--text-secondary);">Total goods billed on credit</span>
+  </div>
+  <div class="stat-card" style="border-left:4px solid #16A34A;">
+    <span class="stat-label">Total Payments Received (Credit / Cr)</span>
+    <span class="stat-value" style="color: #16A34A;">Rs. {{ total_paid|floatformat:2 }}</span>
+    <span class="stat-change" style="color:var(--text-secondary);">Total collections received</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #EA580C;">
+    <span class="stat-label">Remaining Customer Debt (Dr)</span>
+    <span class="stat-value" style="color: #EA580C;">Rs. {{ remaining_due|floatformat:2 }}</span>
+    <span class="stat-change" style="color:var(--text-secondary);">Net balance owed by customer</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #DC2626;">
+    <span class="stat-label">Overdue Debt Amount</span>
+    <span class="stat-value" style="color: #DC2626;">Rs. {{ overdue_amount|floatformat:2 }}</span>
+    <span class="stat-change" style="color:var(--text-secondary);">Passed agreed due date</span>
+  </div>
+</div>
+
+<!-- Ledger Chronological Table -->
+<div class="card">
+  <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+    <div>
+      <h3 style="margin:0; font-size:16px; font-weight:700;">Chronological Customer Ledger</h3>
+      <span style="font-size:12px; color:var(--text-secondary);">Debits (+) increase what customer owes &bull; Credits (&minus;) represent customer settlements</span>
+    </div>
+    <span class="font-mono" style="font-size:13px; color:var(--text-secondary);">Statement as of {% now "Y-m-d" %}</span>
+  </div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Ref / Invoice #</th>
+          <th>Description</th>
+          <th style="text-align:right;">Debit (+) [Dr]</th>
+          <th style="text-align:right;">Credit (&minus;) [Cr]</th>
+          <th style="text-align:right;">Running Balance (Dr)</th>
+          <th style="text-align:right;" class="no-print">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Opening Balance Entry -->
+        <tr style="background-color: var(--bg-primary, #F8FAFC); font-style:italic;">
+          <td>-</td>
+          <td><span class="badge badge-secondary">Opening</span></td>
+          <td class="font-mono">-</td>
+          <td>Customer Opening Balance</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ opening_balance|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">-</td>
+          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ opening_balance|floatformat:2 }}</strong></td>
+          <td class="no-print"></td>
+        </tr>
+
+        {% for row in ledger_rows %}
+        <tr>
+          <td>{{ row.date|date:"Y-m-d" }}</td>
+          <td>
+            {% if row.type == 'Credit Given' %}
+              <span class="badge badge-primary">Credit Sale (Dr)</span>
+            {% else %}
+              <span class="badge badge-success">Payment Received (Cr)</span>
+            {% endif %}
+          </td>
+          <td class="font-mono">
+            {% if row.type == 'Credit Given' %}
+              <a href="{% url 'credit:given_detail' row.raw_obj.id %}" style="font-weight:600; color:var(--primary);">{{ row.reference }}</a>
+            {% else %}
+              <span style="font-weight:600;">{{ row.reference }}</span>
+            {% endif %}
+          </td>
+          <td>{{ row.description }}</td>
+          <td style="text-align:right;" class="font-mono">
+            {% if row.debit > 0 %}
+              <strong style="color:#2563EB;">Rs. {{ row.debit|floatformat:2 }}</strong>
+            {% else %}-{% endif %}
+          </td>
+          <td style="text-align:right;" class="font-mono">
+            {% if row.credit > 0 %}
+              <strong style="color:#16A34A;">Rs. {{ row.credit|floatformat:2 }}</strong>
+            {% else %}-{% endif %}
+          </td>
+          <td style="text-align:right;" class="font-mono">
+            <strong style="{% if row.running_balance > 0 %}color:#DC2626;{% else %}color:#16A34A;{% endif %}">
+              Rs. {{ row.running_balance|floatformat:2 }}
+            </strong>
+          </td>
+          <td style="text-align:right;" class="no-print">
+            {% if row.type == 'Credit Given' %}
+              <a href="{% url 'credit:given_detail' row.raw_obj.id %}" class="btn btn-ghost btn-sm">View &rarr;</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="table-empty">No credit transactions or payments recorded for this customer.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="font-weight:700; background-color:var(--bg-primary, #F8FAFC); font-size:14px;">
+          <td colspan="4" style="text-align:right;">Totals &amp; Closing Debit Balance:</td>
+          <td style="text-align:right;" class="font-mono" style="color:#2563EB;">Rs. {{ total_credit_given|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono" style="color:#16A34A;">Rs. {{ total_paid|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono" style="color:#DC2626;">Rs. {{ remaining_due|floatformat:2 }} Dr</td>
+          <td class="no-print"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<style>
+@media print {
+  .no-print, .sidebar, .navbar, .page-header .btn { display: none !important; }
+  body { background: #fff !important; }
+  .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+}
+</style>
+{% endblock %}

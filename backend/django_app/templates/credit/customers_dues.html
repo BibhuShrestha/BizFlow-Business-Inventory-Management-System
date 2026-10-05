@@ -1,0 +1,91 @@
+{% extends "base/base.html" %}
+{% block title %}Customer Receivables & Dues - BizFlow{% endblock %}
+{% block page_title %}Customer Receivables & Outstanding Dues{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Customer Receivables & Outstanding Dues</h1>
+    <p class="page-subtitle">Track customer-wise receivables, collected payments, and outstanding debt balances.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'credit:export_csv' 'customer_dues' %}" class="btn btn-secondary btn-sm">Export Dues CSV</a>
+    <a href="{% url 'credit:create' %}?type=given" class="btn btn-primary btn-sm">+ Record Receivable</a>
+  </div>
+</div>
+
+<div class="stat-grid" style="margin-bottom: 24px;">
+  <div class="stat-card" style="border-left: 4px solid #EA580C;">
+    <span class="stat-label">Total Customer Receivables (Debit / Dr)</span>
+    <span class="stat-value" style="color: #EA580C;">Rs. {{ total_due|floatformat:2 }}</span>
+    <span class="stat-change" style="color: var(--text-secondary);">Total balance customers owe you (Net Dr)</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #DC2626;">
+    <span class="stat-label">Total Overdue Receivables (Dr)</span>
+    <span class="stat-value" style="color: #DC2626;">Rs. {{ total_overdue|floatformat:2 }}</span>
+    <span class="stat-change" style="color: var(--text-secondary);">Exceeded due date limit</span>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form method="get" style="display:flex; gap:12px; align-items:center;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search customer name or phone..." class="form-control" style="max-width:320px;">
+    <button type="submit" class="btn btn-secondary">Search</button>
+    {% if search %}<a href="{% url 'credit:customers_dues' %}" class="btn btn-ghost">Reset</a>{% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Customer Name</th>
+          <th>Phone</th>
+          <th style="text-align:right;">Total Debit (Dr)</th>
+          <th style="text-align:right;">Total Paid</th>
+          <th style="text-align:right;">Outstanding Due (Dr)</th>
+          <th style="text-align:right;">Overdue Amount</th>
+          <th style="text-align:center;">Invoices</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in page_obj %}
+        <tr {% if d.overdue_amount > 0 %}style="background-color: rgba(220, 38, 38, 0.03);"{% endif %}>
+          <td>
+            <a href="{% url 'credit:customer_ledger' d.customer.id %}" style="font-weight:600; color:var(--primary);">
+              {{ d.customer.name }}
+            </a>
+          </td>
+          <td>{{ d.customer.phone|default:"-" }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ d.total_credit|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono" style="color:#16A34A;">Rs. {{ d.total_paid|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">
+            <strong style="{% if d.remaining_due > 0 %}color:#EA580C;{% else %}color:#16A34A;{% endif %}">
+              Rs. {{ d.remaining_due|floatformat:2 }}
+            </strong>
+          </td>
+          <td style="text-align:right;" class="font-mono">
+            {% if d.overdue_amount > 0 %}
+              <strong style="color:#DC2626;">Rs. {{ d.overdue_amount|floatformat:2 }}</strong>
+            {% else %}
+              <span style="color:var(--text-secondary);">-</span>
+            {% endif %}
+          </td>
+          <td style="text-align:center;">{{ d.invoice_count }}</td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'credit:customer_ledger' d.customer.id %}" class="btn btn-secondary btn-sm">View Ledger</a>
+              <a href="{% url 'credit:create' %}?type=given" class="btn btn-ghost btn-sm">+ Credit</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="table-empty">No customer dues found matching criteria.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

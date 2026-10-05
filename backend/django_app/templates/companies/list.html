@@ -1,0 +1,82 @@
+{% extends "base/base.html" %}
+{% block title %}Companies - BizFlow{% endblock %}
+{% block page_title %}Company Workspaces{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Companies</h1>
+    <p class="page-subtitle">Manage company profiles, VAT/PAN credentials, and active workspace.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'companies:export_csv' %}" class="btn btn-secondary btn-sm">Export CSV</a>
+    <a href="{% url 'companies:export_excel' %}" class="btn btn-secondary btn-sm">Export Excel</a>
+    <a href="{% url 'companies:create' %}" class="btn btn-primary btn-sm">+ New Company</a>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form method="get" style="display:flex; gap:12px;">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search company name, PAN, phone..." class="form-control" style="max-width:320px;">
+    <button type="submit" class="btn btn-secondary">Search</button>
+    {% if search_query %}
+      <a href="{% url 'companies:list' %}" class="btn btn-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Company Name</th>
+          <th>PAN / VAT</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Address</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in companies %}
+        <tr>
+          <td style="font-weight:600;">
+            {{ c.company_name }}
+            {% if request.user.active_company_id == c.id %}
+              <span class="badge badge-success" style="margin-left:6px;">Active</span>
+            {% endif %}
+          </td>
+          <td class="font-mono">{{ c.vat_pan_number|default:"—" }}</td>
+          <td>{{ c.company_phone|default:"—" }}</td>
+          <td>{{ c.address|default:"—" }}</td>
+          <td>{{ c.address|default:"—" }}</td>
+          <td>
+            {% if c.is_active %}
+              <span class="badge badge-success">Active</span>
+            {% else %}
+              <span class="badge badge-danger">Inactive</span>
+            {% endif %}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              {% if request.user.active_company_id != c.id %}
+                <a href="{% url 'companies:switch' c.id %}" class="btn btn-ghost btn-sm">Switch</a>
+              {% endif %}
+              <a href="{% url 'companies:edit' c.id %}" class="btn btn-ghost btn-sm">Edit</a>
+              <form method="post" action="{% url 'companies:delete' c.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to deactivate this company?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="table-empty">No companies registered</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

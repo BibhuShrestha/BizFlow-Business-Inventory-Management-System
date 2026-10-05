@@ -1,0 +1,15 @@
+{% extends "base/base.html" %}
+{% block title %}404 - Page Not Found | BizFlow{% endblock %}
+{% block page_title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div class="empty-state" style="max-width: 520px; margin: 60px auto;">
+  <div style="font-size: 64px; font-weight: 800; color: var(--primary); line-height: 1; margin-bottom: 16px;">404</div>
+  <h2 class="empty-state-title" style="font-size: 20px;">Page Not Found</h2>
+  <p class="empty-state-desc">The requested resource could not be found. It may have been moved, renamed, or is temporarily unavailable.</p>
+  <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+    <a href="{% url 'dashboard:index' %}" class="btn btn-primary">Return to Dashboard</a>
+    <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+  </div>
+</div>
+{% endblock %}

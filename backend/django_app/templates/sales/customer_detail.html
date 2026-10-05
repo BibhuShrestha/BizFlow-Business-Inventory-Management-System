@@ -1,0 +1,72 @@
+{% extends "base/base.html" %}
+{% block title %}{{ customer.name }} - Customer Details{% endblock %}
+{% block page_title %}Customer Profile{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">{{ customer.name }}</h1>
+    <p class="page-subtitle">Phone: {{ customer.phone|default:"N/A" }} | PAN: {{ customer.pan_number|default:"N/A" }} | {{ customer.address|default:"No address" }}</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'credit:customer_ledger' customer.id %}" class="btn btn-primary btn-sm">View Ledger Statement</a>
+    <a href="{% url 'customers:edit' customer.id %}" class="btn btn-secondary btn-sm">Edit Profile</a>
+  </div>
+</div>
+
+<!-- Receivables & Credit Summary Cards -->
+<div class="stat-grid" style="margin-bottom: 24px;">
+  <div class="stat-card">
+    <span class="stat-label">Total Credit (Receivables)</span>
+    <span class="stat-value" style="color: #2563EB;">Rs. {{ total_credit|floatformat:2 }}</span>
+    <span class="stat-badge info">Sales on Credit</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Paid</span>
+    <span class="stat-value" style="color: #16A34A;">Rs. {{ total_paid|floatformat:2 }}</span>
+    <span class="stat-badge success">Settled</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #EA580C;">
+    <span class="stat-label">Remaining Due</span>
+    <span class="stat-value" style="color: #EA580C;">Rs. {{ remaining_due|floatformat:2 }}</span>
+    <span class="stat-badge warning">Customer Owes</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #DC2626;">
+    <span class="stat-label">Overdue</span>
+    <span class="stat-value" style="color: #DC2626;">Rs. {{ overdue_amount|floatformat:2 }}</span>
+    <span class="stat-badge danger">Late</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3 class="card-title">Order History & Sales Invoices</h3></div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Date</th>
+          <th style="text-align:right;">Subtotal</th>
+          <th style="text-align:right;">Tax</th>
+          <th style="text-align:right;">Total</th>
+          <th>Payment</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sales %}
+        <tr>
+          <td class="font-mono"><a href="{% url 'sales:detail' s.id %}">{{ s.invoice_number }}</a></td>
+          <td>{{ s.sale_date|date:"Y-m-d" }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ s.subtotal|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ s.tax_amount|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ s.total|floatformat:2 }}</strong></td>
+          <td><span class="badge badge-success">{{ s.payment_status|default:"Paid" }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="table-empty">No invoices found for this customer</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

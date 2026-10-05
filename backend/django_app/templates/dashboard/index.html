@@ -1,0 +1,263 @@
+{% extends "base/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">Welcome back, {{ user.name }}. Here's your business overview.</p>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <span class="stat-label">Total Sales</span>
+    <span class="stat-value">Rs. {{ total_sales|floatformat:2 }}</span>
+    <span class="stat-badge success">Revenue</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Purchases</span>
+    <span class="stat-value">Rs. {{ total_purchases|floatformat:2 }}</span>
+    <span class="stat-badge info">Cost</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Expenses</span>
+    <span class="stat-value">Rs. {{ total_expenses|floatformat:2 }}</span>
+    <span class="stat-badge warning">Overhead</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Net Profit</span>
+    <span class="stat-value {% if net_profit < 0 %}text-danger{% else %}text-success{% endif %}">
+      Rs. {{ net_profit|floatformat:2 }}
+    </span>
+    <span class="stat-badge {% if net_profit < 0 %}danger{% else %}success{% endif %}">
+      {% if net_profit < 0 %}Loss{% else %}Profit{% endif %}
+    </span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Active Products</span>
+    <span class="stat-value">{{ product_count }}</span>
+    <span class="stat-badge primary">Items</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Low Stock</span>
+    <span class="stat-value {% if low_stock_count > 0 %}text-warning{% endif %}">{{ low_stock_count }}</span>
+    <span class="stat-badge {% if low_stock_count > 0 %}warning{% else %}success{% endif %}">
+      {% if low_stock_count > 0 %}Attention Needed{% else %}All Good{% endif %}
+    </span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Out of Stock</span>
+    <span class="stat-value {% if out_of_stock_count > 0 %}text-danger{% endif %}">{{ out_of_stock_count }}</span>
+    <span class="stat-badge {% if out_of_stock_count > 0 %}danger{% else %}success{% endif %}">
+      {% if out_of_stock_count > 0 %}Restock Required{% else %}All Available{% endif %}
+    </span>
+  </div>
+</div>
+
+<!-- Business Alerts Section (Prompt Section 18) -->
+<div style="margin-top: 24px; margin-bottom: 12px; display:flex; justify-content:space-between; align-items:center;">
+  <div style="display:flex; align-items:center; gap:8px;">
+    <h2 style="font-size:18px; font-weight:700; margin:0;">Business Alerts</h2>
+    <span class="badge badge-warning" style="font-weight:700;">Live Monitor</span>
+  </div>
+  <a href="{% url 'dashboard:notifications' %}" class="btn btn-ghost btn-sm" style="font-weight:600; color:var(--primary);">View All Notifications &rarr;</a>
+</div>
+
+<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 24px;">
+  <a href="/products/?stock_status=out" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #EF4444;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <span class="stat-label">🚨 Out of Stock</span>
+      <span class="badge badge-danger">{{ business_alerts.out_of_stock }}</span>
+    </div>
+    <span class="stat-value" style="color:#EF4444; margin-top:8px;">{{ business_alerts.out_of_stock }}</span>
+    <span style="font-size:11px; color:var(--text-secondary);">Restock required</span>
+  </a>
+
+  <a href="/products/?stock_status=low" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #F59E0B;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <span class="stat-label">⚠️ Low Stock</span>
+      <span class="badge badge-warning">{{ business_alerts.low_stock }}</span>
+    </div>
+    <span class="stat-value" style="color:#F59E0B; margin-top:8px;">{{ business_alerts.low_stock }}</span>
+    <span style="font-size:11px; color:var(--text-secondary);">Below minimum level</span>
+  </a>
+
+  <a href="/inventory/movements/?movement_type=IN" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #10B981;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <span class="stat-label">📦 Stock Received</span>
+      <span class="badge badge-success">{{ business_alerts.stock_received }}</span>
+    </div>
+    <span class="stat-value" style="color:#10B981; margin-top:8px;">{{ business_alerts.stock_received }}</span>
+    <span style="font-size:11px; color:var(--text-secondary);">Past 7 days movements</span>
+  </a>
+
+  <a href="/sales/?status=due" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #3B82F6;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <span class="stat-label">💳 Payments Due</span>
+      <span class="badge badge-info">{{ business_alerts.payments_due }}</span>
+    </div>
+    <span class="stat-value" style="color:#3B82F6; margin-top:8px;">{{ business_alerts.payments_due }}</span>
+    <span style="font-size:11px; color:var(--text-secondary);">Due soon or today</span>
+  </a>
+
+  <a href="{% url 'credit:cheques_list' %}?status=pending" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #8B5CF6;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <span class="stat-label">🧾 Cheques Due</span>
+      <span class="badge badge-secondary">{{ business_alerts.cheques_due }}</span>
+    </div>
+    <span class="stat-value" style="color:#8B5CF6; margin-top:8px;">{{ business_alerts.cheques_due }}</span>
+    <span style="font-size:11px; color:var(--text-secondary);">Upcoming maturity</span>
+  </a>
+
+  <a href="{% url 'credit:overdue_list' %}?type=given" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #DC2626;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <span class="stat-label">💰 Receivables Overdue</span>
+      <span class="badge badge-danger">{{ business_alerts.receivables_overdue }}</span>
+    </div>
+    <span class="stat-value" style="color:#DC2626; margin-top:8px;">{{ business_alerts.receivables_overdue }}</span>
+    <span style="font-size:11px; color:var(--text-secondary);">Customer overdue</span>
+  </a>
+
+  <a href="{% url 'credit:overdue_list' %}?type=taken" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #B91C1C;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <span class="stat-label">💸 Payables Overdue</span>
+      <span class="badge badge-danger">{{ business_alerts.payables_overdue }}</span>
+    </div>
+    <span class="stat-value" style="color:#B91C1C; margin-top:8px;">{{ business_alerts.payables_overdue }}</span>
+    <span style="font-size:11px; color:var(--text-secondary);">Supplier overdue</span>
+  </a>
+</div>
+
+<!-- Receivables & Payables Summary Section (Requirements 14, 15, 16) -->
+<div style="margin-top: 24px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h2 style="font-size:18px; font-weight:700; margin:0;">Receivables & Payables Summary</h2>
+    <span style="font-size:12px; color:var(--text-secondary);">Overview of credit extended to customers and credit taken from vendors</span>
+  </div>
+  <a href="{% url 'credit:dashboard' %}" class="btn btn-ghost btn-sm" style="font-weight:600; color:var(--primary);">Go to Receivables & Payables &rarr;</a>
+</div>
+
+<div class="stat-grid" style="margin-bottom: 24px;">
+  <!-- Receivables -->
+  <div class="stat-card" style="border-left: 4px solid #2563EB;">
+    <span class="stat-label">Total Receivables</span>
+    <span class="stat-value" style="color: #2563EB;">Rs. {{ credit_summary.receivables_total|default:credit_summary.credit_given_total|floatformat:2 }}</span>
+    <span class="stat-badge info">Credit Given</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Received</span>
+    <span class="stat-value" style="color: #16A34A;">Rs. {{ credit_summary.receivables_received|default:credit_summary.credit_given_received|floatformat:2 }}</span>
+    <span class="stat-badge success">Collected</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #EA580C;">
+    <span class="stat-label">Outstanding Receivables</span>
+    <span class="stat-value" style="color: #EA580C;">Rs. {{ credit_summary.receivables_outstanding|default:credit_summary.customer_due|floatformat:2 }}</span>
+    <span class="stat-badge warning">Customer Due</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #DC2626;">
+    <span class="stat-label">Overdue Receivables</span>
+    <span class="stat-value" style="color: #DC2626;">Rs. {{ credit_summary.receivables_overdue|default:credit_summary.overdue_given_amount|floatformat:2 }}</span>
+    <span class="stat-badge danger">Action Required</span>
+  </div>
+
+  <!-- Payables -->
+  <div class="stat-card" style="border-left: 4px solid #7C3AED;">
+    <span class="stat-label">Total Payables</span>
+    <span class="stat-value" style="color: #7C3AED;">Rs. {{ credit_summary.payables_total|default:credit_summary.credit_taken_total|floatformat:2 }}</span>
+    <span class="stat-badge info">Credit Taken</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Paid to Suppliers</span>
+    <span class="stat-value" style="color: #16A34A;">Rs. {{ credit_summary.payables_paid|default:credit_summary.credit_taken_paid|floatformat:2 }}</span>
+    <span class="stat-badge success">Settled</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #F59E0B;">
+    <span class="stat-label">Outstanding Payables</span>
+    <span class="stat-value" style="color: #F59E0B;">Rs. {{ credit_summary.payables_outstanding|default:credit_summary.supplier_due|floatformat:2 }}</span>
+    <span class="stat-badge warning">Supplier Due</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #B91C1C;">
+    <span class="stat-label">Overdue Payables</span>
+    <span class="stat-value" style="color: #B91C1C;">Rs. {{ credit_summary.payables_overdue|default:credit_summary.overdue_taken_amount|floatformat:2 }}</span>
+    <span class="stat-badge danger">Supplier Due</span>
+  </div>
+</div>
+
+<!-- Recent Activity -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px;">
+  <!-- Recent Sales -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Recent Sales</h3>
+      <a href="/transactions/sales/" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <div class="table-container" style="border:none;border-radius:0;">
+      <table>
+        <thead>
+          <tr>
+            <th>Invoice</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sale in recent_sales %}
+            <tr>
+              <td class="font-mono">{{ sale.invoice_number }}</td>
+              <td>{{ sale.sale_date|date:"d M Y" }}</td>
+              <td>Rs. {{ sale.total|floatformat:2 }}</td>
+              <td>
+                <span class="badge {% if sale.payment_status == 'Paid' %}badge-success{% elif sale.payment_status == 'Partial' %}badge-warning{% else %}badge-danger{% endif %}">
+                  {{ sale.payment_status }}
+                </span>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="table-empty">No sales yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Purchases -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Recent Purchases</h3>
+      <a href="/transactions/purchases/" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    <div class="table-container" style="border:none;border-radius:0;">
+      <table>
+        <thead>
+          <tr>
+            <th>PO Number</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for purchase in recent_purchases %}
+            <tr>
+              <td class="font-mono">{{ purchase.purchase_number }}</td>
+              <td>{{ purchase.purchase_date|date:"d M Y" }}</td>
+              <td>Rs. {{ purchase.total|floatformat:2 }}</td>
+              <td>
+                <span class="badge {% if purchase.payment_status == 'Paid' %}badge-success{% elif purchase.payment_status == 'Partial' %}badge-warning{% else %}badge-danger{% endif %}">
+                  {{ purchase.payment_status }}
+                </span>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="table-empty">No purchases yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

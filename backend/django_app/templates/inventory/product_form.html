@@ -1,0 +1,217 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}{{ title }} - BizFlow{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Configure item specifications, tax rate, and inventory thresholds.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 880px; margin-bottom: 40px;">
+  <form method="post" id="productForm" style="padding: 24px;">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger" style="margin-bottom:16px;">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label" for="id_name">Product Name *</label>
+        {{ form.name }}
+        {% if form.name.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.name.errors }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="id_sku">SKU / Code *</label>
+        {{ form.sku }}
+        {% if form.sku.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.sku.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Company, Category, Seller -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;" for="id_company">Company</label>
+          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-company')">+ New Company</button>
+        </div>
+        {{ form.company }}
+        {% if form.company.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.company.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;" for="id_category">Category *</label>
+          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-category')">+ New Category</button>
+        </div>
+        {{ form.category }}
+        {% if form.category.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.category.errors }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label class="form-label" style="margin-bottom:0;" for="id_seller">Seller / Owner</label>
+          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-seller')">+ New Seller</button>
+        </div>
+        {{ form.seller }}
+        {% if form.seller.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.seller.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <!-- Pricing & Stock -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label" for="id_purchase_price">Cost / Buy Price (Rs.)</label>
+        {{ form.purchase_price }}
+        {% if form.purchase_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.purchase_price.errors }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="id_selling_price">Selling Price (Rs.) *</label>
+        {{ form.selling_price }}
+        {% if form.selling_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.selling_price.errors }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="id_current_stock">Opening Stock</label>
+        {{ form.current_stock }}
+        {% if form.current_stock.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.current_stock.errors }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="id_minimum_stock">Min Stock Alert</label>
+        {{ form.minimum_stock }}
+        {% if form.minimum_stock.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.minimum_stock.errors }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label" for="id_unit">Unit of Measure</label>
+        {{ form.unit }}
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="id_tax_rate">Tax Rate (%)</label>
+        {{ form.tax_rate }}
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:24px;">
+      <label class="form-label" for="id_description">Description / Specifications</label>
+      {{ form.description }}
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <button type="submit" class="btn btn-primary" id="submitBtn">Save Product</button>
+      <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<!-- ========================================== -->
+<!-- 1. Quick Add Company Modal -->
+<!-- ========================================== -->
+<div id="modal-add-company" class="quick-modal">
+  <div class="quick-modal-dialog">
+    <div class="quick-modal-header">
+      <h3 class="quick-modal-title">🏢 Add New Company Profile</h3>
+      <button type="button" class="quick-modal-close" onclick="closeQuickModal('modal-add-company')">&times;</button>
+    </div>
+    <form action="{% url 'companies:create' %}" method="post" onsubmit="submitQuickForm(event, this, 'id_company', 'modal-add-company')">
+      {% csrf_token %}
+      <div class="quick-modal-body">
+        <div class="quick-form-errors"></div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Company Name *</label>
+          <input type="text" name="company_name" class="form-control" required placeholder="e.g. Kathmandu Trading Pvt Ltd">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">VAT / PAN Number</label>
+          <input type="text" name="vat_pan_number" class="form-control" placeholder="PAN / VAT Number">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Company Phone</label>
+          <input type="text" name="company_phone" class="form-control" placeholder="Phone Number">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Address</label>
+          <textarea name="address" class="form-control" rows="2" placeholder="Company Address"></textarea>
+        </div>
+      </div>
+      <div class="quick-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeQuickModal('modal-add-company')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save & Select</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 2. Quick Add Category Modal -->
+<!-- ========================================== -->
+<div id="modal-add-category" class="quick-modal">
+  <div class="quick-modal-dialog">
+    <div class="quick-modal-header">
+      <h3 class="quick-modal-title">🏷️ Add New Category</h3>
+      <button type="button" class="quick-modal-close" onclick="closeQuickModal('modal-add-category')">&times;</button>
+    </div>
+    <form action="{% url 'inventory:category_create' %}" method="post" onsubmit="submitQuickForm(event, this, 'id_category', 'modal-add-category')">
+      {% csrf_token %}
+      <div class="quick-modal-body">
+        <div class="quick-form-errors"></div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Category Name *</label>
+          <input type="text" name="name" class="form-control" required placeholder="e.g. Electronics, Groceries">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Description</label>
+          <textarea name="description" class="form-control" rows="2" placeholder="Optional category details"></textarea>
+        </div>
+      </div>
+      <div class="quick-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeQuickModal('modal-add-category')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save & Select</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 3. Quick Add Seller Modal -->
+<!-- ========================================== -->
+<div id="modal-add-seller" class="quick-modal">
+  <div class="quick-modal-dialog">
+    <div class="quick-modal-header">
+      <h3 class="quick-modal-title">🤝 Add New Seller</h3>
+      <button type="button" class="quick-modal-close" onclick="closeQuickModal('modal-add-seller')">&times;</button>
+    </div>
+    <form action="{% url 'sellers:create' %}" method="post" onsubmit="submitQuickForm(event, this, 'id_seller', 'modal-add-seller')">
+      {% csrf_token %}
+      <div class="quick-modal-body">
+        <div class="quick-form-errors"></div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Seller / Owner Name *</label>
+          <input type="text" name="seller_name" class="form-control" required placeholder="e.g. Shyam Sundar">
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Phone Number</label>
+          <input type="text" name="seller_phone" class="form-control" placeholder="98XXXXXXXX">
+        </div>
+      </div>
+      <div class="quick-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeQuickModal('modal-add-seller')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save & Select</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/quick_add.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initFormStatePersistence('productForm', 'bizflow_product_draft');
+  });
+</script>
+{% endblock %}

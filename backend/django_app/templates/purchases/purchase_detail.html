@@ -1,0 +1,70 @@
+{% extends "base/base.html" %}
+{% block title %}Purchase {{ purchase.purchase_number }} - BizFlow{% endblock %}
+{% block page_title %}Purchase #{{ purchase.purchase_number }}{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Purchase #{{ purchase.purchase_number }}</h1>
+    <p class="page-subtitle">Date: {{ purchase.purchase_date|date:"Y-m-d" }} | Supplier: {{ purchase.supplier.name }}</p>
+  </div>
+  <a href="{% url 'purchases:list' %}" class="btn btn-secondary btn-sm">Back to Purchases</a>
+</div>
+
+<div class="card" style="padding:24px; max-width:800px;">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:24px;">
+    <div>
+      <h4 style="margin-bottom:8px; font-size:14px; color:var(--text-secondary);">Supplier Information</h4>
+      <p style="margin:0; font-weight:600;">{{ purchase.supplier.name }}</p>
+      <p style="margin:0; font-size:13px;">PAN: {{ purchase.supplier.pan_number|default:"N/A" }}</p>
+      <p style="margin:0; font-size:13px;">Phone: {{ purchase.supplier.phone|default:"N/A" }}</p>
+    </div>
+    <div style="text-align:right;">
+      <h4 style="margin-bottom:8px; font-size:14px; color:var(--text-secondary);">Payment Summary</h4>
+      <p style="margin:0; font-size:14px;">Method: {{ purchase.payment_method }}</p>
+      <p style="margin:0; font-size:14px;">Status: <span class="badge badge-success">{{ purchase.payment_status }}</span></p>
+    </div>
+  </div>
+
+  <div class="table-container" style="margin-bottom:24px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th style="text-align:center;">Qty</th>
+          <th style="text-align:right;">Unit Price</th>
+          <th style="text-align:right;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.product.name }}</td>
+          <td style="text-align:center;">{{ item.quantity }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ item.unit_price|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ item.total|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td>General Goods Supply</td>
+          <td style="text-align:center;">1</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ purchase.subtotal|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ purchase.subtotal|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex; justify-content:flex-end;">
+    <div style="width:250px;">
+      <div style="display:flex; justify-content:space-between; padding:4px 0;"><span>Subtotal:</span><span>Rs. {{ purchase.subtotal|floatformat:2 }}</span></div>
+      <div style="display:flex; justify-content:space-between; padding:4px 0;"><span>Discount:</span><span>- Rs. {{ purchase.discount_amount|floatformat:2 }}</span></div>
+      <div style="display:flex; justify-content:space-between; padding:4px 0;"><span>Tax:</span><span>Rs. {{ purchase.tax_amount|floatformat:2 }}</span></div>
+      <div style="display:flex; justify-content:space-between; padding:8px 0; border-top:2px solid var(--border-color); font-weight:700;">
+        <span>Total:</span><span>Rs. {{ purchase.total|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

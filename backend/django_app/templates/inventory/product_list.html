@@ -1,0 +1,111 @@
+{% extends "base/base.html" %}
+{% block title %}Products - BizFlow{% endblock %}
+{% block page_title %}Products & Stock{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div>
+    <h1 class="page-title">Products Inventory</h1>
+    <p class="page-subtitle">Track SKUs, selling prices, physical quantities, and low stock warnings.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'inventory:import' %}" class="btn btn-secondary btn-sm">Import Excel/CSV</a>
+    <a href="{% url 'inventory:export_csv' %}" class="btn btn-secondary btn-sm">Export CSV</a>
+    <a href="{% url 'inventory:export_excel' %}" class="btn btn-secondary btn-sm">Export Excel</a>
+    <a href="{% url 'inventory:category_list' %}" class="btn btn-secondary btn-sm">Categories</a>
+    <a href="{% url 'inventory:product_create' %}" class="btn btn-primary btn-sm">+ Add Product</a>
+  </div>
+</div>
+
+<!-- Filters & Search -->
+<div class="card" style="margin-bottom: 20px; padding: 16px;">
+  <form method="get" style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search name, SKU, barcode..." class="form-control" style="width:240px;">
+    <select name="category" class="form-control" style="width:180px;">
+      <option value="">All Categories</option>
+      {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+      {% endfor %}
+    </select>
+    <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+      <input type="checkbox" name="low_stock" value="1" {% if low_stock_filter %}checked{% endif %}>
+      Low Stock Only
+    </label>
+    <button type="submit" class="btn btn-secondary">Apply Filters</button>
+    {% if search_query or selected_category or low_stock_filter %}
+      <a href="{% url 'inventory:product_list' %}" class="btn btn-ghost">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>SKU / Code</th>
+          <th>Category</th>
+          <th>Unit</th>
+          <th style="text-align:right;">Buy Price</th>
+          <th style="text-align:right;">Sell Price</th>
+          <th style="text-align:center;">Current Stock</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in page_obj %}
+        <tr>
+          <td style="font-weight:600;">{{ p.name }}</td>
+          <td class="font-mono">{{ p.sku|default:"—" }}</td>
+          <td>{{ p.category.name|default:"Uncategorized" }}</td>
+          <td>{{ p.unit|default:"pcs" }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ p.purchase_price|floatformat:2 }}</td>
+          <td style="text-align:right;" class="font-mono">Rs. {{ p.selling_price|floatformat:2 }}</td>
+          <td style="text-align:center;">
+            {% if p.current_stock <= p.minimum_stock %}
+              <span class="badge badge-danger">{{ p.current_stock }}</span>
+            {% else %}
+              <span class="badge badge-success">{{ p.current_stock }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if p.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-secondary">Inactive</span>{% endif %}
+          </td>
+          <td style="text-align:right;">
+            <div style="display:inline-flex; gap:6px;">
+              <a href="{% url 'inventory:product_edit' p.id %}" class="btn btn-ghost btn-sm">Edit</a>
+              <form method="post" action="{% url 'inventory:product_delete' p.id %}" style="display:inline;" onsubmit="return confirm('Deactivate this product?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="table-empty">No products found matching criteria</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 24px; border-top:1px solid var(--border-color);">
+    <span style="font-size:13px; color:var(--text-secondary);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} items)
+    </span>
+    <div style="display:flex; gap:8px;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&category={{ selected_category }}" class="btn btn-ghost btn-sm">&laquo; Prev</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&category={{ selected_category }}" class="btn btn-ghost btn-sm">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

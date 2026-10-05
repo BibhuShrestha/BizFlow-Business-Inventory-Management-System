@@ -1,0 +1,152 @@
+{% extends "base/base.html" %}
+{% block title %}Overdue Receivables & Payables - BizFlow{% endblock %}
+{% block page_title %}Overdue Receivables & Payables{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 class="page-title">Overdue Receivables & Payables</h1>
+    <p class="page-subtitle">Track customer receivables and supplier payables that have passed their designated due dates.</p>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <a href="{% url 'credit:dashboard' %}" class="btn btn-secondary btn-sm">&larr; Back to Dashboard</a>
+  </div>
+</div>
+
+<div class="stat-grid" style="margin-bottom: 24px;">
+  <div class="stat-card" style="border-left: 4px solid #DC2626;">
+    <span class="stat-label">Overdue Receivables (Customer Dues)</span>
+    <span class="stat-value" style="color: #DC2626;">Rs. {{ total_overdue_given|floatformat:2 }}</span>
+    <span class="stat-change" style="color: var(--text-secondary);">{{ overdue_given|length }} overdue customer invoices</span>
+  </div>
+  <div class="stat-card" style="border-left: 4px solid #EA580C;">
+    <span class="stat-label">Overdue Payables (Supplier Dues)</span>
+    <span class="stat-value" style="color: #EA580C;">Rs. {{ total_overdue_taken|floatformat:2 }}</span>
+    <span class="stat-change" style="color: var(--text-secondary);">{{ overdue_taken|length }} overdue vendor bills</span>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div style="display:flex; gap:12px; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+  <a href="?tab=given" class="btn {% if active_tab == 'given' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">
+    Overdue Receivables ({{ overdue_given|length }})
+  </a>
+  <a href="?tab=taken" class="btn {% if active_tab == 'taken' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">
+    Overdue Payables ({{ overdue_taken|length }})
+  </a>
+</div>
+
+{% if active_tab == 'given' %}
+  <!-- Customers Overdue Table -->
+  <div class="card">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:700; color:#DC2626;">
+        Overdue Customer Receivables
+        <span class="badge badge-primary" style="font-size:11px; margin-left:6px;">Debit (Dr)</span>
+      </h3>
+      <span style="font-size:12px; color:var(--text-secondary);">Amounts customers owe past due date</span>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Invoice #</th>
+            <th>Due Date</th>
+            <th>Customer</th>
+            <th>Phone</th>
+            <th style="text-align:right;">Grand Total</th>
+            <th style="text-align:right;">Paid</th>
+            <th style="text-align:right;">Overdue Amount (Dr)</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in overdue_given %}
+          <tr style="background-color: rgba(220, 38, 38, 0.03);">
+            <td class="font-mono">
+              <a href="{% url 'credit:given_detail' s.id %}" style="font-weight:600; color:var(--primary);">{{ s.invoice_number }}</a>
+            </td>
+            <td style="color:#DC2626; font-weight:600;">
+              {{ s.due_date|date:"Y-m-d" }}
+              <span class="badge badge-danger" style="margin-left:4px;">LATE</span>
+            </td>
+            <td>
+              <a href="{% url 'credit:customer_ledger' s.customer.id %}">
+                {{ s.customer.name|default:"Walk-in" }}
+              </a>
+            </td>
+            <td>{{ s.customer.phone|default:"-" }}</td>
+            <td style="text-align:right;" class="font-mono">Rs. {{ s.total|floatformat:2 }}</td>
+            <td style="text-align:right;" class="font-mono" style="color:#16A34A;">Rs. {{ s.paid_amount|floatformat:2 }}</td>
+            <td style="text-align:right;" class="font-mono">
+              <strong style="color:#DC2626;">Rs. {{ s.remaining_amount|floatformat:2 }}</strong>
+            </td>
+            <td style="text-align:right;">
+              <a href="{% url 'credit:given_detail' s.id %}#add-payment" class="btn btn-primary btn-sm">+ Collect</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="table-empty">Good news! No customer invoices are currently overdue.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% else %}
+  <!-- Suppliers Overdue Table -->
+  <div class="card">
+    <div style="padding:16px 20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0; font-size:16px; font-weight:700; color:#EA580C;">
+        Overdue Supplier Payables
+        <span class="badge" style="font-size:11px; margin-left:6px; background:#F5F3FF; color:#6D28D9; border:1px solid #DDD6FE;">Credit (Cr)</span>
+      </h3>
+      <span style="font-size:12px; color:var(--text-secondary);">Amounts owed to suppliers past due date</span>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>PO / Bill #</th>
+            <th>Due Date</th>
+            <th>Supplier</th>
+            <th>Phone</th>
+            <th style="text-align:right;">Grand Total</th>
+            <th style="text-align:right;">Paid</th>
+            <th style="text-align:right;">Overdue Payable (Cr)</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in overdue_taken %}
+          <tr style="background-color: rgba(234, 88, 12, 0.03);">
+            <td class="font-mono">
+              <a href="{% url 'credit:taken_detail' p.id %}" style="font-weight:600; color:var(--primary);">{{ p.purchase_number }}</a>
+            </td>
+            <td style="color:#DC2626; font-weight:600;">
+              {{ p.due_date|date:"Y-m-d" }}
+              <span class="badge badge-danger" style="margin-left:4px;">LATE</span>
+            </td>
+            <td>
+              <a href="{% url 'credit:supplier_ledger' p.supplier.id %}">
+                {{ p.supplier.name|default:"Vendor" }}
+              </a>
+            </td>
+            <td>{{ p.supplier.phone|default:"-" }}</td>
+            <td style="text-align:right;" class="font-mono">Rs. {{ p.total|floatformat:2 }}</td>
+            <td style="text-align:right;" class="font-mono" style="color:#16A34A;">Rs. {{ p.paid_amount|floatformat:2 }}</td>
+            <td style="text-align:right;" class="font-mono">
+              <strong style="color:#DC2626;">Rs. {{ p.remaining_amount|floatformat:2 }}</strong>
+            </td>
+            <td style="text-align:right;">
+              <a href="{% url 'credit:taken_detail' p.id %}#add-payment" class="btn btn-primary btn-sm">+ Pay</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="table-empty">Good news! No supplier bills are currently overdue.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

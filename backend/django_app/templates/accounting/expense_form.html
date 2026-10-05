@@ -1,0 +1,48 @@
+{% extends "base/base.html" %}
+{% block title %}{{ title }} - BizFlow{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header"><h1 class="page-title">{{ title }}</h1></div>
+<div class="card" style="max-width: 600px;">
+  <form method="post" style="padding: 24px;">
+    {% csrf_token %}
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Expense Title *</label>
+      {{ form.title }}
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        {{ form.category }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount *</label>
+        {{ form.amount }}
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Expense Date *</label>
+        {{ form.expense_date }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Payment Method</label>
+        {{ form.payment_method }}
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Payee / Vendor</label>
+      {{ form.payee }}
+    </div>
+    <div class="form-group" style="margin-bottom:24px;">
+      <label class="form-label">Notes / Description</label>
+      {{ form.notes }}
+    </div>
+    <div style="display:flex; gap:12px;">
+      <button type="submit" class="btn btn-primary">Save Expense</button>
+      <a href="{% url 'expenses:list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
