@@ -16,6 +16,8 @@ def customer_list(request: HttpRequest) -> HttpResponse:
     """List customers with search and pagination."""
     search = request.GET.get("search", "").strip()
     query = Customer.objects.filter(is_active=True)
+    if getattr(request.user, "active_company", None):
+        query = query.filter(company=request.user.active_company)
 
     if search:
         query = query.filter(

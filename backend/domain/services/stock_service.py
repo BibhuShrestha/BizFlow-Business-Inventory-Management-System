@@ -194,32 +194,41 @@ class StockService:
         return movement
 
     @staticmethod
-    def low_stock_products():
+    def low_stock_products(company_id: int | None = None):
         """Return products where current_stock <= minimum_stock (active products only)."""
         from apps.inventory.models import Product
         from django.db.models import F
 
-        return Product.objects.filter(
+        qs = Product.objects.filter(
             is_active=True,
             current_stock__lte=F("minimum_stock"),
-        ).select_related("category").order_by("current_stock")
+        )
+        if company_id:
+            qs = qs.filter(company_id=company_id)
+        return qs.select_related("category").order_by("current_stock")
 
     @staticmethod
-    def critical_stock_products():
+    def critical_stock_products(company_id: int | None = None):
         """Return products where current_stock > 0 and stock is at or below critical threshold."""
         from apps.inventory.models import Product
         from django.db.models import F
 
-        return Product.objects.filter(
+        qs = Product.objects.filter(
             is_active=True,
             current_stock__gt=0,
             current_stock__lte=F("critical_stock"),
-        ).select_related("category").order_by("current_stock")
+        )
+        if company_id:
+            qs = qs.filter(company_id=company_id)
+        return qs.select_related("category").order_by("current_stock")
 
     @staticmethod
-    def out_of_stock_products():
+    def out_of_stock_products(company_id: int | None = None):
         """Return active products with zero stock."""
         from apps.inventory.models import Product
 
-        return Product.objects.filter(is_active=True, current_stock=0).select_related("category")
+        qs = Product.objects.filter(is_active=True, current_stock=0)
+        if company_id:
+            qs = qs.filter(company_id=company_id)
+        return qs.select_related("category")
 

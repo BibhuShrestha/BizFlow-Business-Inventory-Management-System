@@ -41,6 +41,7 @@
 | Part 17 | Business Alerts, Reminders, Cheque Management, SMS & Import/Export | `[x]` Complete (153 passing tests) |
 | Part 18 | Inline Quick-Add Modals, Entity Resolvers & Form State Persistence | `[x]` Complete (166 passing tests) |
 | Part 19 | Double-Entry Accounting Indicators & Party Ledger Portal Suite | `[x]` Complete (170 passing tests) |
+| Part 20 | Minimal UI/UX, Performance & Resource Optimization | `[x]` Complete (170 passing / test suite optimized) |
 
 ---
 
@@ -181,3 +182,28 @@
 - `tests/test_performance_and_security.py`: 13 passing tests.
 - Total test suite: 100 passing tests (100% pass rate).
 - Original Flask project integrity verified (100% untouched).
+
+---
+
+## Part 20 — Minimal UI/UX, Performance & Resource Optimization Summary
+
+### 1. Database & ORM Optimization
+- **N+1 Query Elimination**: Updated `Sale` and `Purchase` property calculation methods (`paid_amount`, `subtotal`) to inspect `_prefetched_objects_cache` before firing secondary database queries.
+- **Overdue Computation**: Rewrote `CreditService.get_credit_summary` to execute a single-pass scan with payment relation prefetching and `.exclude(payment_status=Sale.STATUS_PAID)`.
+- **Date Boundary Scoping**: Updated `NotificationService.check_payment_due_reminders` and `check_cheque_reminders` to restrict SQL queries to upcoming 7-day ranges rather than scanning all open records across history.
+- **Lazy Pagination**: Refactored `credit_given_list` and `credit_taken_list` to avoid in-memory list conversion when dynamic status filtering is not requested.
+
+### 2. Multi-Tenancy Scoping & Isolation
+- Enforced active company filtering across `dashboard`, `expense_list`, `customer_list`, `supplier_list`, `credit_given_list`, and `credit_taken_list`.
+- Extended `StockService` (`low_stock_products`, `critical_stock_products`, `out_of_stock_products`) to support optional `company_id` parameter.
+
+### 3. Frontend & Asset Optimization
+- Removed render-blocking `@import` font call from `main.css`.
+- Configured parallel preconnect and `<link rel="stylesheet">` tags in `base.html` with `display=swap` to reduce layout shift and network latency.
+
+### 4. Bug Fixes & Usability
+- Fixed `context_processors.py` broken import (`apps.dashboard.models.Notification` -> `apps.audit.models.Notification`), eliminating swallowed exceptions on every request and restoring unread notification badges.
+- Fixed 404 links on dashboard (`/transactions/sales/` and `/transactions/purchases/` -> `{% url 'sales:list' %}` and `{% url 'purchases:list' %}`).
+- Fixed KPI card key names on dashboard template to render live metrics.
+- Fixed `NepaliDateService.format_nepali_date` to convert Gregorian date to Bikram Sambat date before formatting.
+- Added 60-second in-memory cache throttle to `NotificationService.run_all_monitors` on dashboard load.

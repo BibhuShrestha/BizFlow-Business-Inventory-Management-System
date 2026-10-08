@@ -578,15 +578,25 @@ class CreditService:
 
         today = timezone.localdate()
 
-        # Overdue Given
-        overdue_sales = [s for s in sales_q.filter(due_date__lt=today) if s.remaining_amount > Decimal("0.00")]
-        overdue_given_count = len(overdue_sales)
-        overdue_given_amount = sum((s.remaining_amount for s in overdue_sales), Decimal("0.00"))
+        # Overdue Given (Receivables)
+        overdue_sales_cand = sales_q.filter(due_date__lt=today).exclude(payment_status=Sale.STATUS_PAID).prefetch_related("payments")
+        overdue_given_list = []
+        for s in overdue_sales_cand:
+            rem = s.remaining_amount
+            if rem > Decimal("0.00"):
+                overdue_given_list.append(rem)
+        overdue_given_count = len(overdue_given_list)
+        overdue_given_amount = sum(overdue_given_list, Decimal("0.00"))
 
-        # Overdue Taken
-        overdue_purchases = [p for p in purchases_q.filter(due_date__lt=today) if p.remaining_amount > Decimal("0.00")]
-        overdue_taken_count = len(overdue_purchases)
-        overdue_taken_amount = sum((p.remaining_amount for p in overdue_purchases), Decimal("0.00"))
+        # Overdue Taken (Payables)
+        overdue_purchases_cand = purchases_q.filter(due_date__lt=today).exclude(payment_status=Purchase.STATUS_PAID).prefetch_related("payments")
+        overdue_taken_list = []
+        for p in overdue_purchases_cand:
+            rem = p.remaining_amount
+            if rem > Decimal("0.00"):
+                overdue_taken_list.append(rem)
+        overdue_taken_count = len(overdue_taken_list)
+        overdue_taken_amount = sum(overdue_taken_list, Decimal("0.00"))
 
         net_balance = customer_due - supplier_due
         net_type = "Receivable (Dr.)" if net_balance >= Decimal("0.00") else "Payable (Cr.)"

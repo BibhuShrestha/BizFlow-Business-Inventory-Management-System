@@ -280,10 +280,17 @@ class NotificationService:
         """
         today = timezone.localdate()
         today_str = today.isoformat()
+        max_due_date = today + timezone.timedelta(days=7)
         stats = {"sales_due": 0, "sales_overdue": 0, "purchases_due": 0, "purchases_overdue": 0}
 
         # 1. Sales Receivables
-        sales = Sale.objects.filter(is_active=True, due_date__isnull=False).select_related("customer", "company")
+        sales = Sale.objects.filter(
+            is_active=True,
+            due_date__isnull=False,
+            due_date__lte=max_due_date,
+        ).exclude(
+            payment_status=Sale.STATUS_PAID,
+        ).select_related("customer", "company").prefetch_related("payments")
         if company_id:
             sales = sales.filter(company_id=company_id)
 
@@ -345,7 +352,13 @@ class NotificationService:
                 )
 
         # 2. Purchases Payables
-        purchases = Purchase.objects.filter(is_active=True, due_date__isnull=False).select_related("supplier", "company")
+        purchases = Purchase.objects.filter(
+            is_active=True,
+            due_date__isnull=False,
+            due_date__lte=max_due_date,
+        ).exclude(
+            payment_status=Purchase.STATUS_PAID,
+        ).select_related("supplier", "company").prefetch_related("payments")
         if company_id:
             purchases = purchases.filter(company_id=company_id)
 
@@ -422,9 +435,10 @@ class NotificationService:
         today_str = today.isoformat()
         stats = {"cheques_due": 0, "cheques_overdue": 0}
 
-        cheques = Cheque.objects.filter(status=Cheque.STATUS_PENDING).select_related(
-            "customer", "supplier", "company"
-        )
+        cheques = Cheque.objects.filter(
+            status=Cheque.STATUS_PENDING,
+            cheque_date__lte=today + timezone.timedelta(days=7),
+        ).select_related("customer", "supplier", "company")
         if company_id:
             cheques = cheques.filter(company_id=company_id)
 

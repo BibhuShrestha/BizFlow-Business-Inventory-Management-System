@@ -22,7 +22,7 @@ def active_company(request):
         except Exception:
             user_comps = []
         try:
-            from apps.dashboard.models import Notification
+            from apps.audit.models import Notification
             unread_count = Notification.objects.filter(user=user, is_read=False).count()
         except Exception:
             unread_count = 0

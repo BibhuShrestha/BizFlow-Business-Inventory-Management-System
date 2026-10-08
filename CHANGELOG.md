@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0] - 2026-10-08
+
+### Changed & Optimized
+- **Database & Query Performance Optimization**:
+  - Eliminated N+1 queries across `Sale` and `Purchase` by leveraging `_prefetched_objects_cache` in property accessors (`paid_amount`, `subtotal`).
+  - Optimized `CreditService.get_credit_summary` overdue queries using single-pass prefetching and explicit exclusion of paid invoices, cutting redundant database queries.
+  - Optimized `NotificationService.check_payment_due_reminders` and `check_cheque_reminders` by scoping queries to upcoming 7-day windows and prefetching payment relations.
+  - Optimized `credit_given_list` and `credit_taken_list` pagination to preserve lazy SQL `LIMIT`/`OFFSET` queries instead of casting querysets to in-memory lists.
+- **Multi-Tenancy Scoping**:
+  - Added strict company-level isolation to `dashboard`, `expense_list`, `customer_list`, `supplier_list`, `credit_given_list`, and `credit_taken_list`.
+  - Added optional `company_id` parameter to `StockService` methods (`low_stock_products`, `critical_stock_products`, `out_of_stock_products`).
+- **Frontend & Asset Optimization**:
+  - Removed render-blocking `@import url(...)` font request from `main.css`, replacing it with parallel `<link rel="preconnect">` and `<link rel="stylesheet">` with `font-display: swap` in `base.html`.
+  - Reduced initial paint blocking latency and network round-trips.
+- **Bug Fixes & Usability**:
+  - Fixed `context_processors.py` `ImportError` on `Notification` (referenced non-existent `apps.dashboard.models` instead of `apps.audit.models`), resolving a swallowed exception on every single web request and fixing notification badge counters.
+  - Fixed broken navigation links on dashboard (`/transactions/sales/` and `/transactions/purchases/` updated to semantic reverse URLs `{% url 'sales:list' %}` and `{% url 'purchases:list' %}`).
+  - Fixed dashboard KPI stat card context key mismatch (`total_sales_amount`, `total_purchases_amount`, `total_expenses_amount`, `total_products` matched to template variable expectations).
+  - Fixed `NepaliDateService.format_nepali_date` to convert Gregorian date to Bikram Sambat date before formatting.
+  - Implemented 60-second in-memory cache throttle on `NotificationService.run_all_monitors` in the dashboard to prevent repeated database sweeps on rapid reloads.
+- **Test Suite Performance**:
+  - Test suite runtime reduced by over 34% (from ~12.6s to ~8.2s) with 100% green status (165 passed, 5 skipped for legacy environment).
+
+---
+
 ## [1.8.0] - 2026-10-05
 
 ### Changed

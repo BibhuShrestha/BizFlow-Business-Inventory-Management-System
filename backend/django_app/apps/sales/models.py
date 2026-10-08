@@ -86,6 +86,10 @@ class Sale(models.Model):
     @property
     def subtotal(self) -> Decimal:
         """Calculate subtotal before discount and tax."""
+        if hasattr(self, "_prefetched_objects_cache") and "items" in self._prefetched_objects_cache:
+            items_total = [item.total for item in self.items.all() if item.total is not None]
+            if items_total:
+                return sum(items_total, Decimal("0.00"))
         items_subtotal = self.items.aggregate(models.Sum("total"))["total__sum"]
         if items_subtotal is not None:
             return items_subtotal
@@ -94,6 +98,16 @@ class Sale(models.Model):
     @property
     def paid_amount(self) -> Decimal:
         """Total payments received for this sale."""
+        if hasattr(self, "_prefetched_objects_cache") and "payments" in self._prefetched_objects_cache:
+            completed_payments = [
+                p.amount for p in self.payments.all()
+                if getattr(p, "status", "").lower() == "completed"
+            ]
+            if completed_payments:
+                return sum(completed_payments, Decimal("0.00"))
+            if self.payment_status == self.STATUS_PAID:
+                return self.total
+            return Decimal("0.00")
         total_p = self.payments.filter(status__iexact="Completed").aggregate(models.Sum("amount"))["amount__sum"]
         if total_p is not None:
             return total_p

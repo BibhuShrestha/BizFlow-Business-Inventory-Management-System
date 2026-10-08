@@ -192,7 +192,7 @@
   <div class="card">
     <div class="card-header">
       <h3 class="card-title">Recent Sales</h3>
-      <a href="/transactions/sales/" class="btn btn-ghost btn-sm">View All</a>
+      <a href="{% url 'sales:list' %}" class="btn btn-ghost btn-sm">View All</a>
     </div>
     <div class="table-container" style="border:none;border-radius:0;">
       <table>
@@ -228,7 +228,7 @@
   <div class="card">
     <div class="card-header">
       <h3 class="card-title">Recent Purchases</h3>
-      <a href="/transactions/purchases/" class="btn btn-ghost btn-sm">View All</a>
+      <a href="{% url 'purchases:list' %}" class="btn btn-ghost btn-sm">View All</a>
     </div>
     <div class="table-container" style="border:none;border-radius:0;">
       <table>

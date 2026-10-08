@@ -40,47 +40,74 @@ def index(request: HttpRequest) -> HttpResponse:
         return redirect("inventory:product_list")
 
     today = timezone.localdate()
+    company_id = getattr(request.user.active_company, "id", None) if getattr(request.user, "active_company", None) else None
+
+    # Base querysets scoped by active company if present
+    sales_qs = Sale.objects.filter(is_active=True)
+    purchases_qs = Purchase.objects.filter(is_active=True)
+    products_qs = Product.objects.filter(is_active=True)
+    expenses_qs = Expense.objects.all()
+    customers_qs = Customer.objects.filter(is_active=True)
+    suppliers_qs = Supplier.objects.filter(is_active=True)
+
+    if company_id:
+        sales_qs = sales_qs.filter(company_id=company_id)
+        purchases_qs = purchases_qs.filter(company_id=company_id)
+        products_qs = products_qs.filter(company_id=company_id)
+        expenses_qs = expenses_qs.filter(company_id=company_id)
+        customers_qs = customers_qs.filter(company_id=company_id)
+        suppliers_qs = suppliers_qs.filter(company_id=company_id)
 
     # Metrics
-    todays_sales = Sale.objects.filter(sale_date__date=today).count()
-    todays_purchases = Purchase.objects.filter(purchase_date__date=today).count()
-    total_products = Product.objects.filter(is_active=True).count()
-    low_stock = StockService.low_stock_products().count()
-    out_of_stock = StockService.out_of_stock_products().count()
-    customers_count = Customer.objects.filter(is_active=True).count()
-    suppliers_count = Supplier.objects.filter(is_active=True).count()
+    todays_sales = sales_qs.filter(sale_date__date=today).count()
+    todays_purchases = purchases_qs.filter(purchase_date__date=today).count()
+    total_products = products_qs.count()
+    low_stock = StockService.low_stock_products(company_id=company_id).count()
+    out_of_stock = StockService.out_of_stock_products(company_id=company_id).count()
+    customers_count = customers_qs.count()
+    suppliers_count = suppliers_qs.count()
     unread_notifications = Notification.objects.filter(user=request.user, is_read=False).count()
 
     # Financial sums
-    total_sales_amount = Sale.objects.filter(is_active=True).aggregate(t=Sum("total"))["t"] or Decimal("0.00")
-    total_purchases_amount = Purchase.objects.filter(is_active=True).aggregate(t=Sum("total"))["t"] or Decimal("0.00")
-    total_expenses_amount = Expense.objects.all().aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
+    total_sales_amount = sales_qs.aggregate(t=Sum("total"))["t"] or Decimal("0.00")
+    total_purchases_amount = purchases_qs.aggregate(t=Sum("total"))["t"] or Decimal("0.00")
+    total_expenses_amount = expenses_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
     net_profit = total_sales_amount - total_purchases_amount - total_expenses_amount
 
     # Receivables & Payables summary
-    company_id = getattr(request.user.active_company, "id", None) if getattr(request.user, "active_company", None) else None
     credit_summary = CreditService.get_credit_summary(company_id=company_id)
 
-    # Central Business Monitoring & Alerts
-    NotificationService.run_all_monitors(company_id=company_id, user=request.user)
+    # Central Business Monitoring & Alerts with 60-second cooldown throttle
+    from django.core.cache import cache
+    cache_key = f"monitors_run_{company_id or 'global'}_{request.user.id}"
+    if not cache.get(cache_key):
+        NotificationService.run_all_monitors(company_id=company_id, user=request.user)
+        cache.set(cache_key, True, timeout=60)
+
     business_alerts = NotificationService.get_dashboard_business_alerts(company_id=company_id)
     popups = NotificationService.get_active_popups(request.user)
 
     # Recent activity
-    recent_sales = Sale.objects.select_related("customer").filter(is_active=True).order_by("-sale_date")[:5]
-    recent_purchases = Purchase.objects.select_related("supplier").filter(is_active=True).order_by("-purchase_date")[:5]
+    recent_sales = sales_qs.select_related("customer").order_by("-sale_date")[:5]
+    recent_purchases = purchases_qs.select_related("supplier").order_by("-purchase_date")[:5]
 
     context = {
         "todays_sales": todays_sales,
         "todays_purchases": todays_purchases,
         "total_products": total_products,
+        "product_count": total_products,
         "low_stock": low_stock,
+        "low_stock_count": low_stock,
         "out_of_stock": out_of_stock,
+        "out_of_stock_count": out_of_stock,
         "customers": customers_count,
         "suppliers": suppliers_count,
         "notifications": unread_notifications,
+        "total_sales": total_sales_amount,
         "total_sales_amount": total_sales_amount,
+        "total_purchases": total_purchases_amount,
         "total_purchases_amount": total_purchases_amount,
+        "total_expenses": total_expenses_amount,
         "total_expenses_amount": total_expenses_amount,
         "net_profit": net_profit,
         "credit_summary": credit_summary,

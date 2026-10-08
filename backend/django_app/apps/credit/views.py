@@ -63,17 +63,24 @@ def credit_given_list(request: HttpRequest) -> HttpResponse:
             Q(customer__phone__icontains=search)
         )
 
+    company_id = getattr(request.user.active_company, "id", None) if getattr(request.user, "active_company", None) else None
+    if company_id:
+        query = query.filter(company_id=company_id)
+
     if customer_id:
         query = query.filter(customer_id=customer_id)
 
-    sales = list(query.order_by("-sale_date"))
-
-    # In-memory status filtering because status is dynamic based on payments and due date
+    # In-memory status filtering only when needed because status is dynamic based on payments and due date
     if status_filter:
-        sales = [s for s in sales if s.calculated_status.lower() == status_filter.lower()]
+        sales = [s for s in query.order_by("-sale_date") if s.calculated_status.lower() == status_filter.lower()]
+        page_obj = paginate_queryset(request, sales, per_page=15)
+    else:
+        page_obj = paginate_queryset(request, query.order_by("-sale_date"), per_page=15)
 
-    page_obj = paginate_queryset(request, sales, per_page=15)
-    customers = Customer.objects.filter(is_active=True).order_by("name")
+    customers = Customer.objects.filter(is_active=True)
+    if company_id:
+        customers = customers.filter(company_id=company_id)
+    customers = customers.order_by("name")
 
     return render(request, "credit/credit_given_list.html", {
         "page_obj": page_obj,
@@ -93,6 +100,9 @@ def credit_taken_list(request: HttpRequest) -> HttpResponse:
     supplier_id = request.GET.get("supplier", "")
 
     query = Purchase.objects.select_related("supplier", "company").prefetch_related("payments").filter(is_active=True)
+    company_id = getattr(request.user.active_company, "id", None) if getattr(request.user, "active_company", None) else None
+    if company_id:
+        query = query.filter(company_id=company_id)
 
     if search:
         query = query.filter(
@@ -105,13 +115,16 @@ def credit_taken_list(request: HttpRequest) -> HttpResponse:
     if supplier_id:
         query = query.filter(supplier_id=supplier_id)
 
-    purchases = list(query.order_by("-purchase_date"))
-
     if status_filter:
-        purchases = [p for p in purchases if p.calculated_status.lower() == status_filter.lower()]
+        purchases = [p for p in query.order_by("-purchase_date") if p.calculated_status.lower() == status_filter.lower()]
+        page_obj = paginate_queryset(request, purchases, per_page=15)
+    else:
+        page_obj = paginate_queryset(request, query.order_by("-purchase_date"), per_page=15)
 
-    page_obj = paginate_queryset(request, purchases, per_page=15)
-    suppliers = Supplier.objects.filter(is_active=True).order_by("name")
+    suppliers = Supplier.objects.filter(is_active=True)
+    if company_id:
+        suppliers = suppliers.filter(company_id=company_id)
+    suppliers = suppliers.order_by("name")
 
     return render(request, "credit/credit_taken_list.html", {
         "page_obj": page_obj,

@@ -180,6 +180,10 @@ class TestCoreExceptions:
 # ---------------------------------------------------------------------------
 # 5. Original Flask project is untouched
 # ---------------------------------------------------------------------------
+@pytest.mark.skipif(
+    not (_ROOT.parent / "business").exists(),
+    reason="Original Flask project directory not present at E:/project/business in this environment",
+)
 class TestFlaskProjectIntegrity:
     """Verify the original Flask project was not modified."""
 

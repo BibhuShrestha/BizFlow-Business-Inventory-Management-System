@@ -19,6 +19,9 @@ def expense_list(request: HttpRequest) -> HttpResponse:
     category = request.GET.get("category", "").strip()
 
     query = Expense.objects.all()
+    company = getattr(request.user, "active_company", None)
+    if company:
+        query = query.filter(company=company)
 
     if search:
         query = query.filter(
@@ -31,7 +34,7 @@ def expense_list(request: HttpRequest) -> HttpResponse:
         query = query.filter(category__iexact=category)
 
     page_obj = paginate_queryset(request, query.order_by("-expense_date"), per_page=15)
-    categories = Expense.objects.values_list("category", flat=True).distinct()
+    categories = query.values_list("category", flat=True).distinct()
     return render(request, "accounting/expense_list.html", {
         "page_obj": page_obj,
         "search": search,
