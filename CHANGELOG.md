@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.0] - 2026-10-09
+
+### Fixed & Resolved
+- **Admin User Management & Immediate Visibility**:
+  - Identified and fixed root cause where `user_views.py` provided `page_obj` in context while `user_list.html` iterated over `users`, causing the table to evaluate to empty and display "No users found" despite successful user creation.
+  - Linked `page_obj` and `users` harmoniously in context, and added pagination, multi-field search, role filtering, account status filtering, and sorting controls.
+  - Upgraded `UserCreateForm` and `user_form.html` to render explicit field-level error messages (preventing silent validation rejections on duplicate email or password strength requirements).
+  - Resolved missing migration for `last_activity` on `User` model (`0003_user_last_activity.py`).
+  - Added route alias for `/users/create/` and `/users/new/`.
+
+### Added
+- **Online vs Offline Activity Visibility**:
+  - Implemented lightweight `UserActivityMiddleware` tracking `last_activity` timestamps with a 60-second in-session write throttle to eliminate unnecessary database I/O.
+  - Added `User.is_online`, `User.online_status_label`, and `User.account_status_label` properties with configurable `USER_ONLINE_TIMEOUT_MINUTES` (defaults to 15 minutes).
+  - Added KPI summary cards to User Management: Total Users, Online Now, Offline Users, Active Accounts, and Disabled Accounts.
+  - Added visual status indicators (pulsating green dot for Online, neutral slate for Offline) and account status badges.
+- **Upgraded Business Analytics & Decision Support**:
+  - Authoritative financial accounting distinction: strictly separates earned **Sales Revenue** from actual **Cash Received** (customer payments). Unpaid credit sales are categorized as Trade Receivables, never cash.
+  - Accurate **Cost of Goods Sold (COGS)** derived from sold item costs (`SaleItem.quantity * product.purchase_price`).
+  - Computed **Net Cash Flow** (`Cash In - Cash Out`) where Cash Out equals supplier debt settlements plus operating expenses.
+  - Added **Intelligent Stock Reorder Suggestions** table identifying items at or below alert thresholds with calculated reorder quantities and estimated capital outlay.
+  - Extended period filtering: supports Today, Yesterday, This Week, This Month, This Quarter, This Year, Previous Year, and custom date range pickers (`date_from` and `date_to`).
+  - Added comprehensive CSV report export at `/reports/analytics/export/csv/` and print-ready stylesheet for one-click PDF generation.
+- **Verification & Test Suite**:
+  - Added comprehensive test suite `tests/test_user_management_and_analytics.py` with 12 tests.
+  - Expanded total repository test suite to **194 passing tests (100% green)**.
+
+---
+
 ## [2.0.1] - 2026-10-09
 
 ### Added

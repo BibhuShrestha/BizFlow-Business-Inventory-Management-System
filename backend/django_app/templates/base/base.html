@@ -31,6 +31,7 @@
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
   {% block extra_css %}{% endblock %}
+  {% block extra_head %}{% endblock %}
 </head>
 <body>
 <div class="layout">
@@ -110,15 +111,19 @@
       <span class="nav-section-label">Receivables & Payables</span>
       <a href="{% url 'credit:dashboard' %}" class="nav-item {% if request.resolver_match.namespace == 'credit' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        Receivables & Payables Summary
+        Receivables & Payables Hub
       </a>
-      <a href="{% url 'credit:given_list' %}" class="nav-item {% if 'credit/given' in request.path %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" /></svg>
-        Receivables Register (Customer Dues)
+      <a href="{% url 'credit:customers_dues' %}" class="nav-item {% if 'credit/customers-dues' in request.path or 'credit/given' in request.path %}active{% endif %}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+        Customer Receivables (Dr)
       </a>
-      <a href="{% url 'credit:taken_list' %}" class="nav-item {% if 'credit/taken' in request.path %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>
-        Payables Register (Supplier Dues)
+      <a href="{% url 'credit:suppliers_dues' %}" class="nav-item {% if 'credit/suppliers-dues' in request.path or 'credit/taken' in request.path %}active{% endif %}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg>
+        Supplier Payables (Cr)
+      </a>
+      <a href="{% url 'credit:overdue_list' %}" class="nav-item {% if 'credit/overdue' in request.path %}active{% endif %}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        Overdue Accounts
       </a>
       <a href="{% url 'credit:cheques_list' %}" class="nav-item {% if 'credit/cheques' in request.path %}active{% endif %}">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -126,27 +131,7 @@
       </a>
       <a href="{% url 'credit:payment_list' %}" class="nav-item {% if 'credit/payments' in request.path %}active{% endif %}">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        Payment Settlements
-      </a>
-      <a href="{% url 'credit:customers_dues' %}" class="nav-item {% if 'credit/customers-dues' in request.path %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-        Customer Receivables (Dr)
-      </a>
-      <a href="{% url 'credit:suppliers_dues' %}" class="nav-item {% if 'credit/suppliers-dues' in request.path %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" /></svg>
-        Supplier Payables (Cr)
-      </a>
-      <a href="{% url 'credit:overdue_list' %}" class="nav-item {% if 'credit/overdue' in request.path %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        Overdue Receivables & Payables
-      </a>
-      <a href="{% url 'credit:ledger_select' %}" class="nav-item {% if 'credit/ledger' in request.path %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-        Party Ledgers (Dr / Cr)
-      </a>
-      <a href="{% url 'credit:reports' %}" class="nav-item {% if 'credit/reports' in request.path %}active{% endif %}">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-        Receivables & Payables Reports
+        Settlement Vouchers
       </a>
 
       <span class="nav-section-label">Operations</span>

@@ -42,18 +42,22 @@ def index(request: HttpRequest) -> HttpResponse:
 def analytics_view(request: HttpRequest) -> HttpResponse:
     """Business Intelligence, KPIs, Inventory Velocity, and AI Decision Support."""
     company_id = getattr(request.user.active_company, "id", None)
+    period = request.GET.get("period", "").strip().lower()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
     days_str = request.GET.get("days", "30").strip()
-    try:
-        days = int(days_str)
-        if days not in [7, 30, 90, 365]:
+
+    days = 30
+    if days_str:
+        try:
+            days = int(days_str)
+        except ValueError:
             days = 30
-    except ValueError:
-        days = 30
 
     force_refresh = request.GET.get("refresh_ai", "0") in ("1", "true")
     focus_options = {
-        "sales", "purchases", "expenses", "profitability",
-        "inventory", "receivables", "payables",
+        "overview", "sales", "payments", "receivables", "purchases", "payables",
+        "expenses", "profitability", "inventory", "customers", "users",
     }
     selected_focus = request.GET.get("focus", "sales").strip().lower()
     if selected_focus not in focus_options:
@@ -61,7 +65,10 @@ def analytics_view(request: HttpRequest) -> HttpResponse:
 
     analytics_data = AnalyticsService.get_business_analytics(
         company_id=company_id,
-        days=days,
+        days=days if not period and not (date_from and date_to) else None,
+        period=period or None,
+        date_from=date_from or None,
+        date_to=date_to or None,
         include_ai=True,
         force_ai_refresh=force_refresh,
         user_id=request.user.id,
@@ -69,8 +76,11 @@ def analytics_view(request: HttpRequest) -> HttpResponse:
 
     return render(request, "reports/analytics.html", {
         "analytics": analytics_data,
-        "selected_days": days,
+        "selected_days": analytics_data.get("period_days", days),
+        "selected_period": analytics_data.get("period_label", f"{days}d"),
         "selected_focus": selected_focus,
+        "date_from": date_from,
+        "date_to": date_to,
     })
 
 
@@ -79,6 +89,9 @@ def analytics_view(request: HttpRequest) -> HttpResponse:
 def analytics_ai_refresh(request: HttpRequest) -> HttpResponse:
     """Explicitly trigger on-demand AI decision support refresh."""
     company_id = getattr(request.user.active_company, "id", None)
+    period = request.POST.get("period", request.GET.get("period", "")).strip()
+    date_from = request.POST.get("date_from", request.GET.get("date_from", "")).strip()
+    date_to = request.POST.get("date_to", request.GET.get("date_to", "")).strip()
     days_str = request.POST.get("days", request.GET.get("days", "30")).strip()
     try:
         days = int(days_str)
@@ -87,7 +100,10 @@ def analytics_ai_refresh(request: HttpRequest) -> HttpResponse:
 
     AnalyticsService.get_business_analytics(
         company_id=company_id,
-        days=days,
+        days=days if not period and not (date_from and date_to) else None,
+        period=period or None,
+        date_from=date_from or None,
+        date_to=date_to or None,
         include_ai=True,
         force_ai_refresh=True,
         user_id=request.user.id,
@@ -97,7 +113,16 @@ def analytics_ai_refresh(request: HttpRequest) -> HttpResponse:
     if request.headers.get("accept") == "application/json":
         return JsonResponse({"status": "success", "message": "Refreshed"})
 
-    return redirect(f"/reports/analytics/?days={days}")
+    params = []
+    if period:
+        params.append(f"period={period}")
+    elif date_from and date_to:
+        params.append(f"date_from={date_from}&date_to={date_to}")
+    else:
+        params.append(f"days={days}")
+
+    query_str = f"?{'&'.join(params)}" if params else ""
+    return redirect(f"/reports/analytics/{query_str}")
 
 
 @login_required_custom
@@ -117,6 +142,69 @@ def export_summary_csv(request: HttpRequest) -> HttpResponse:
         ["Low Stock Items", str(metrics.low_stock_count)],
     ]
     return generate_csv_response(headers, rows, f"financial_summary_{timezone.localdate()}")
+
+
+@login_required_custom
+@manager_required
+def export_analytics_csv(request: HttpRequest) -> HttpResponse:
+    """Export comprehensive business analytics data to CSV matching active filters."""
+    company_id = getattr(request.user.active_company, "id", None)
+    period = request.GET.get("period", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+    days_str = request.GET.get("days", "30").strip()
+    try:
+        days = int(days_str)
+    except ValueError:
+        days = 30
+
+    data = AnalyticsService.get_business_analytics(
+        company_id=company_id,
+        days=days if not period and not (date_from and date_to) else None,
+        period=period or None,
+        date_from=date_from or None,
+        date_to=date_to or None,
+        include_ai=False,
+    )
+
+    headers = ["Report Section", "Metric / Indicator", "Amount / Value (NPR)", "Notes"]
+    rows = [
+        ["Period Overview", "Start Date", data["start_date"].strftime("%Y-%m-%d"), "Inclusive"],
+        ["Period Overview", "End Date", data["end_date"].strftime("%Y-%m-%d"), "Inclusive"],
+        ["Period Overview", "Period Duration", f"{data['period_days']} days", data["period_label"]],
+        ["Period Overview", "Business Health Score", str(data["health_score"]), data["health_grade"]],
+        ["Sales & Revenue", "Total Billed Revenue", str(data["revenue"]), "Gross sales invoices"],
+        ["Sales & Revenue", "Sales Invoices Count", str(data["sales_count"]), "Transaction count"],
+        ["Sales & Revenue", "Average Order Value", str(data["average_order_value"]), "Per invoice avg"],
+        ["Sales & Revenue", "Period Growth Velocity", f"{data['growth_pct']}%", "vs prior period"],
+        ["Sales & Revenue", "Sales Total Discounts", str(data["sales_discount"]), "Discounts given"],
+        ["Cash Collections", "Cash Actually Received", str(data["cash_received"]), "From customer settlements"],
+        ["Cash Collections", "Collection Rate", f"{data['collection_rate_pct']}%", "Cash received / Revenue"],
+        ["Cash Collections", "Customer Dues (Receivables)", str(data["receivables_total"]), "Total unpaid credit"],
+        ["Cash Collections", "Overdue Receivables", str(data["receivables_overdue"]), "Passed due date"],
+        ["Procurement & Costs", "Purchase Bills", str(data["purchases"]), "Inward vendor stock"],
+        ["Procurement & Costs", "Cost of Goods Sold (COGS)", str(data["cogs"]), "Cost of sold inventory"],
+        ["Procurement & Costs", "Operating Expenses", str(data["expenses"]), "Rent, utilities, salaries, etc."],
+        ["Procurement & Costs", "Cash Paid to Suppliers", str(data["cash_paid_suppliers"]), "Vendor settlements"],
+        ["Procurement & Costs", "Supplier Dues (Payables)", str(data["payables_total"]), "Total owed to vendors"],
+        ["Profitability", "Estimated Gross Profit", str(data["gross_profit"]), "Revenue - COGS"],
+        ["Profitability", "Gross Profit Margin", f"{data['gross_margin_pct']}%", "Gross Profit / Revenue"],
+        ["Profitability", "Estimated Net Profit", str(data["net_profit"]), "Gross Profit - Operating Expenses"],
+        ["Profitability", "Net Profit Margin", f"{data['net_margin_pct']}%", "Net Profit / Revenue"],
+        ["Cash Flow", "Total Cash In", str(data["cash_received"]), "Customer payments received"],
+        ["Cash Flow", "Total Cash Out", str(data["total_cash_out"]), "Supplier payments + Expenses"],
+        ["Cash Flow", "Net Cash Flow", str(data["net_cash_flow"]), "Cash In - Cash Out"],
+        ["Working Capital", "Net Working Capital", str(data["working_capital_net"]), "Receivables - Payables"],
+        ["Inventory Snapshot", "Active Products Count", str(data["total_products"]), "Catalog count"],
+        ["Inventory Snapshot", "Total Stock Units", str(data["total_stock_units"]), "On-hand quantity"],
+        ["Inventory Snapshot", "Stock Valuation (at Cost)", str(data["inventory_valuation"]), "Based on purchase price"],
+        ["Inventory Snapshot", "Stock Valuation (at Retail)", str(data["retail_valuation"]), "Based on selling price"],
+        ["Inventory Snapshot", "Low Stock Products", str(data["low_stock_count"]), "At or below alert level"],
+        ["Inventory Snapshot", "Out of Stock Products", str(data["out_of_stock_count"]), "Zero stock available"],
+        ["Cheque Portfolio", "Cheques Maturing (Next 7d)", str(data["cheques_due_7d"]), f"Value: Rs. {data['cheques_due_amount']}"],
+    ]
+    filename = f"business_analytics_{timezone.localdate()}_{data['period_label']}"
+    return generate_csv_response(headers, rows, filename)
 
 
 @login_required_custom

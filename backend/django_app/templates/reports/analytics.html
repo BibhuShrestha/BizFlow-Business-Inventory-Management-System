@@ -1,683 +1,1249 @@
 {% extends "base/base.html" %}
-{% block title %}AI Analytics & Business Intelligence - BizFlow{% endblock %}
-{% block page_title %}AI Analytics & Decision Support{% endblock %}
+{% block title %}Business Analytics & Intelligence - BizFlow{% endblock %}
+{% block page_title %}Executive Analytics & AI Decision Support{% endblock %}
 
-{% block extra_head %}
+{% block extra_css %}
 <meta name="robots" content="noindex, nofollow">
 <style>
-  .analytics-hero {
-    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
-    color: #ffffff;
+  /* === Executive Analytics Design System === */
+  .ea-container {
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+
+  /* Toolbar & Filter Bar */
+  .ea-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+  .ea-period-pills {
+    display: inline-flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .ea-period-pill {
+    padding: 6px 14px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .ea-period-pill:hover {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.6);
+  }
+  .ea-period-pill.active {
+    background: #ffffff;
+    color: #1e40af;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  }
+
+  .ea-custom-date {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .ea-date-input {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: #0f172a;
+    background: #f8fafc;
+  }
+  .ea-date-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  }
+
+  /* Executive KPI Cards Grid */
+  .ea-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 1300px) {
+    .ea-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .ea-kpi-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .ea-kpi-grid { grid-template-columns: 1fr; }
+  }
+
+  .ea-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .ea-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px -2px rgba(15, 23, 42, 0.08);
+  }
+  .ea-kpi-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+  .kpi-revenue::before { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+  .kpi-cash::before { background: linear-gradient(90deg, #10b981, #059669); }
+  .kpi-dues::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+  .kpi-profit::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+  .kpi-cashflow::before { background: linear-gradient(90deg, #06b6d4, #0891b2); }
+  .kpi-stock::before { background: linear-gradient(90deg, #64748b, #475569); }
+
+  .ea-kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .ea-kpi-num {
+    font-size: 23px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .ea-kpi-sub {
+    font-size: 11.5px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  /* Executive AI Hero Banner */
+  .ea-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+    color: #ffffff;
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 20px -4px rgba(30, 58, 138, 0.25);
+    position: relative;
+    overflow: hidden;
+  }
+  .ea-hero-backdrop {
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    pointer-events: none;
+  }
+  .ea-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    padding-bottom: 20px;
+  }
+  .ea-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    margin-bottom: 10px;
+  }
+  .ea-hero-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.01em;
+  }
+  .ea-hero-summary {
+    font-size: 14px;
+    opacity: 0.92;
+    line-height: 1.55;
+    max-width: 720px;
+    margin: 0;
+  }
+
+  .ea-health-meter {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .ea-health-score-val {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .ea-action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .ea-action-card {
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 10px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* Interactive Chart Card */
+  .ea-chart-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
     padding: 24px;
     margin-bottom: 24px;
-    box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.15), 0 2px 4px -2px rgba(30, 64, 175, 0.1);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   }
-  .analytics-hero-header {
+  .ea-chart-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     flex-wrap: wrap;
     gap: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    padding-bottom: 16px;
     margin-bottom: 20px;
   }
-  .health-badge-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    padding: 6px 14px;
-    border-radius: 9999px;
-    font-size: 13px;
-    font-weight: 600;
-  }
-  .action-plan-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-    margin-top: 20px;
-  }
-  .action-card {
-    background: #ffffff;
+  .ea-chart-title {
+    font-size: 17px;
+    font-weight: 700;
     color: #0f172a;
-    border-radius: 8px;
-    padding: 16px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    margin: 0 0 4px 0;
   }
-  .chart-container {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 24px;
-  }
-  .bar-chart-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 12px;
-    height: 180px;
-    padding: 10px 0;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  .bar-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%;
-    justify-content: flex-end;
-  }
-  .bar-fill {
-    width: 100%;
-    max-width: 28px;
-    background: #2563eb;
-    border-radius: 4px 4px 0 0;
-    transition: height 0.3s ease;
-  }
-  .bar-fill:hover {
-    background: #1d4ed8;
-  }
-  .bar-label {
-    font-size: 11px;
+  .ea-chart-subtitle {
+    font-size: 13px;
     color: #64748b;
-    margin-top: 6px;
-    white-space: nowrap;
-  }
-  .badge-high {
-    background: #fef2f2;
-    color: #b91c1c;
-    border: 1px solid #fecaca;
-  }
-  .badge-med {
-    background: #fffbeb;
-    color: #b45309;
-    border: 1px solid #fde68a;
-  }
-  .badge-low {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
-  }
-  .meter-bar {
-    height: 8px;
-    border-radius: 4px;
-    background: #f1f5f9;
-    overflow: hidden;
-    margin: 6px 0;
-  }
-  .meter-fill {
-    height: 100%;
-    background: #3b82f6;
-    border-radius: 4px;
+    margin: 0;
   }
 
-  .analytics-explorer { background:#fff; border:1px solid #dfe7f1; border-radius:10px; padding:22px; margin-bottom:24px; box-shadow:0 1px 3px rgba(15,23,42,.04); }
-  .explorer-header { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; margin-bottom:18px; }
-  .explorer-kicker { margin:0 0 5px; color:#2563eb; font-size:10px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
-  .explorer-header h2 { margin:0; color:#0f172a; font-size:19px; letter-spacing:-.025em; }
-  .explorer-header p { margin:6px 0 0; color:#64748b; font-size:12px; }
-  .explorer-select-wrap { min-width:210px; }
-  .explorer-select-wrap label { display:block; margin-bottom:5px; color:#475569; font-size:11px; font-weight:600; }
-  .explorer-select { width:100%; min-height:38px; padding:0 32px 0 10px; color:#0f172a; background:#fff; border:1px solid #cbd5e1; border-radius:6px; font:600 12px Inter,system-ui,sans-serif; }
-  .explorer-panel { display:grid; grid-template-columns:minmax(250px,.78fr) minmax(0,1.5fr); gap:16px; }
-  .explorer-panel[hidden] { display:none !important; }
-  .explorer-kpis { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; align-content:start; }
-  .explorer-kpi { min-width:0; padding:13px; background:#f8fafc; border:1px solid #e8edf4; border-radius:7px; }
-  .explorer-kpi span { display:block; color:#64748b; font-size:10px; line-height:1.35; }
-  .explorer-kpi strong { display:block; margin-top:6px; color:#0f172a; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; overflow-wrap:anywhere; }
-  .explorer-figure { min-width:0; padding:14px 16px 10px; border:1px solid #e8edf4; border-radius:7px; }
-  .explorer-figure-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
-  .explorer-figure h3 { margin:0; color:#0f172a; font-size:13px; }
-  .explorer-figure p { margin:4px 0 0; color:#64748b; font-size:10px; }
-  .explorer-range { flex:none; color:#64748b; background:#f1f5f9; border-radius:99px; padding:5px 8px; font-size:9px; font-weight:600; }
-  .explorer-chart { display:block; width:100%; height:auto; min-height:180px; margin-top:9px; overflow:visible; }
-  .explorer-chart text { fill:#64748b; font-family:Inter,system-ui,sans-serif; font-size:10px; }
-  .explorer-empty { padding:42px 10px; color:#64748b; text-align:center; font-size:12px; }
-  .explorer-footnote { margin:10px 0 0; color:#94a3b8; font-size:10px; }
-  @media(max-width:850px) { .explorer-panel { grid-template-columns:1fr; } .explorer-kpis { grid-template-columns:repeat(4,minmax(0,1fr)); } }
-  @media(max-width:640px) { .analytics-explorer { padding:16px; } .explorer-header { align-items:stretch; flex-direction:column; } .explorer-select-wrap { width:100%; } .explorer-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } .explorer-figure { padding:12px 9px 8px; } .explorer-chart { min-height:150px; } }
+  .ea-chart-strip {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .ea-series-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    user-select: none;
+    transition: all 0.15s ease;
+  }
+  .ea-series-toggle.active-sales {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+  }
+  .ea-series-toggle.active-cash {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #047857;
+  }
+  .ea-series-toggle.active-expenses {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #b45309;
+  }
+
+  .ea-chart-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    border: 1px solid #f1f5f9;
+  }
+  @media (max-width: 768px) {
+    .ea-chart-summary-strip { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* SVG Chart Viewport */
+  .ea-chart-viewport {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background: linear-gradient(180deg, #fafcff 0%, #ffffff 100%);
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .ea-svg-chart {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Floating Tooltip */
+  .ea-chart-tooltip {
+    position: absolute;
+    display: none;
+    pointer-events: none;
+    z-index: 50;
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(6px);
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    transform: translate(-50%, -115%);
+    transition: left 0.05s ease, top 0.05s ease;
+    white-space: nowrap;
+  }
+  .ea-chart-tooltip::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0;
+    border-style: solid;
+    border-color: rgba(15, 23, 42, 0.92) transparent;
+    display: block;
+    width: 0;
+  }
+
+  /* Section Containers */
+  .ea-section-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 900px) {
+    .ea-section-grid { grid-template-columns: 1fr; }
+  }
+
+  .ea-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+  }
+  .ea-card-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .ea-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ea-card-body {
+    padding: 20px;
+  }
+
+  /* Leaderboard rank item */
+  .ea-rank-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    margin-bottom: 8px;
+    transition: background 0.1s ease;
+  }
+  .ea-rank-item:hover { background: #f1f5f9; }
+  .ea-rank-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+  }
+  .ea-rank-badge.top-1 { background: #fef3c7; color: #b45309; }
+  .ea-rank-badge.top-2 { background: #e0f2fe; color: #0284c7; }
+  .ea-rank-badge.top-3 { background: #f1f5f9; color: #475569; }
+
+  /* Meter bar */
+  .ea-meter {
+    background: #e2e8f0;
+    border-radius: 9999px;
+    height: 7px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+  .ea-meter-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: #2563eb;
+  }
+
+  /* Empty state */
+  .ea-empty-box {
+    text-align: center;
+    padding: 32px 16px;
+    color: #64748b;
+  }
+  .ea-empty-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #94a3b8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  /* Optimal Inventory Healthy State */
+  .ea-healthy-stock-card {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  @media print {
+    .ea-toolbar, .no-print, .btn { display: none !important; }
+    body { background: #ffffff !important; }
+    .ea-kpi-card, .ea-card, .ea-chart-card { box-shadow: none !important; border: 1px solid #ccc !important; }
+  }
 </style>
 {% endblock %}
 
+{% block extra_head %}
+<!-- Redundant hook for backward compatibility -->
+{% endblock %}
+
 {% block content %}
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px;">
-  <div>
-    <h1 class="page-title" style="display:flex; align-items:center; gap:8px;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#1e40af"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-      Executive Analytics & AI Decision Support
-    </h1>
-    <p class="page-subtitle">Real-time margin metrics, inventory velocity, cashflow risk, and automated advisory.</p>
+<div class="ea-container">
+  <!-- Page Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:16px;">
+    <div>
+      <h1 style="font-size:22px; font-weight:700; color:#0f172a; margin-bottom:4px; letter-spacing:-0.02em;">Executive Analytics & AI Decision Support</h1>
+      <p style="font-size:13.5px; color:#64748b; margin:0;">Authoritative business metrics, revenue realization, cashflow trajectory, and inventory health.</p>
+    </div>
+    <div style="display:flex; gap:8px;" class="no-print">
+      <button onclick="window.print()" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Print Report
+      </button>
+      <a href="{% url 'reports:export_analytics_csv' %}?period={{ selected_period }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Export CSV
+      </a>
+      <form method="post" action="{% url 'reports:analytics_ai_refresh' %}" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="period" value="{{ selected_period }}">
+        <input type="hidden" name="date_from" value="{{ date_from }}">
+        <input type="hidden" name="date_to" value="{{ date_to }}">
+        <button type="submit" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(37,99,235,0.2);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          Refresh Advisor
+        </button>
+      </form>
+    </div>
   </div>
-  
-  <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-    <!-- Period Selector -->
-    <div style="display:inline-flex; background:#e2e8f0; border-radius:6px; padding:3px;">
-      <a href="?days=7&amp;focus={{ selected_focus }}" class="btn btn-sm {% if selected_days == 7 %}btn-primary{% else %}btn-ghost{% endif %}" style="padding:4px 10px; font-size:12px;">7 Days</a>
-      <a href="?days=30&amp;focus={{ selected_focus }}" class="btn btn-sm {% if selected_days == 30 %}btn-primary{% else %}btn-ghost{% endif %}" style="padding:4px 10px; font-size:12px;">30 Days</a>
-      <a href="?days=90&amp;focus={{ selected_focus }}" class="btn btn-sm {% if selected_days == 90 %}btn-primary{% else %}btn-ghost{% endif %}" style="padding:4px 10px; font-size:12px;">90 Days</a>
-      <a href="?days=365&amp;focus={{ selected_focus }}" class="btn btn-sm {% if selected_days == 365 %}btn-primary{% else %}btn-ghost{% endif %}" style="padding:4px 10px; font-size:12px;">1 Year</a>
+
+  <!-- Period & Date Range Filter Toolbar -->
+  <div class="ea-toolbar no-print">
+    <div class="ea-period-pills">
+      <a href="?period=today&focus={{ selected_focus }}" class="ea-period-pill {% if selected_period == 'today' %}active{% endif %}">Today</a>
+      <a href="?period=yesterday&focus={{ selected_focus }}" class="ea-period-pill {% if selected_period == 'yesterday' %}active{% endif %}">Yesterday</a>
+      <a href="?period=7d&focus={{ selected_focus }}" class="ea-period-pill {% if selected_period == '7d' %}active{% endif %}">7 Days</a>
+      <a href="?period=30d&focus={{ selected_focus }}" class="ea-period-pill {% if selected_period == '30d' %}active{% endif %}">30 Days</a>
+      <a href="?period=90d&focus={{ selected_focus }}" class="ea-period-pill {% if selected_period == '90d' %}active{% endif %}">90 Days</a>
+      <a href="?period=365d&focus={{ selected_focus }}" class="ea-period-pill {% if selected_period == '365d' %}active{% endif %}">This Year</a>
+      <a href="?period=previous_year&focus={{ selected_focus }}" class="ea-period-pill {% if selected_period == 'previous_year' %}active{% endif %}">Last Year</a>
     </div>
 
-    <!-- On-demand AI Refresh -->
-    <form method="POST" action="{% url 'reports:analytics_ai_refresh' %}" style="display:inline;">
-      {% csrf_token %}
-      <input type="hidden" name="days" value="{{ selected_days }}">
-      <button type="submit" class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:6px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-        Refresh AI Advisor
-      </button>
+    <!-- Custom Range Selector -->
+    <form method="get" action="{% url 'reports:analytics' %}" class="ea-custom-date">
+      <input type="hidden" name="focus" value="{{ selected_focus }}">
+      <span style="font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Range:</span>
+      <input type="date" name="date_from" value="{{ date_from }}" class="ea-date-input" title="Start date">
+      <span style="color:#94a3b8; font-weight:bold;">→</span>
+      <input type="date" name="date_to" value="{{ date_to }}" class="ea-date-input" title="End date">
+      <button type="submit" class="btn btn-primary btn-sm" style="height:34px; padding:0 14px;">Apply</button>
     </form>
   </div>
-</div>
 
-<!-- Interactive metric explorer: choose a business area and see its figures and chart. -->
-<section class="analytics-explorer" aria-labelledby="explorer-title">
-  <div class="explorer-header">
-    <div>
-      <p class="explorer-kicker">Explore your numbers</p>
-      <h2 id="explorer-title">Choose what you want to review</h2>
-      <p>Switch between business areas to see key figures and a matching chart for the selected period.</p>
-    </div>
-    <div class="explorer-select-wrap">
-      <label for="analytics-topic">Review area</label>
-      <select id="analytics-topic" class="explorer-select">
-        <option value="sales" {% if selected_focus == "sales" %}selected{% endif %}>Sales</option>
-        <option value="purchases" {% if selected_focus == "purchases" %}selected{% endif %}>Purchases</option>
-        <option value="expenses" {% if selected_focus == "expenses" %}selected{% endif %}>Expenses</option>
-        <option value="profitability" {% if selected_focus == "profitability" %}selected{% endif %}>Profitability</option>
-        <option value="inventory" {% if selected_focus == "inventory" %}selected{% endif %}>Inventory</option>
-        <option value="receivables" {% if selected_focus == "receivables" %}selected{% endif %}>Customer dues</option>
-        <option value="payables" {% if selected_focus == "payables" %}selected{% endif %}>Supplier dues</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="explorer-panel" data-review-panel="sales" {% if selected_focus != "sales" %}hidden{% endif %}>
-    <div class="explorer-kpis" aria-label="Sales figures">
-      <div class="explorer-kpi"><span>Revenue</span><strong>Rs. {{ analytics.revenue|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Invoices</span><strong>{{ analytics.sales_count }}</strong></div>
-      <div class="explorer-kpi"><span>Average order</span><strong>Rs. {{ analytics.average_order_value|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Change vs prior period</span><strong>{{ analytics.growth_pct }}%</strong></div>
-    </div>
-    <div class="explorer-figure"><div class="explorer-figure-head"><div><h3 id="review-chart-title">Sales trend</h3><p id="review-chart-caption">Sales totals across the selected period.</p></div><span class="explorer-range">{{ selected_days }} days</span></div><svg id="review-chart" class="explorer-chart" viewBox="0 0 760 260" role="img" aria-label="Sales chart" aria-describedby="review-chart-caption"></svg><div data-empty-topic="sales" class="explorer-empty" hidden>No activity is recorded for this view and period.</div></div>
-  </div>
-
-  <div class="explorer-panel" data-review-panel="purchases" {% if selected_focus != "purchases" %}hidden{% endif %}>
-    <div class="explorer-kpis" aria-label="Purchase figures">
-      <div class="explorer-kpi"><span>Purchases</span><strong>Rs. {{ analytics.purchases|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Purchase bills</span><strong>{{ analytics.purchase_count }}</strong></div>
-      <div class="explorer-kpi"><span>Inventory valuation at cost</span><strong>Rs. {{ analytics.inventory_valuation|floatformat:2 }}</strong></div>
-    </div>
-    <div class="explorer-figure"><div class="explorer-figure-head"><div><h3>Purchase trend</h3><p>Purchase totals by day, week, or month.</p></div><span class="explorer-range">{{ selected_days }} days</span></div><svg class="explorer-chart" viewBox="0 0 760 260" role="img" aria-label="Purchase chart" data-chart-topic="purchases"></svg><div class="explorer-empty" data-empty-topic="purchases" hidden>No purchase activity is recorded for this period.</div></div>
-  </div>
-
-  <div class="explorer-panel" data-review-panel="expenses" {% if selected_focus != "expenses" %}hidden{% endif %}>
-    <div class="explorer-kpis" aria-label="Expense figures">
-      <div class="explorer-kpi"><span>Operating expenses</span><strong>Rs. {{ analytics.expenses|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Expense entries</span><strong>{{ analytics.expense_count }}</strong></div>
-      <div class="explorer-kpi"><span>Largest category</span><strong>{% if analytics.top_expense_categories %}{{ analytics.top_expense_categories.0.category }}{% else %}—{% endif %}</strong></div>
-    </div>
-    <div class="explorer-figure"><div class="explorer-figure-head"><div><h3>Expense trend</h3><p>Expense totals by day, week, or month.</p></div><span class="explorer-range">{{ selected_days }} days</span></div><svg class="explorer-chart" viewBox="0 0 760 260" role="img" aria-label="Expense chart" data-chart-topic="expenses"></svg><div class="explorer-empty" data-empty-topic="expenses" hidden>No expense activity is recorded for this period.</div></div>
-  </div>
-
-  <div class="explorer-panel" data-review-panel="profitability" {% if selected_focus != "profitability" %}hidden{% endif %}>
-    <div class="explorer-kpis" aria-label="Profitability figures">
-      <div class="explorer-kpi"><span>Estimated gross profit</span><strong>Rs. {{ analytics.gross_profit|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Estimated net profit</span><strong>Rs. {{ analytics.net_profit|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Gross margin</span><strong>{{ analytics.gross_margin_pct }}%</strong></div>
-      <div class="explorer-kpi"><span>Net margin</span><strong>{{ analytics.net_margin_pct }}%</strong></div>
-    </div>
-    <div class="explorer-figure"><div class="explorer-figure-head"><div><h3>Period financial breakdown</h3><p>Revenue compared with purchases, expenses, and estimated net profit.</p></div><span class="explorer-range">{{ selected_days }} days</span></div><svg class="explorer-chart" viewBox="0 0 760 260" role="img" aria-label="Profitability breakdown" data-chart-topic="profitability"></svg><div class="explorer-empty" data-empty-topic="profitability" hidden>No financial activity is recorded for this period.</div><p class="explorer-footnote">Profit is an estimate using revenue minus purchases and operating expenses.</p></div>
-  </div>
-
-  <div class="explorer-panel" data-review-panel="inventory" {% if selected_focus != "inventory" %}hidden{% endif %}>
-    <div class="explorer-kpis" aria-label="Inventory figures">
-      <div class="explorer-kpi"><span>Inventory at cost</span><strong>Rs. {{ analytics.inventory_valuation|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Retail value</span><strong>Rs. {{ analytics.retail_valuation|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Active products</span><strong>{{ analytics.total_products }}</strong></div>
-      <div class="explorer-kpi"><span>Low / out of stock</span><strong>{{ analytics.low_stock_count }} / {{ analytics.out_of_stock_count }}</strong></div>
-    </div>
-    <div class="explorer-figure"><div class="explorer-figure-head"><div><h3>Fast-moving products</h3><p>Units sold during the selected period. Inventory valuation is a current snapshot.</p></div><span class="explorer-range">{{ selected_days }} days</span></div><svg class="explorer-chart" viewBox="0 0 760 260" role="img" aria-label="Fast-moving products chart" data-chart-topic="inventory"></svg><div class="explorer-empty" data-empty-topic="inventory" hidden>No product sales are recorded for this period.</div></div>
-  </div>
-
-  <div class="explorer-panel" data-review-panel="receivables" {% if selected_focus != "receivables" %}hidden{% endif %}>
-    <div class="explorer-kpis" aria-label="Customer balance figures">
-      <div class="explorer-kpi"><span>Customer dues</span><strong>Rs. {{ analytics.receivables_total|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Overdue receivables</span><strong>Rs. {{ analytics.receivables_overdue|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Net working capital</span><strong>Rs. {{ analytics.working_capital_net|floatformat:2 }}</strong></div>
-    </div>
-    <div class="explorer-figure"><div class="explorer-figure-head"><div><h3>Customer dues snapshot</h3><p>Outstanding balances split between overdue and not yet overdue.</p></div><span class="explorer-range">Current</span></div><svg class="explorer-chart" viewBox="0 0 760 260" role="img" aria-label="Customer dues breakdown" data-chart-topic="receivables"></svg><div class="explorer-empty" data-empty-topic="receivables" hidden>No customer balances are recorded.</div></div>
-  </div>
-
-  <div class="explorer-panel" data-review-panel="payables" {% if selected_focus != "payables" %}hidden{% endif %}>
-    <div class="explorer-kpis" aria-label="Supplier balance figures">
-      <div class="explorer-kpi"><span>Supplier dues</span><strong>Rs. {{ analytics.payables_total|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Overdue payables</span><strong>Rs. {{ analytics.payables_overdue|floatformat:2 }}</strong></div>
-      <div class="explorer-kpi"><span>Net working capital</span><strong>Rs. {{ analytics.working_capital_net|floatformat:2 }}</strong></div>
-    </div>
-    <div class="explorer-figure"><div class="explorer-figure-head"><div><h3>Supplier dues snapshot</h3><p>Outstanding balances split between overdue and not yet overdue.</p></div><span class="explorer-range">Current</span></div><svg class="explorer-chart" viewBox="0 0 760 260" role="img" aria-label="Supplier dues breakdown" data-chart-topic="payables"></svg><div class="explorer-empty" data-empty-topic="payables" hidden>No supplier balances are recorded.</div></div>
-  </div>
-  <p class="explorer-footnote">Amounts are shown in NPR. Inventory valuation and customer/supplier balances are current snapshots.</p>
-</section>
-{{ analytics.period_trend|json_script:"analytics-period-trend" }}
-{{ analytics.fast_moving_products|json_script:"analytics-fast-products" }}
-
-<!-- AI Decision Support Hero Banner -->
-<div class="analytics-hero">
-  <div class="analytics-hero-header">
-    <div>
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-        <span style="font-size:12px; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; font-weight:600;">
-          {% if analytics.ai_insights.provider %}{{ analytics.ai_insights.provider }}{% else %}BizFlow Decision Advisor{% endif %}
-        </span>
-        <span style="font-size:11px; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:4px;">
-          Model: {{ analytics.ai_insights.model }}
-        </span>
+  <!-- Executive KPI Strip -->
+  <div class="ea-kpi-grid">
+    <!-- Revenue -->
+    <div class="ea-kpi-card kpi-revenue">
+      <div class="ea-kpi-label">
+        <span>Sales Revenue</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
       </div>
-      <h2 style="font-size:20px; font-weight:700; margin:0 0 8px 0; color:#ffffff;">
-        Business Health Score: {{ analytics.health_score }} / 100
-      </h2>
-      <p style="margin:0; font-size:14px; opacity:0.95; line-height:1.5; max-width:850px;">
-        {{ analytics.ai_insights.executive_summary }}
-      </p>
-    </div>
-
-    <div>
-      <span class="health-badge-pill">
-        <span style="width:8px; height:8px; border-radius:50%; background:{% if analytics.health_score >= 80 %}#34d399{% elif analytics.health_score >= 60 %}#fbbf24{% else %}#f87171{% endif %};"></span>
-        Status: {{ analytics.health_grade }}
-      </span>
-    </div>
-  </div>
-
-  <!-- Commentary Boxes -->
-  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px;">
-    <div style="background:rgba(255,255,255,0.1); border-radius:8px; padding:14px; border:1px solid rgba(255,255,255,0.15);">
-      <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; margin-bottom:4px;">
-        Cashflow & Working Capital Outlook
-      </div>
-      <div style="font-size:13px; line-height:1.4;">
-        {{ analytics.ai_insights.cashflow_outlook }}
+      <div class="ea-kpi-num">Rs. {{ analytics.revenue|floatformat:2 }}</div>
+      <div class="ea-kpi-sub">
+        <strong style="color:#0f172a;">{{ analytics.sales_count }}</strong> invoices · AOV Rs. {{ analytics.average_order_value|floatformat:0 }}
       </div>
     </div>
-    <div style="background:rgba(255,255,255,0.1); border-radius:8px; padding:14px; border:1px solid rgba(255,255,255,0.15);">
-      <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; margin-bottom:4px;">
-        Growth & Inventory Recommendation
+
+    <!-- Cash Received -->
+    <div class="ea-kpi-card kpi-cash">
+      <div class="ea-kpi-label">
+        <span>Cash Collected</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </div>
-      <div style="font-size:13px; line-height:1.4;">
-        {{ analytics.ai_insights.growth_opportunities }}
+      <div class="ea-kpi-num" style="color:#059669;">Rs. {{ analytics.cash_received|floatformat:2 }}</div>
+      <div class="ea-kpi-sub">
+        Rate: <strong style="color:#059669;">{{ analytics.collection_rate_pct }}%</strong> of revenue
+      </div>
+    </div>
+
+    <!-- Customer Receivables -->
+    <div class="ea-kpi-card kpi-dues">
+      <div class="ea-kpi-label">
+        <span>Receivables Due</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+      </div>
+      <div class="ea-kpi-num" style="color:#d97706;">Rs. {{ analytics.receivables_total|floatformat:2 }}</div>
+      <div class="ea-kpi-sub">
+        Overdue: Rs. {{ analytics.receivables_overdue|floatformat:2 }}
+      </div>
+    </div>
+
+    <!-- Net Profit -->
+    <div class="ea-kpi-card kpi-profit">
+      <div class="ea-kpi-label">
+        <span>Estimated Net Profit</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+      </div>
+      <div class="ea-kpi-num" {% if analytics.net_profit < 0 %}style="color:#dc2626;"{% else %}style="color:#7c3aed;"{% endif %}>
+        Rs. {{ analytics.net_profit|floatformat:2 }}
+      </div>
+      <div class="ea-kpi-sub">
+        Margin: <strong>{{ analytics.net_margin_pct }}%</strong> · Gross: {{ analytics.gross_margin_pct }}%
+      </div>
+    </div>
+
+    <!-- Net Cash Flow -->
+    <div class="ea-kpi-card kpi-cashflow">
+      <div class="ea-kpi-label">
+        <span>Net Cash Flow</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      </div>
+      <div class="ea-kpi-num" {% if analytics.net_cash_flow < 0 %}style="color:#dc2626;"{% else %}style="color:#0891b2;"{% endif %}>
+        Rs. {{ analytics.net_cash_flow|floatformat:2 }}
+      </div>
+      <div class="ea-kpi-sub">
+        In: Rs. {{ analytics.cash_received|floatformat:0 }} · Out: Rs. {{ analytics.total_cash_out|floatformat:0 }}
+      </div>
+    </div>
+
+    <!-- Inventory Valuation -->
+    <div class="ea-kpi-card kpi-stock">
+      <div class="ea-kpi-label">
+        <span>Stock Valuation</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+      </div>
+      <div class="ea-kpi-num">Rs. {{ analytics.inventory_valuation|floatformat:2 }}</div>
+      <div class="ea-kpi-sub">
+        {{ analytics.total_products }} SKUs · {% if analytics.low_stock_count > 0 %}<strong style="color:#dc2626;">{{ analytics.low_stock_count }} low</strong>{% else %}<span style="color:#059669;">Optimal</span>{% endif %}
       </div>
     </div>
   </div>
 
-  <!-- Priority Strategic Actions -->
-  <h3 style="font-size:15px; font-weight:600; margin:20px 0 12px 0; color:#ffffff;">
-    Strategic Action Plan (Priority Directives)
-  </h3>
-  <div class="action-plan-grid">
-    {% for action in analytics.ai_insights.action_plan %}
-    <div class="action-card">
+  <!-- AI Decision Intelligence Banner -->
+  <div class="ea-hero">
+    <div class="ea-hero-backdrop"></div>
+    <div class="ea-hero-top">
       <div>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span style="font-size:11px; font-weight:600; text-transform:uppercase; color:#64748b;">
-            {{ action.category }}
-          </span>
-          <span class="badge {% if action.priority == 'High' %}badge-high{% elif action.priority == 'Medium' %}badge-med{% else %}badge-low{% endif %}" style="font-size:11px; padding:2px 8px; border-radius:4px; font-weight:600;">
-            {{ action.priority }} Priority
-          </span>
+        <div class="ea-hero-badge">
+          ✨ {% if analytics.ai_insights.provider %}{{ analytics.ai_insights.provider }}{% else %}BizFlow Strategic Intelligence{% endif %}
         </div>
-        <div style="font-weight:600; font-size:14px; color:#0f172a; margin-bottom:6px;">
-          {{ action.title }}
-        </div>
-        <div style="font-size:12px; color:#475569; line-height:1.4;">
-          {{ action.detail }}
+        <h2 class="ea-hero-title">Executive Decision Support & Outlook</h2>
+        <p class="ea-hero-summary">{{ analytics.ai_insights.summary }}</p>
+      </div>
+
+      <div class="ea-health-meter">
+        <div>
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; opacity:0.85;">Health Score</div>
+          <div class="ea-health-score-val">{{ analytics.health_score }} <span style="font-size:16px; opacity:0.8;">/ 100</span></div>
+          <div style="font-size:11px; font-weight:600; opacity:0.9;">Grade {{ analytics.health_grade }}</div>
         </div>
       </div>
     </div>
-    {% empty %}
-    <div style="background:rgba(255,255,255,0.1); border-radius:8px; padding:16px; color:#ffffff; font-size:13px;">
-      All business indicators are stable. No urgent corrective actions flagged.
-    </div>
-    {% endfor %}
-  </div>
-</div>
 
-<!-- Core Financial KPIs Grid -->
-<div class="stat-grid" style="margin-bottom:24px;">
-  <div class="stat-card">
-    <span class="stat-label">Revenue ({{ selected_days }}d)</span>
-    <span class="stat-value">Rs. {{ analytics.revenue|floatformat:2 }}</span>
-    <span class="stat-badge {% if analytics.growth_pct >= 0 %}success{% else %}danger{% endif %}">
-      {% if analytics.growth_pct >= 0 %}&uarr; +{% else %}&darr; {% endif %}{{ analytics.growth_pct }}% vs prior period
-    </span>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-label">Cost of Goods (Purchases)</span>
-    <span class="stat-value">Rs. {{ analytics.purchases|floatformat:2 }}</span>
-    <span class="stat-badge info">
-      Gross Margin: {{ analytics.gross_margin_pct }}%
-    </span>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-label">Operating Expenses</span>
-    <span class="stat-value">Rs. {{ analytics.expenses|floatformat:2 }}</span>
-    <span class="stat-badge warning">
-      Net Profit: Rs. {{ analytics.net_profit|floatformat:2 }}
-    </span>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-label">Net Operating Margin</span>
-    <span class="stat-value {% if analytics.net_profit < 0 %}text-danger{% else %}text-success{% endif %}">
-      {{ analytics.net_margin_pct }}%
-    </span>
-    <span class="stat-badge {% if analytics.net_profit < 0 %}danger{% else %}success{% endif %}">
-      {% if analytics.net_profit >= 0 %}Profitable{% else %}Deficit{% endif %}
-    </span>
-  </div>
-</div>
-
-<!-- Working Capital & Cheques Row -->
-<div class="stat-grid" style="margin-bottom:24px;">
-  <div class="stat-card">
-    <span class="stat-label">Trade Receivables (Customer Dues)</span>
-    <span class="stat-value">Rs. {{ analytics.receivables_total|floatformat:2 }}</span>
-    <span class="stat-badge {% if analytics.receivables_overdue > 0 %}danger{% else %}success{% endif %}">
-      Overdue: Rs. {{ analytics.receivables_overdue|floatformat:2 }}
-    </span>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-label">Trade Payables (Vendor Dues)</span>
-    <span class="stat-value">Rs. {{ analytics.payables_total|floatformat:2 }}</span>
-    <span class="stat-badge {% if analytics.payables_overdue > 0 %}danger{% else %}info{% endif %}">
-      Overdue: Rs. {{ analytics.payables_overdue|floatformat:2 }}
-    </span>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-label">Net Working Capital</span>
-    <span class="stat-value {% if analytics.working_capital_net < 0 %}text-danger{% else %}text-success{% endif %}">
-      Rs. {{ analytics.working_capital_net|floatformat:2 }}
-    </span>
-    <span class="stat-badge info">
-      Receivables minus Payables
-    </span>
-  </div>
-
-  <div class="stat-card">
-    <span class="stat-label">Cheques Maturing (Next 7 Days)</span>
-    <span class="stat-value">{{ analytics.cheques_due_7d }}</span>
-    <span class="stat-badge warning">
-      Amount: Rs. {{ analytics.cheques_due_amount|floatformat:2 }}
-    </span>
-  </div>
-</div>
-
-<!-- Trend & Expense Breakdown Grid -->
-<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(450px, 1fr)); gap:24px; margin-bottom:24px;">
-  <!-- Daily Sales Velocity Chart -->
-  <div class="chart-container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <div>
-        <h3 style="font-size:15px; font-weight:600; margin:0 0 2px 0; color:#0f172a;">Daily Sales Velocity (Past 15 Days)</h3>
-        <p style="margin:0; font-size:12px; color:#64748b;">Daily revenue distribution and operational run-rate.</p>
-      </div>
-      <span style="font-size:12px; font-weight:600; color:#1e40af;">Avg Order: Rs. {{ analytics.average_order_value|floatformat:2 }}</span>
-    </div>
-
-    <div class="bar-chart-row">
-      {% for point in analytics.daily_trend %}
-      <div class="bar-col" title="{{ point.date }}: Rs. {{ point.total|floatformat:2 }}">
-        <div class="bar-fill" style="height:{% if analytics.revenue > 0 %}{% widthratio point.total analytics.revenue 300 %}{% else %}4{% endif %}px; min-height:4px;"></div>
-        <span class="bar-label">{{ point.date }}</span>
+    <!-- Recommendations -->
+    {% if analytics.ai_insights.action_plan %}
+    <div class="ea-action-grid">
+      {% for plan in analytics.ai_insights.action_plan %}
+      <div class="ea-action-card">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:2px 8px; border-radius:4px;
+              {% if plan.priority == 'HIGH' %}background:#fee2e2; color:#b91c1c;{% elif plan.priority == 'MEDIUM' %}background:#fef3c7; color:#b45309;{% else %}background:#eff6ff; color:#1d4ed8;{% endif %}">
+              {{ plan.priority }} Priority
+            </span>
+            <span style="font-size:11.5px; color:#64748b; font-weight:600;">{{ plan.area }}</span>
+          </div>
+          <div style="font-weight:600; font-size:13.5px; color:#0f172a; margin-bottom:6px; line-height:1.35;">{{ plan.action }}</div>
+        </div>
+        <div style="font-size:12px; color:#64748b; margin-top:10px; border-top:1px solid #f1f5f9; padding-top:8px;">
+          <strong>Context:</strong> {{ plan.rationale }}
+        </div>
       </div>
       {% endfor %}
     </div>
+    {% endif %}
   </div>
 
-  <!-- Expense Categories Breakdown -->
-  <div class="chart-container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+  <!-- ===================================================================== -->
+  <!-- SECTION 1: INTERACTIVE BUSINESS PERFORMANCE TRAJECTORY CHART          -->
+  <!-- ===================================================================== -->
+  <div class="ea-chart-card">
+    <div class="ea-chart-header">
       <div>
-        <h3 style="font-size:15px; font-weight:600; margin:0 0 2px 0; color:#0f172a;">Top Operational Expenses</h3>
-        <p style="margin:0; font-size:12px; color:#64748b;">Expenditure distribution by operating category.</p>
+        <h3 class="ea-chart-title">Performance Trajectory</h3>
+        <p class="ea-chart-subtitle">Daily operational dynamics for sales revenue, cash collections, and expenses ({{ analytics.period_label }}).</p>
       </div>
-      <span style="font-size:12px; font-weight:600; color:#64748b;">Total: Rs. {{ analytics.expenses|floatformat:2 }}</span>
+
+      <!-- Metric Series Toggles -->
+      <div class="ea-chart-strip">
+        <button type="button" class="ea-series-toggle active-sales" id="toggle-sales" onclick="toggleSeries('sales')">
+          <span style="width:8px; height:8px; background:#2563eb; border-radius:50%;"></span>
+          Sales Revenue
+        </button>
+        <button type="button" class="ea-series-toggle active-cash" id="toggle-cash" onclick="toggleSeries('cash')">
+          <span style="width:8px; height:8px; background:#10b981; border-radius:50%;"></span>
+          Cash Collected
+        </button>
+        <button type="button" class="ea-series-toggle active-expenses" id="toggle-expenses" onclick="toggleSeries('expenses')">
+          <span style="width:8px; height:8px; background:#f59e0b; border-radius:50%;"></span>
+          Expenses
+        </button>
+      </div>
     </div>
 
-    {% for exp in analytics.top_expense_categories %}
-    <div style="margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:500;">
-        <span>{{ exp.category }}</span>
-        <span>Rs. {{ exp.amount|floatformat:2 }} ({{ exp.percentage }}%)</span>
+    <!-- Quick Mini-Stats Strip -->
+    <div class="ea-chart-summary-strip">
+      <div>
+        <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Period Revenue</div>
+        <div style="font-size:16px; font-weight:700; color:#2563eb;">Rs. {{ analytics.revenue|floatformat:2 }}</div>
       </div>
-      <div class="meter-bar">
-        <div class="meter-fill" style="width:{{ exp.percentage }}%;"></div>
+      <div>
+        <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Cash Inflow</div>
+        <div style="font-size:16px; font-weight:700; color:#059669;">Rs. {{ analytics.cash_received|floatformat:2 }}</div>
+      </div>
+      <div>
+        <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Operating Outflow</div>
+        <div style="font-size:16px; font-weight:700; color:#d97706;">Rs. {{ analytics.total_cash_out|floatformat:2 }}</div>
+      </div>
+      <div>
+        <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Net Cash Buffer</div>
+        <div style="font-size:16px; font-weight:700; {% if analytics.net_cash_flow < 0 %}color:#dc2626;{% else %}color:#0891b2;{% endif %}">
+          Rs. {{ analytics.net_cash_flow|floatformat:2 }}
+        </div>
       </div>
     </div>
-    {% empty %}
-    <div style="padding:24px 0; text-align:center; color:#94a3b8; font-size:13px;">
-      No operational expenses logged for this period.
+
+    <!-- Interactive SVG Chart Viewport -->
+    <div class="ea-chart-viewport" id="chart-container">
+      <svg id="overview-trend-chart" class="ea-svg-chart" viewBox="0 0 1000 300" preserveAspectRatio="none" role="img" aria-label="Performance Trajectory Chart"></svg>
+      <div id="chart-tooltip" class="ea-chart-tooltip"></div>
     </div>
-    {% endfor %}
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 2: SALES REALIZATION & PAYMENT METHOD DISTRIBUTION            -->
+  <!-- ===================================================================== -->
+  <div class="ea-section-grid">
+    <!-- Payment Methods -->
+    <div class="ea-card">
+      <div class="ea-card-head">
+        <span class="ea-card-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+          Sales by Payment Method
+        </span>
+      </div>
+      <div class="ea-card-body">
+        {% for m in analytics.sales_by_payment_method %}
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:500;">
+            <span>{{ m.method }} ({{ m.count }} transactions)</span>
+            <strong>Rs. {{ m.total|floatformat:2 }} ({{ m.percentage }}%)</strong>
+          </div>
+          <div class="ea-meter">
+            <div class="ea-meter-fill" style="width: {{ m.percentage }}%;"></div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="ea-empty-box">
+          <div class="ea-empty-icon">💳</div>
+          <div>No transactions recorded in this period</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Revenue Realization: Cash vs Credit -->
+    <div class="ea-card">
+      <div class="ea-card-head">
+        <span class="ea-card-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><line x1="12" y1="6" x2="12" y2="8"></line><line x1="12" y1="16" x2="12" y2="18"></line></svg>
+          Revenue Realization (Cash vs Credit)
+        </span>
+      </div>
+      <div class="ea-card-body">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px;">
+            <span style="font-size:11px; color:#166534; text-transform:uppercase; font-weight:700;">Liquid Funds Deposited</span>
+            <div style="font-size:20px; font-weight:700; color:#15803d; margin-top:2px;">Rs. {{ analytics.cash_received|floatformat:2 }}</div>
+          </div>
+          <div style="background:#fffbeb; border:1px solid #fef3c7; border-radius:10px; padding:14px;">
+            <span style="font-size:11px; color:#92400e; text-transform:uppercase; font-weight:700;">Outstanding Receivables</span>
+            <div style="font-size:20px; font-weight:700; color:#b45309; margin-top:2px;">Rs. {{ analytics.receivables_total|floatformat:2 }}</div>
+          </div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; font-size:12.5px; color:#475569; line-height:1.5;">
+          💡 <strong>Accounting Clarity:</strong> Invoiced revenue represents recognized earnings, while Cash Collected reflects actual deposits. Realized collection efficiency is <strong style="color:#0f172a;">{{ analytics.collection_rate_pct }}%</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 3: INVENTORY HEALTH & REORDER SUGGESTIONS                     -->
+  <!-- ===================================================================== -->
+  <div class="ea-card" style="margin-bottom:24px;">
+    <div class="ea-card-head">
+      <div>
+        <span class="ea-card-title">
+          📦 Inventory Health & Stock Replenishment
+        </span>
+        <span style="font-size:12.5px; color:#64748b; font-weight:normal; margin-left:8px;">Calculated against minimum threshold buffers</span>
+      </div>
+      <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary btn-sm">Catalog Manager →</a>
+    </div>
+
+    <div style="padding:20px;">
+      {% if analytics.reorder_suggestions %}
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; text-align:left;">
+          <thead>
+            <tr style="border-bottom:1px solid #e2e8f0; font-size:11.5px; text-transform:uppercase; color:#64748b;">
+              <th style="padding:10px 12px;">Product</th>
+              <th style="padding:10px 12px;">SKU</th>
+              <th style="padding:10px 12px;">On Hand</th>
+              <th style="padding:10px 12px;">Safety Threshold</th>
+              <th style="padding:10px 12px;">Suggested Reorder</th>
+              <th style="padding:10px 12px;">Unit Cost</th>
+              <th style="padding:10px 12px; text-align:right;">Estimated Outlay</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in analytics.reorder_suggestions %}
+            <tr style="border-bottom:1px solid #f1f5f9; font-size:13px;">
+              <td style="padding:12px; font-weight:600;">{{ r.name }}</td>
+              <td style="padding:12px; font-family:monospace; color:#64748b;">{{ r.sku }}</td>
+              <td style="padding:12px;">
+                <span class="badge {% if r.current_stock == 0 %}badge-danger{% else %}badge-warning{% endif %}">
+                  {{ r.current_stock }} units
+                </span>
+              </td>
+              <td style="padding:12px; color:#64748b;">{{ r.minimum_stock }} units</td>
+              <td style="padding:12px; font-weight:700; color:#1e40af;">+{{ r.suggested_order_qty }} units</td>
+              <td style="padding:12px;">Rs. {{ r.unit_cost|floatformat:2 }}</td>
+              <td style="padding:12px; text-align:right; font-weight:600;">Rs. {{ r.estimated_cost|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <!-- Healthy State Banner -->
+      <div class="ea-healthy-stock-card">
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div style="width:48px; height:48px; border-radius:12px; background:#dcfce7; color:#15803d; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          </div>
+          <div>
+            <div style="font-size:16px; font-weight:700; color:#166534; margin-bottom:2px;">All Catalog Inventory Levels Optimal</div>
+            <div style="font-size:13px; color:#15803d; opacity:0.9;">No products are below minimum alert thresholds. Safety stock buffers are sufficient for current run rate.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:20px; border-left:1px solid #bbf7d0; padding-left:24px;">
+          <div>
+            <div style="font-size:11px; text-transform:uppercase; color:#15803d; font-weight:600;">Total SKUs</div>
+            <div style="font-size:18px; font-weight:700; color:#166534;">{{ analytics.total_products }}</div>
+          </div>
+          <div>
+            <div style="font-size:11px; text-transform:uppercase; color:#15803d; font-weight:600;">Catalog Valuation</div>
+            <div style="font-size:18px; font-weight:700; color:#166534;">Rs. {{ analytics.inventory_valuation|floatformat:0 }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 4: PRODUCT VELOCITY LEADERBOARD                               -->
+  <!-- ===================================================================== -->
+  <div class="ea-section-grid">
+    <!-- Fast Moving Products -->
+    <div class="ea-card">
+      <div class="ea-card-head">
+        <span class="ea-card-title">
+          ⚡ Fast-Moving Products (Units Sold in Period)
+        </span>
+      </div>
+      <div class="ea-card-body">
+        {% for p in analytics.fast_moving_products %}
+        <div class="ea-rank-item">
+          <div style="display:flex; align-items:center;">
+            <div class="ea-rank-badge {% if forloop.counter == 1 %}top-1{% elif forloop.counter == 2 %}top-2{% else %}top-3{% endif %}">
+              #{{ forloop.counter }}
+            </div>
+            <div>
+              <div style="font-weight:600; color:#0f172a; font-size:13.5px;">{{ p.name }}</div>
+              {% if p.sku %}<div style="font-family:monospace; font-size:11px; color:#64748b;">{{ p.sku }}</div>{% endif %}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700; color:#0f172a; font-size:13.5px;">Rs. {{ p.revenue|floatformat:2 }}</div>
+            <div style="font-size:11px; color:#059669; font-weight:600;">{{ p.sold_units }} units sold</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="ea-empty-box">
+          <div class="ea-empty-icon">📦</div>
+          <div>No items sold during this period</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Dead / Stagnant Stock -->
+    <div class="ea-card">
+      <div class="ea-card-head">
+        <span class="ea-card-title" style="color:#b91c1c;">
+          ⚠️ Stagnant Stock (Zero Sales & Tied Capital)
+        </span>
+      </div>
+      <div class="ea-card-body">
+        {% for p in analytics.slow_moving_products %}
+        <div class="ea-rank-item" style="border-left:3px solid #ef4444;">
+          <div>
+            <div style="font-weight:600; color:#0f172a; font-size:13.5px;">{{ p.name }}</div>
+            <div style="font-size:11.5px; color:#64748b;">{{ p.stock }} units on shelf</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700; color:#dc2626; font-size:13.5px;">Rs. {{ p.tied_up_capital|floatformat:2 }}</div>
+            <div style="font-size:11px; color:#dc2626;">Tied Capital</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="ea-empty-box">
+          <div class="ea-empty-icon" style="background:#f0fdf4; color:#16a34a;">✓</div>
+          <div style="font-weight:600; color:#166534; margin-bottom:2px;">Zero Stagnant Stock</div>
+          <div style="font-size:12.5px;">All products recorded healthy velocity with zero locked capital!</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 5: CUSTOMER RECEIVABLES & OPERATING EXPENSES                  -->
+  <!-- ===================================================================== -->
+  <div class="ea-section-grid">
+    <!-- Top Customer Debtors -->
+    <div class="ea-card">
+      <div class="ea-card-head">
+        <span class="ea-card-title">
+          👥 Customer Receivables (Top Debtors)
+        </span>
+        <a href="{% url 'credit:customers_dues' %}" class="btn btn-ghost btn-sm">Full Ledger →</a>
+      </div>
+      <div class="ea-card-body">
+        {% for d in analytics.top_debtors %}
+        <div class="ea-rank-item">
+          <div style="font-weight:600; color:#0f172a;">{{ d.name }}</div>
+          <div style="font-weight:700; color:#b45309;">Rs. {{ d.total_due|floatformat:2 }}</div>
+        </div>
+        {% empty %}
+        <div class="ea-empty-box">
+          <div class="ea-empty-icon" style="background:#f0fdf4; color:#16a34a;">✓</div>
+          <div style="font-weight:600; color:#166534; margin-bottom:2px;">Clean Receivables Ledger</div>
+          <div style="font-size:12.5px;">No customer outstanding dues recorded.</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Operating Expense Breakdown -->
+    <div class="ea-card">
+      <div class="ea-card-head">
+        <span class="ea-card-title">
+          📊 Operating Expenses Distribution
+        </span>
+      </div>
+      <div class="ea-card-body">
+        {% for exp in analytics.top_expense_categories %}
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:500;">
+            <span>{{ exp.category }}</span>
+            <strong>Rs. {{ exp.amount|floatformat:2 }} ({{ exp.percentage }}%)</strong>
+          </div>
+          <div class="ea-meter">
+            <div class="ea-meter-fill" style="width: {{ exp.percentage }}%; background:#f59e0b;"></div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="ea-empty-box">
+          <div class="ea-empty-icon">📋</div>
+          <div>No operating expenses logged in this period</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- SECTION 6: USER ACCOUNTS & ACCESS ACTIVITY                           -->
+  <!-- ===================================================================== -->
+  <div class="ea-card" style="margin-bottom:24px;">
+    <div class="ea-card-head">
+      <div>
+        <span class="ea-card-title">
+          🛡️ Team & System Access Overview
+        </span>
+        <span style="font-size:12.5px; color:#64748b; font-weight:normal; margin-left:8px;">Live user presence and security state</span>
+      </div>
+      <a href="{% url 'users:list' %}" class="btn btn-secondary btn-sm">Manage Users →</a>
+    </div>
+    <div style="padding:20px;">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px;">
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
+          <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Total Registered</div>
+          <div style="font-size:24px; font-weight:700; color:#0f172a; margin-top:2px;">{{ analytics.total_users }}</div>
+        </div>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:16px;">
+          <div style="font-size:11px; color:#166534; font-weight:600; text-transform:uppercase;">Online Now</div>
+          <div style="font-size:24px; font-weight:700; color:#15803d; margin-top:2px;">{{ analytics.online_users }}</div>
+          <small style="color:#166534; font-size:11px;">Active in last 15m</small>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:16px;">
+          <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase;">Offline</div>
+          <div style="font-size:24px; font-weight:700; color:#64748b; margin-top:2px;">{{ analytics.offline_users }}</div>
+        </div>
+        <div style="background:#eff6ff; border:1px solid #dbeafe; border-radius:10px; padding:16px;">
+          <div style="font-size:11px; color:#1e40af; font-weight:600; text-transform:uppercase;">Active Accounts</div>
+          <div style="font-size:24px; font-weight:700; color:#2563eb; margin-top:2px;">{{ analytics.active_accounts }}</div>
+        </div>
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:16px;">
+          <div style="font-size:11px; color:#991b1b; font-weight:600; text-transform:uppercase;">Disabled Accounts</div>
+          <div style="font-size:24px; font-weight:700; color:#dc2626; margin-top:2px;">{{ analytics.disabled_accounts }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Inventory Velocity: Fast-Moving vs Dead Capital Stock -->
-<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(450px, 1fr)); gap:24px; margin-bottom:24px;">
-  <!-- Fast-Moving Items -->
-  <div class="card" style="padding:20px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <div>
-        <h3 style="font-size:15px; font-weight:600; margin:0 0 2px 0; color:#0f172a;">Fast-Moving Products (Top Velocity)</h3>
-        <p style="margin:0; font-size:12px; color:#64748b;">Highest turnover items in the active period.</p>
-      </div>
-      <span class="badge badge-success" style="font-size:11px;">High Demand</span>
-    </div>
+<!-- Hidden JSON payloads for interactive charts -->
+{{ analytics.period_trend|json_script:"analytics-period-trend" }}
 
-    <div class="table-responsive">
-      <table class="table" style="font-size:13px;">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>SKU</th>
-            <th style="text-align:right;">Sold Qty</th>
-            <th style="text-align:right;">Revenue</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in analytics.fast_moving_products %}
-          <tr>
-            <td style="font-weight:500;">{{ p.name }}</td>
-            <td style="color:#64748b; font-family:monospace;">{{ p.sku }}</td>
-            <td style="text-align:right; font-weight:600;">{{ p.sold_units }}</td>
-            <td style="text-align:right;">Rs. {{ p.revenue|floatformat:2 }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="4" style="text-align:center; color:#94a3b8; padding:16px;">
-              No product sales recorded in this period.
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Slow-Moving / Dead Stock Items -->
-  <div class="card" style="padding:20px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-      <div>
-        <h3 style="font-size:15px; font-weight:600; margin:0 0 2px 0; color:#0f172a;">Stagnant / Tied-Up Capital Stock</h3>
-        <p style="margin:0; font-size:12px; color:#64748b;">In-stock items with zero sales in the active period.</p>
-      </div>
-      <span class="badge badge-warning" style="font-size:11px;">Capital Lockup</span>
-    </div>
-
-    <div class="table-responsive">
-      <table class="table" style="font-size:13px;">
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th>SKU</th>
-            <th style="text-align:right;">Stock</th>
-            <th style="text-align:right;">Tied-Up Capital</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in analytics.slow_moving_products %}
-          <tr>
-            <td style="font-weight:500;">{{ p.name }}</td>
-            <td style="color:#64748b; font-family:monospace;">{{ p.sku }}</td>
-            <td style="text-align:right; font-weight:600;">{{ p.stock }}</td>
-            <td style="text-align:right; color:#b45309; font-weight:500;">Rs. {{ p.tied_up_capital|floatformat:2 }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="4" style="text-align:center; color:#94a3b8; padding:16px;">
-              Zero stagnant inventory detected. Excellent stock turnover!
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+<!-- ===================================================================== -->
+<!-- INTERACTIVE SVG CHART ENGINE SCRIPT                                   -->
+<!-- ===================================================================== -->
 <script>
-(function () {
-  const selector = document.getElementById("analytics-topic");
-  if (!selector) return;
+let seriesVisibility = {
+  sales: true,
+  cash: true,
+  expenses: true,
+};
 
-  const trend = JSON.parse(document.getElementById("analytics-period-trend").textContent);
-  const products = JSON.parse(document.getElementById("analytics-fast-products").textContent);
-  const panels = Array.from(document.querySelectorAll("[data-review-panel]"));
-  const currency = new Intl.NumberFormat("en-NP", { maximumFractionDigits: 0 });
+function toggleSeries(key) {
+  seriesVisibility[key] = !seriesVisibility[key];
+  const btn = document.getElementById("toggle-" + key);
+  if (btn) {
+    if (seriesVisibility[key]) {
+      btn.classList.add("active-" + key);
+    } else {
+      btn.classList.remove("active-" + key);
+    }
+  }
+  renderChart();
+}
+
+let renderChart = null;
+
+(function() {
+  const trend = JSON.parse(document.getElementById("analytics-period-trend")?.textContent || "[]");
+  const svg = document.getElementById("overview-trend-chart");
+  const tooltip = document.getElementById("chart-tooltip");
+  const container = document.getElementById("chart-container");
+  if (!svg || !trend.length) return;
+
   const svgNS = "http://www.w3.org/2000/svg";
+  const currency = new Intl.NumberFormat("en-NP", { maximumFractionDigits: 0 });
 
   function node(tag, attrs, text) {
-    const item = document.createElementNS(svgNS, tag);
-    Object.entries(attrs || {}).forEach(([key, value]) => item.setAttribute(key, value));
-    if (text !== undefined) item.textContent = text;
-    return item;
+    const el = document.createElementNS(svgNS, tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => el.setAttribute(k, v));
+    if (text !== undefined) el.textContent = text;
+    return el;
   }
 
-  function drawTrend(svg, topic) {
-    const values = trend.map((point) => ({ label: point.date, value: Number(point[topic]) || 0 }));
-    const maxValue = Math.max(0, ...values.map((point) => point.value));
-    if (!values.length || maxValue <= 0) return false;
+  // Smooth Bézier Spline generator
+  function getCurvedPath(coords) {
+    if (coords.length === 0) return "";
+    if (coords.length === 1) return `M ${coords[0].x} ${coords[0].y}`;
+    if (coords.length === 2) return `M ${coords[0].x} ${coords[0].y} L ${coords[1].x} ${coords[1].y}`;
 
-    const width = 760, height = 260, left = 58, right = 18, top = 20, bottom = 42;
-    const plotWidth = width - left - right, plotHeight = height - top - bottom;
-    const upper = maxValue * 1.12;
-    for (let i = 0; i <= 4; i += 1) {
-      const y = top + (plotHeight * i / 4);
-      svg.appendChild(node("line", { x1:left, x2:width-right, y1:y, y2:y, stroke:"#e8edf4", "stroke-width":"1" }));
-      svg.appendChild(node("text", { x:left-9, y:y+4, "text-anchor":"end" }, currency.format(upper * (4-i) / 4)));
+    let d = `M ${coords[0].x} ${coords[0].y}`;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const p0 = i > 0 ? coords[i - 1] : coords[i];
+      const p1 = coords[i];
+      const p2 = coords[i + 1];
+      const p3 = i < coords.length - 2 ? coords[i + 2] : p2;
+
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
     }
-    const coords = values.map((point, index) => ({
-      ...point,
-      x: left + (values.length === 1 ? plotWidth / 2 : plotWidth * index / (values.length - 1)),
-      y: top + plotHeight - (point.value / upper * plotHeight),
-    }));
-    const pathData = coords.map((point, index) => `${index ? "L" : "M"}${point.x},${point.y}`).join(" ");
-    const areaData = `${pathData} L${coords[coords.length-1].x},${top+plotHeight} L${coords[0].x},${top+plotHeight} Z`;
-    svg.appendChild(node("path", { d:areaData, fill:"#2563eb", "fill-opacity":".09" }));
-    svg.appendChild(node("path", { d:pathData, fill:"none", stroke:"#2563eb", "stroke-width":"3", "stroke-linecap":"round", "stroke-linejoin":"round" }));
-    coords.forEach((point) => {
-      const circle = node("circle", { cx:point.x, cy:point.y, r:4, fill:"#fff", stroke:"#2563eb", "stroke-width":"2" });
-      circle.appendChild(node("title", {}, `${point.label}: Rs. ${currency.format(point.value)}`));
-      svg.appendChild(circle);
-    });
-    const labelIndexes = [...new Set([0, Math.floor((values.length - 1) / 2), values.length - 1])];
-    labelIndexes.forEach((index) => svg.appendChild(node("text", { x:coords[index].x, y:height-12, "text-anchor":"middle" }, values[index].label)));
-    return true;
+    return d;
   }
 
-  function drawBars(svg, rows, unit) {
-    const entries = rows.filter((row) => Number.isFinite(row.value));
-    if (!entries.length || entries.every((row) => row.value === 0)) return false;
-    const width = 760, left = 185, right = 22, rowHeight = 42, top = 22;
-    const height = Math.max(150, top + entries.length * rowHeight + 24);
-    const maxValue = Math.max(1, ...entries.map((row) => Math.abs(row.value)));
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    const hasNegative = entries.some((row) => row.value < 0);
-    const zeroX = hasNegative ? left + (width-left-right) * .72 : left;
-    const maxWidth = hasNegative ? (width-right-zeroX-90) : (width-left-right-120);
-    if (hasNegative) svg.appendChild(node("line", { x1:zeroX, x2:zeroX, y1:top-10, y2:height-13, stroke:"#cbd5e1", "stroke-width":"1" }));
-    entries.forEach((row, index) => {
-      const y = top + index * rowHeight;
-      svg.appendChild(node("text", { x:left-12, y:y+14, "text-anchor":"end" }, row.label.length > 23 ? `${row.label.slice(0, 21)}…` : row.label));
-      const barWidth = Math.abs(row.value) === 0 ? 0 : Math.max(2, Math.abs(row.value) / maxValue * maxWidth);
-      const x = row.value < 0 ? zeroX - barWidth : zeroX;
-      const fill = row.color || (row.value < 0 ? "#dc2626" : "#3b74dc");
-      const rect = node("rect", { x, y, width:barWidth, height:20, rx:4, fill });
-      rect.appendChild(node("title", {}, `${row.label}: ${unit === "money" ? "Rs. " : ""}${currency.format(row.value)}${unit === "units" ? " units" : ""}`));
-      svg.appendChild(rect);
-      const valueX = row.value < 0 ? Math.max(left, x-8) : Math.min(width-right, x+barWidth+8);
-      svg.appendChild(node("text", { x:valueX, y:y+14, "text-anchor":row.value < 0 ? "end" : "start" }, `${unit === "money" ? "Rs. " : ""}${currency.format(row.value)}${unit === "units" ? " units" : ""}`));
-    });
-    return true;
-  }
+  renderChart = function() {
+    svg.innerHTML = "";
 
-  function renderTopic(topic) {
-    panels.forEach((panel) => { panel.hidden = panel.dataset.reviewPanel !== topic; });
-    const url = new URL(window.location.href);
-    url.searchParams.set("focus", topic);
-    window.history.replaceState({}, "", url);
+    const width = 1000, height = 300, left = 75, right = 30, top = 25, bottom = 45;
+    const plotW = width - left - right, plotH = height - top - bottom;
 
-    const svg = document.querySelector(`[data-review-panel="${topic}"] .explorer-chart`);
-    if (!svg) return;
-    svg.replaceChildren();
-    svg.setAttribute("viewBox", "0 0 760 260");
-    const empty = document.querySelector(`[data-empty-topic="${topic}"]`);
-    if (empty) empty.hidden = true;
-    svg.setAttribute("aria-label", `${selector.options[selector.selectedIndex].text} chart`);
-    let hasData = false;
+    // Defs for gradients
+    const defs = node("defs");
+    defs.innerHTML = `
+      <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#2563eb" stop-opacity="0.22"/>
+        <stop offset="100%" stop-color="#2563eb" stop-opacity="0.0"/>
+      </linearGradient>
+      <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#10b981" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="#10b981" stop-opacity="0.0"/>
+      </linearGradient>
+      <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0"/>
+      </linearGradient>
+    `;
+    svg.appendChild(defs);
 
-    if (["sales", "purchases", "expenses"].includes(topic)) {
-      hasData = drawTrend(svg, topic);
-    } else if (topic === "inventory") {
-      hasData = drawBars(svg, products.map((item) => ({ label:item.name, value:Number(item.sold_units) || 0 })), "units");
-    } else if (topic === "profitability") {
-      hasData = drawBars(svg, [
-        { label:"Revenue", value:{{ analytics.revenue|default:0 }}, color:"#2563eb" },
-        { label:"Purchases", value:{{ analytics.purchases|default:0 }}, color:"#d97706" },
-        { label:"Operating expenses", value:{{ analytics.expenses|default:0 }}, color:"#f59e0b" },
-        { label:"Estimated net profit", value:{{ analytics.net_profit|default:0 }}, color:"#16a34a" },
-      ], "money");
-    } else if (topic === "receivables") {
-      const total = Number("{{ analytics.receivables_total|default:0 }}") || 0;
-      const overdue = Number("{{ analytics.receivables_overdue|default:0 }}") || 0;
-      hasData = drawBars(svg, [
-        { label:"Not yet overdue", value:Math.max(0, total-overdue), color:"#3b74dc" },
-        { label:"Overdue", value:overdue, color:"#dc2626" },
-      ], "money");
-    } else if (topic === "payables") {
-      const total = Number("{{ analytics.payables_total|default:0 }}") || 0;
-      const overdue = Number("{{ analytics.payables_overdue|default:0 }}") || 0;
-      hasData = drawBars(svg, [
-        { label:"Not yet overdue", value:Math.max(0, total-overdue), color:"#3b74dc" },
-        { label:"Overdue", value:overdue, color:"#dc2626" },
-      ], "money");
+    const maxSales = Math.max(0, ...trend.map(p => Number(p.sales) || 0));
+    const maxCash = Math.max(0, ...trend.map(p => Number(p.cash_received) || 0));
+    const maxExp = Math.max(0, ...trend.map(p => Number(p.expenses) || 0));
+    const rawUpper = Math.max(maxSales, maxCash, maxExp);
+    const upper = Math.max(100, Math.ceil(rawUpper * 1.25 / 10) * 10);
+
+    // Horizontal Grid Lines & Y Axis Labels
+    for (let i = 0; i <= 4; i++) {
+      const y = top + (plotH * i / 4);
+      svg.appendChild(node("line", { x1: left, x2: width - right, y1: y, y2: y, stroke: "#edf2f7", "stroke-width": "1" }));
+      svg.appendChild(node("text", { x: left - 10, y: y + 4, "text-anchor": "end", "font-size": "11", fill: "#94a3b8", "font-weight": "500" }, currency.format(upper * (4 - i) / 4)));
     }
-    if (!hasData && empty) empty.hidden = false;
-  }
 
-  selector.addEventListener("change", () => renderTopic(selector.value));
-  renderTopic(selector.value);
+    function getCoords(key) {
+      return trend.map((p, idx) => ({
+        x: left + (trend.length === 1 ? plotW / 2 : (plotW * idx / (trend.length - 1))),
+        y: top + plotH - ((Number(p[key]) || 0) / upper * plotH),
+        val: Number(p[key]) || 0,
+        label: p.date,
+        raw: p,
+      }));
+    }
+
+    const seriesData = [
+      { key: "sales", color: "#2563eb", grad: "url(#salesGrad)", coords: getCoords("sales") },
+      { key: "cash", color: "#10b981", grad: "url(#cashGrad)", coords: getCoords("cash_received") },
+      { key: "expenses", color: "#f59e0b", grad: "url(#expGrad)", coords: getCoords("expenses") },
+    ];
+
+    // Draw active series
+    seriesData.forEach(s => {
+      if (!seriesVisibility[s.key]) return;
+      const coords = s.coords;
+      const curvedPath = getCurvedPath(coords);
+      if (!curvedPath) return;
+
+      // Area fill
+      const areaPath = `${curvedPath} L ${coords[coords.length - 1].x} ${top + plotH} L ${coords[0].x} ${top + plotH} Z`;
+      svg.appendChild(node("path", { d: areaPath, fill: s.grad }));
+
+      // Spline line
+      svg.appendChild(node("path", { d: curvedPath, fill: "none", stroke: s.color, "stroke-width": "2.5", "stroke-linecap": "round", "stroke-linejoin": "round" }));
+
+      // Render dots only on points with non-zero values to avoid crowded bottom beads
+      coords.forEach(c => {
+        if (c.val > 0) {
+          const dot = node("circle", { cx: c.x, cy: c.y, r: 4.5, fill: "#ffffff", stroke: s.color, "stroke-width": "2.5" });
+          svg.appendChild(dot);
+        }
+      });
+    });
+
+    // X-Axis labels
+    const labelStep = Math.max(1, Math.floor(trend.length / 7));
+    trend.forEach((p, idx) => {
+      if (idx % labelStep === 0 || idx === trend.length - 1) {
+        const x = left + (trend.length === 1 ? plotW / 2 : (plotW * idx / (trend.length - 1)));
+        svg.appendChild(node("text", { x, y: height - 12, "text-anchor": "middle", "font-size": "11", fill: "#64748b", "font-weight": "500" }, p.date));
+      }
+    });
+
+    // Crosshair line (hidden initially)
+    const crosshair = node("line", { y1: top, y2: top + plotH, stroke: "#94a3b8", "stroke-width": "1.5", "stroke-dasharray": "3,3", opacity: "0" });
+    svg.appendChild(crosshair);
+
+    // Interactive hover overlay
+    container.onmousemove = function(e) {
+      const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const normalizedX = (mouseX / rect.width) * width;
+
+      if (normalizedX < left || normalizedX > width - right) {
+        tooltip.style.display = "none";
+        crosshair.setAttribute("opacity", "0");
+        return;
+      }
+
+      // Find closest index
+      let closestIdx = 0;
+      let minDiff = Infinity;
+      trend.forEach((p, idx) => {
+        const x = left + (trend.length === 1 ? plotW / 2 : (plotW * idx / (trend.length - 1)));
+        const diff = Math.abs(x - normalizedX);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIdx = idx;
+        }
+      });
+
+      const pt = trend[closestIdx];
+      const targetX = left + (trend.length === 1 ? plotW / 2 : (plotW * closestIdx / (trend.length - 1)));
+
+      crosshair.setAttribute("x1", targetX);
+      crosshair.setAttribute("x2", targetX);
+      crosshair.setAttribute("opacity", "0.85");
+
+      // Position tooltip
+      const screenX = (targetX / width) * rect.width;
+      tooltip.style.left = `${screenX}px`;
+      tooltip.style.top = `${rect.height * 0.4}px`;
+      tooltip.style.display = "block";
+
+      tooltip.innerHTML = `
+        <div style="font-weight:700; color:#e2e8f0; margin-bottom:6px; font-size:11.5px; border-bottom:1px solid rgba(255,255,255,0.15); padding-bottom:3px;">
+          📅 ${pt.date}
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:3px;">
+          <span style="color:#93c5fd;">● Sales Revenue:</span>
+          <strong>Rs. ${currency.format(pt.sales || 0)}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:3px;">
+          <span style="color:#6ee7b7;">● Cash Collected:</span>
+          <strong>Rs. ${currency.format(pt.cash_received || 0)}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:12px;">
+          <span style="color:#fcd34d;">● Expenses:</span>
+          <strong>Rs. ${currency.format(pt.expenses || 0)}</strong>
+        </div>
+      `;
+    };
+
+    container.onmouseleave = function() {
+      tooltip.style.display = "none";
+      crosshair.setAttribute("opacity", "0");
+    };
+  };
+
+  renderChart();
 })();
 </script>
 {% endblock %}

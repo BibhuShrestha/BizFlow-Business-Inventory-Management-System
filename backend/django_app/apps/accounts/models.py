@@ -1,7 +1,7 @@
 """
 Accounts models: User, Role, EmailVerificationToken, PasswordResetToken, LoginHistory, RevokedToken.
 """
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
 import hashlib
 import secrets
 
@@ -12,6 +12,7 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.db import models
+from django.utils import timezone
 
 
 class Role(models.Model):
@@ -91,6 +92,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    last_activity = models.DateTimeField(null=True, blank=True, db_index=True)
 
     objects = UserManager()
 
@@ -170,6 +172,28 @@ class User(AbstractBaseUser, PermissionsMixin):
         normalized = [r.lower() for r in roles]
         return self.role_name in normalized
 
+    @property
+    def is_online(self) -> bool:
+        """True if user recorded activity within the configured timeout window (default 15 minutes)."""
+        if not self.last_activity:
+            return False
+        timeout_minutes = getattr(settings, "USER_ONLINE_TIMEOUT_MINUTES", 15)
+        return (timezone.now() - self.last_activity).total_seconds() <= (timeout_minutes * 60)
+
+    @property
+    def online_status_label(self) -> str:
+        """Online presence status label (Online vs Offline)."""
+        return "Online" if self.is_online else "Offline"
+
+    @property
+    def account_status_label(self) -> str:
+        """Account authorization status label (Active, Disabled, or Pending Verification)."""
+        if not self.is_active:
+            return "Disabled"
+        if not self.email_verified:
+            return "Pending Verification"
+        return "Active"
+
 
 class EmailVerificationToken(models.Model):
     """Token for email activation link."""
@@ -188,13 +212,13 @@ class EmailVerificationToken(models.Model):
         db_table = "email_verification_tokens"
 
     def is_valid(self) -> bool:
-        return not self.used and datetime.now(timezone.utc) <= self.expires_at
+        return not self.used and timezone.now() <= self.expires_at
 
     @classmethod
     def create_token(cls, user, expires_hours: int = 24):
         raw_token = secrets.token_urlsafe(32)
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=expires_hours)
+        expires_at = timezone.now() + timedelta(hours=expires_hours)
         obj = cls(user=user, token_hash=token_hash, expires_at=expires_at)
         return obj, raw_token
 
@@ -228,13 +252,13 @@ class PasswordResetToken(models.Model):
         db_table = "password_reset_tokens"
 
     def is_valid(self) -> bool:
-        return not self.used and datetime.now(timezone.utc) <= self.expires_at
+        return not self.used and timezone.now() <= self.expires_at
 
     @classmethod
     def create_token(cls, user, expires_hours: int = 2):
         raw_token = secrets.token_urlsafe(32)
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=expires_hours)
+        expires_at = timezone.now() + timedelta(hours=expires_hours)
         obj = cls(user=user, token_hash=token_hash, expires_at=expires_at)
         return obj, raw_token
 

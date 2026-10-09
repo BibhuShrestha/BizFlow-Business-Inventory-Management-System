@@ -102,9 +102,14 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.accounts.middleware.UserActivityMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# Configurable user online activity threshold (minutes)
+USER_ONLINE_TIMEOUT_MINUTES = env.int("USER_ONLINE_TIMEOUT_MINUTES", default=15)
+
 
 # ---------------------------------------------------------------------------
 # URL routing
