@@ -90,7 +90,10 @@ class AuthService:
         if User.objects.filter(email=email).exists():
             raise DuplicateEmailError(f"An account with email '{email}' already exists.")
 
-        validate_password(password)
+        try:
+            validate_password(password)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
 
         # Assign default 'staff' role
         staff_role, _ = Role.objects.get_or_create(
@@ -196,7 +199,10 @@ class AuthService:
         if not token_obj:
             raise TokenInvalidError("Reset link is invalid or has expired.")
 
-        validate_password(new_password)
+        try:
+            validate_password(new_password)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
 
         user = token_obj.user
         user.set_password(new_password)
@@ -225,7 +231,10 @@ class AuthService:
         if not user.check_password(current_password):
             raise AuthenticationError("Current password is incorrect.")
 
-        validate_password(new_password)
+        try:
+            validate_password(new_password)
+        except ValueError as exc:
+            raise ValidationError(str(exc))
 
         user.set_password(new_password)
         user.save(update_fields=["password"])

@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] - 2026-10-09
+
+### Added
+- **Multi-Tenant Aggregated Business Analytics (`AnalyticsService`)**:
+  - Pure-Python, framework-agnostic domain service at `backend/domain/services/analytics_service.py`.
+  - Single-pass multi-tenant metrics across flexible lookback periods (7d, 30d, 90d, 365d):
+    - Revenue, Purchases (COGS), Operating Expenses, Gross Profit, Net Profit, and Profit Margins.
+    - Period-over-period growth velocity and Average Order Value (AOV).
+    - Inventory velocity: Top 5 fast-moving items vs dead-capital stagnant inventory (in-stock with zero sales).
+    - Operating expenses breakdown by category with percentage share.
+    - Trade receivables, payables, net working capital, and upcoming 7-day cheque maturities.
+    - Deterministic Business Health Score (0–100) and qualitative grade (Excellent, Healthy, Attention Needed, Critical Risk).
+- **Hybrid AI & Deterministic Decision Support (`backend/integrations/ai_analytics.py`)**:
+  - `LocalDeterministicAdvisor`: Instantaneous, zero-cost rule engine calculating priority action directives.
+  - `AIAnalyticsService`: Hybrid integration with Google Gemini / OpenAI-compatible models sending anonymized financial telemetry (< 350 tokens) with zero PII.
+  - Robust error handling: 1-hour cache key hashing, 15 req/hour rate limiting, and seamless fallback to deterministic advisor.
+- **FastAPI REST API Layer (`/api/v1/analytics/`)**:
+  - `GET /api/v1/analytics/summary`: Scoped analytics and AI recommendations with typed Pydantic response models.
+  - `POST /api/v1/analytics/insights/refresh`: On-demand AI insights refresh with rate limiting.
+- **Django Web UI Dashboard (`/reports/analytics/`)**:
+  - Executive AI Decision Support card with Health Score meter, Cashflow Outlook, and Priority Action Plan.
+  - Zero-dependency responsive pure CSS/HTML daily sales velocity sparkline/bar chart.
+  - Fast-moving vs Dead Capital stock comparison tables.
+  - Expense distribution visualization bars and period switcher pills (7d, 30d, 90d, 1y).
+  - Prominent navigation entries in sidebar, Reports index, and Dashboard header.
+- **Automated Verification**:
+  - 10 comprehensive tests in `tests/test_analytics_and_ai.py` (total test suite at 180 passing tests, 100% green).
+
+---
+
 ## [1.9.1] - 2026-10-09
 
 ### Added
