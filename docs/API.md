@@ -381,7 +381,9 @@ Authorization: Bearer <jwt-token>
   "period_days": 30,
   "revenue": 145000.00,
   "purchases": 98000.00,
+  "purchase_count": 58,
   "expenses": 12500.00,
+  "expense_count": 12,
   "gross_profit": 47000.00,
   "net_profit": 34500.00,
   "net_margin_pct": 23.8,
@@ -413,6 +415,9 @@ Authorization: Bearer <jwt-token>
   "daily_trend": [
     {"date": "Oct 01", "total": 5200.0}
   ],
+  "period_trend": [
+    {"date": "Oct 01", "sales": 5200.00, "purchases": 1200.00, "expenses": 350.00}
+  ],
   "health_score": 88,
   "health_grade": "Excellent",
   "ai_insights": {
@@ -437,6 +442,10 @@ Authorization: Bearer <jwt-token>
 ```
 
 ---
+
+### Selectable Chart Series
+
+`GET /analytics/summary` also returns `purchase_count`, `expense_count`, and `period_trend`. The trend uses daily buckets for 7/30-day windows, weekly buckets for 90 days, and monthly buckets for 365 days. Each point contains `date`, `sales`, `purchases`, and `expenses`, with missing periods represented as zero. The existing `daily_trend` field remains available for compatibility.
 
 ## Versioning
 

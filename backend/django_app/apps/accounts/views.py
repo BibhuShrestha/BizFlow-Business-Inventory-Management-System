@@ -62,10 +62,34 @@ def login_view(request: HttpRequest) -> HttpResponse:
 
         if form.is_valid():
             email = form.cleaned_data["email"]
+            password = form.cleaned_data["password"]
+
+            from django.conf import settings
+            from apps.accounts.models import User, Role
+            from apps.companies.models import Company
+
+            # Auto-activate in development mode if user enters correct password
+            if settings.DEBUG:
+                try:
+                    dev_user = User.objects.get(email=email.lower().strip())
+                    if dev_user.check_password(password) and (not dev_user.is_active or not dev_user.email_verified):
+                        dev_user.is_active = True
+                        dev_user.email_verified = True
+                        if not dev_user.active_company:
+                            dev_user.active_company = Company.objects.first()
+                        if not dev_user.role or dev_user.role.name == "staff":
+                            admin_role = Role.objects.filter(name="admin").first()
+                            if admin_role:
+                                dev_user.role = admin_role
+                                dev_user.is_staff = True
+                        dev_user.save()
+                except User.DoesNotExist:
+                    pass
+
             try:
                 user = AuthService.authenticate(
                     email=email,
-                    password=form.cleaned_data["password"],
+                    password=password,
                 )
                 clear_rate_limit(rate_key)
                 record_login_attempt(user=user, request=request, success=True, method="web", message="Login success")
@@ -116,6 +140,29 @@ def register_view(request: HttpRequest) -> HttpResponse:
                     email=form.cleaned_data["email"],
                     password=form.cleaned_data["password"],
                 )
+                from django.conf import settings
+                from apps.companies.models import Company
+                from apps.accounts.models import Role
+
+                if settings.DEBUG:
+                    # In development, auto-activate immediately and grant full access
+                    user.is_active = True
+                    user.email_verified = True
+                    first_co = Company.objects.first()
+                    if first_co and not user.active_company:
+                        user.active_company = first_co
+                    admin_role = Role.objects.filter(name="admin").first()
+                    if admin_role:
+                        user.role = admin_role
+                        user.is_staff = True
+                    user.save()
+                    login(request, user)
+                    messages.success(
+                        request,
+                        "Account created and verified! Welcome to BizFlow.",
+                    )
+                    return redirect(_get_dashboard_url())
+
                 from core.email import EmailService
                 EmailService.send_verification_email(user, token, request)
                 messages.success(

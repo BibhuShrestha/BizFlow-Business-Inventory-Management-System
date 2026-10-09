@@ -7,6 +7,12 @@
 
 ---
 
+## Analytics Explorer Enhancement (2026-10-09)
+
+- Added selectable sales, purchases, expenses, profitability, inventory, receivables, and payables views to the analytics dashboard.
+- Added numeric summaries alongside charts, with period-aware transaction series and current-state inventory and balance snapshots.
+- Extended the analytics API response with transaction counts and daily, weekly, or monthly trend points.
+
 ## Status Key
 
 | Symbol | Meaning |
@@ -43,7 +49,7 @@
 | Part 19 | Double-Entry Accounting Indicators & Party Ledger Portal Suite | `[x]` Complete (170 passing tests) |
 | Part 20 | Minimal UI/UX, Performance & Resource Optimization | `[x]` Complete (170 passing / test suite optimized) |
 | Part 21 | Transaction Date Controls, Universal Date Filtering & Hardening | `[x]` Complete (170 passing tests) |
-| Part 22 | AI Business Analytics & Decision Support Suite | `[x]` Complete (180 passing tests) |
+| Part 22 | AI Business Analytics & Decision Support Suite | `[x]` Complete (182 passing tests) |
 
 ---
 
@@ -276,8 +282,8 @@
   - Added AI Analytics quick-launch action button in Main Dashboard header (`/dashboard/`).
 
 ### 5. Test Suite Verification
-- Added automated test suite `tests/test_analytics_and_ai.py` with 10 comprehensive tests.
-- Entire repository test suite passes with **180 tests green (100% pass rate)**.
+- Added automated test suite `tests/test_analytics_and_ai.py` with 12 comprehensive tests.
+- Entire repository test suite passes with **182 tests green (100% pass rate)**.
 
 
 

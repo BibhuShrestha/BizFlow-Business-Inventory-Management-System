@@ -224,6 +224,26 @@ class TestAnalyticsService:
         assert top_exp[0]["category"] == "Utilities"
         assert top_exp[0]["amount"] == Decimal("50.00")
 
+        # Counts and period trend
+        assert data["purchase_count"] == 1
+        assert data["expense_count"] == 1
+        assert isinstance(data["period_trend"], list)
+        assert len(data["period_trend"]) > 0
+        first_bucket = data["period_trend"][0]
+        assert "date" in first_bucket
+        assert "sales" in first_bucket
+        assert "purchases" in first_bucket
+        assert "expenses" in first_bucket
+
+    def test_period_trend_grouping(self, analytics_setup):
+        company1 = analytics_setup["company1"]
+        for days in (7, 30, 90, 365):
+            res = AnalyticsService.get_business_analytics(company_id=company1.id, days=days)
+            assert "period_trend" in res
+            assert len(res["period_trend"]) > 0
+            assert "purchase_count" in res
+            assert "expense_count" in res
+
     def test_multi_tenancy_isolation(self, analytics_setup):
         company1 = analytics_setup["company1"]
         company2 = analytics_setup["company2"]
@@ -321,6 +341,21 @@ class TestReportsWebAnalyticsView:
         assert response.status_code == 302
         assert "/reports/analytics/?days=30" in response.url
 
+    def test_analytics_view_focus_parameter(self, analytics_setup):
+        client = Client()
+        manager = analytics_setup["manager"]
+        client.force_login(manager)
+
+        for focus in ("sales", "purchases", "expenses", "profitability", "inventory", "receivables", "payables"):
+            response = client.get(f"/reports/analytics/?days=30&focus={focus}")
+            assert response.status_code == 200
+            assert response.context["selected_focus"] == focus
+
+        # Invalid focus fallback to sales
+        response = client.get("/reports/analytics/?days=30&focus=unknown_metric")
+        assert response.status_code == 200
+        assert response.context["selected_focus"] == "sales"
+
     def test_analytics_view_unauthenticated(self):
         client = Client()
         response = client.get("/reports/analytics/")
@@ -345,6 +380,11 @@ class TestFastAPIAnalyticsEndpoints:
         assert float(data["revenue"]) == 600.0
         assert float(data["gross_profit"]) == 200.0
         assert float(data["net_profit"]) == 150.0
+        assert data["purchase_count"] == 1
+        assert data["expense_count"] == 1
+        assert "period_trend" in data
+        assert isinstance(data["period_trend"], list)
+        assert len(data["period_trend"]) > 0
         assert data["health_score"] >= 10
         assert "ai_insights" in data
 

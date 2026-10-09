@@ -51,6 +51,13 @@ def analytics_view(request: HttpRequest) -> HttpResponse:
         days = 30
 
     force_refresh = request.GET.get("refresh_ai", "0") in ("1", "true")
+    focus_options = {
+        "sales", "purchases", "expenses", "profitability",
+        "inventory", "receivables", "payables",
+    }
+    selected_focus = request.GET.get("focus", "sales").strip().lower()
+    if selected_focus not in focus_options:
+        selected_focus = "sales"
 
     analytics_data = AnalyticsService.get_business_analytics(
         company_id=company_id,
@@ -63,6 +70,7 @@ def analytics_view(request: HttpRequest) -> HttpResponse:
     return render(request, "reports/analytics.html", {
         "analytics": analytics_data,
         "selected_days": days,
+        "selected_focus": selected_focus,
     })
 
 

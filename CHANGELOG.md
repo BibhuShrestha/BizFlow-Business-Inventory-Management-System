@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-10-09
+
+### Added
+- **Analytics Interactive Explorer & Multi-Metric Visualization**:
+  - Added interactive multi-metric explorer to `/reports/analytics/` with dedicated views for Sales, Purchases, Operating Expenses, Profitability, Inventory velocity, Receivables, and Payables.
+  - Interactive SVG visualizer supporting time-series trends and comparative bar charts without external JavaScript dependencies.
+  - `AnalyticsService` period trend grouping: daily buckets for <= 30 days, weekly buckets for <= 90 days, and monthly buckets for full year.
+  - Added transaction volume counts (`purchase_count`, `expense_count`) and `period_trend` data to REST API `/api/v1/analytics/summary`.
+  - Development environment convenience auto-activation and staff elevation in `login_view` and `register_view` when `DEBUG=True`.
+  - Expanded test suite to **182 passing tests (100% green)**.
+
+---
+
 ## [2.0.0] - 2026-10-09
 
 ### Added

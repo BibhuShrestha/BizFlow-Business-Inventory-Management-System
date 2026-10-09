@@ -33,6 +33,13 @@ class DailyTrendSchema(BaseModel):
     total: float
 
 
+class PeriodTrendSchema(BaseModel):
+    date: str
+    sales: Decimal
+    purchases: Decimal
+    expenses: Decimal
+
+
 class ActionPlanItemSchema(BaseModel):
     category: str
     priority: str
@@ -58,7 +65,9 @@ class BusinessAnalyticsResponse(BaseModel):
     period_days: int
     revenue: Decimal
     purchases: Decimal
+    purchase_count: int
     expenses: Decimal
+    expense_count: int
     gross_profit: Decimal
     net_profit: Decimal
     net_margin_pct: float
@@ -82,6 +91,7 @@ class BusinessAnalyticsResponse(BaseModel):
     cheques_due_7d: int
     cheques_due_amount: Decimal
     daily_trend: List[DailyTrendSchema] = []
+    period_trend: List[PeriodTrendSchema] = []
     health_score: int
     health_grade: str
     ai_insights: Optional[AIInsightsSchema] = None

@@ -4,11 +4,12 @@ AnalyticsService -- Resource-efficient Business Analytics & Decision Support.
 Performs deterministic multi-tenant financial, inventory, and working capital
 calculations using single-pass database aggregation and bounded date intervals.
 """
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
 
 from django.db.models import Count, F, Q, Sum
+from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
 from django.utils import timezone
 
 from apps.accounting.models import Expense
@@ -58,19 +59,21 @@ class AnalyticsService:
         # ---------------------------------------------------------------------
         # 2. Financial Metrics (Current Period vs Prior Period)
         # ---------------------------------------------------------------------
-        curr_sales = sales_qs.filter(sale_date__gte=start_date)
-        curr_purch = purch_qs.filter(purchase_date__gte=start_date)
-        curr_exp = exp_qs.filter(expense_date__gte=start_date)
+        curr_sales = sales_qs.filter(sale_date__gte=start_date, sale_date__lte=now)
+        curr_purch = purch_qs.filter(purchase_date__gte=start_date, purchase_date__lte=now)
+        curr_exp = exp_qs.filter(expense_date__gte=start_date, expense_date__lte=now)
 
         revenue_agg = curr_sales.aggregate(total=Sum("total"), count=Count("id"))
         revenue = revenue_agg["total"] or Decimal("0.00")
         sales_count = revenue_agg["count"] or 0
 
-        purch_agg = curr_purch.aggregate(total=Sum("total"))
+        purch_agg = curr_purch.aggregate(total=Sum("total"), count=Count("id"))
         purchases = purch_agg["total"] or Decimal("0.00")
+        purchase_count = purch_agg["count"] or 0
 
-        exp_agg = curr_exp.aggregate(total=Sum("amount"))
+        exp_agg = curr_exp.aggregate(total=Sum("amount"), count=Count("id"))
         expenses = exp_agg["total"] or Decimal("0.00")
+        expense_count = exp_agg["count"] or 0
 
         # Estimated Gross and Net Profit
         gross_profit = revenue - purchases
@@ -180,8 +183,65 @@ class AnalyticsService:
         cheques_due_amount = cheque_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
 
         # ---------------------------------------------------------------------
-        # 6. Sales Trend (Past 14 Days Daily Velocity for lightweight SVG chart)
+        # 6. Transaction trends, grouped to keep charts useful at every period size.
+        if days <= 30:
+            truncation = TruncDate
+            cursor = start_date.date()
+            last_bucket = now.date()
+            step = "day"
+        elif days <= 90:
+            truncation = TruncWeek
+            cursor = start_date.date() - timedelta(days=start_date.date().weekday())
+            last_bucket = now.date() - timedelta(days=now.date().weekday())
+            step = "week"
+        else:
+            truncation = TruncMonth
+            cursor = date(start_date.year, start_date.month, 1)
+            last_bucket = date(now.year, now.month, 1)
+            step = "month"
+
+        bucket_dates = []
+        while cursor <= last_bucket:
+            bucket_dates.append(cursor)
+            if step == "day":
+                cursor += timedelta(days=1)
+            elif step == "week":
+                cursor += timedelta(weeks=1)
+            else:
+                cursor = date(cursor.year + (cursor.month // 12), (cursor.month % 12) + 1, 1)
+
+        def totals_by_period(
+            queryset, date_field: str, amount_field: str
+        ) -> dict[date, Decimal]:
+            rows = (
+                queryset.annotate(bucket=truncation(date_field))
+                .values("bucket")
+                .annotate(total=Sum(amount_field))
+                .order_by("bucket")
+            )
+            totals = {}
+            for row in rows:
+                bucket = row["bucket"]
+                if hasattr(bucket, "date"):
+                    bucket = bucket.date()
+                totals[bucket] = row["total"] or Decimal("0.00")
+            return totals
+
+        sales_by_period = totals_by_period(curr_sales, "sale_date", "total")
+        purchases_by_period = totals_by_period(curr_purch, "purchase_date", "total")
+        expenses_by_period = totals_by_period(curr_exp, "expense_date", "amount")
+        period_trend = []
+        for bucket in bucket_dates:
+            label = bucket.strftime("%b %Y" if step == "month" else "%b %d")
+            period_trend.append({
+                "date": label,
+                "sales": sales_by_period.get(bucket, Decimal("0.00")),
+                "purchases": purchases_by_period.get(bucket, Decimal("0.00")),
+                "expenses": expenses_by_period.get(bucket, Decimal("0.00")),
+            })
+
         # ---------------------------------------------------------------------
+        # 7. Legacy 15-day daily sales trend retained for existing API clients.
         daily_trend = []
         for d in range(14, -1, -1):
             day_target = (now - timedelta(days=d)).date()
@@ -193,7 +253,7 @@ class AnalyticsService:
             })
 
         # ---------------------------------------------------------------------
-        # 7. Deterministic Business Health Score (0 - 100)
+        # 8. Deterministic Business Health Score (0 - 100)
         # ---------------------------------------------------------------------
         score = 80  # Base benchmark
         # Margin factor (+/- 15 pts)
@@ -234,7 +294,9 @@ class AnalyticsService:
             "period_days": days,
             "revenue": revenue,
             "purchases": purchases,
+            "purchase_count": purchase_count,
             "expenses": expenses,
+            "expense_count": expense_count,
             "gross_profit": gross_profit,
             "net_profit": net_profit,
             "net_margin_pct": round(net_margin_pct, 1),
@@ -258,12 +320,13 @@ class AnalyticsService:
             "cheques_due_7d": cheques_due_7d,
             "cheques_due_amount": cheques_due_amount,
             "daily_trend": daily_trend,
+            "period_trend": period_trend,
             "health_score": health_score,
             "health_grade": health_grade,
         }
 
         # ---------------------------------------------------------------------
-        # 8. Optional AI / Decision Support Insights
+        # 9. Optional AI / Decision Support Insights
         # ---------------------------------------------------------------------
         if include_ai:
             ai_insights = AIAnalyticsService.get_insights(
