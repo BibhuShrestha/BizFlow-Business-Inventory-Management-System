@@ -143,19 +143,30 @@ def convert_date(request: HttpRequest) -> JsonResponse:
         date_str = request.GET.get("date", "").strip()
         mode = (request.GET.get("mode") or request.GET.get("direction") or "ad_to_bs").strip().lower()
 
+    NEPALI_MONTHS = {
+        1: "Baisakh", 2: "Jestha", 3: "Ashadh", 4: "Shrawan", 5: "Bhadra", 6: "Ashwin",
+        7: "Kartik", 8: "Mangsir", 9: "Poush", 10: "Magh", 11: "Falgun", 12: "Chaitra"
+    }
+
     if not date_str:
         today_ad = timezone.localdate()
         today_bs = str(NepaliDateService.ad_to_bs(today_ad))
         parts = [int(p) for p in today_bs.split("-") if p.isdigit()]
+        m_idx = parts[1] if len(parts) > 1 else 1
+        m_name = NEPALI_MONTHS.get(m_idx, "")
+        d_val = parts[2] if len(parts) > 2 else 1
+        y_val = parts[0] if parts else 2083
         return JsonResponse({
             "success": True,
             "ad_date": today_ad.isoformat(),
             "bs_date": today_bs,
-            "bs_year": parts[0] if parts else 2083,
-            "bs_month": parts[1] if len(parts) > 1 else 1,
-            "bs_day": parts[2] if len(parts) > 2 else 1,
+            "bs_year": y_val,
+            "bs_month": m_idx,
+            "bs_day": d_val,
+            "bs_month_name": m_name,
             "formatted_ad": today_ad.strftime("%d %b %Y"),
             "formatted_bs": today_bs,
+            "formatted_bs_full": f"{y_val} {m_name} {d_val:02d}",
         })
 
     try:
@@ -165,6 +176,7 @@ def convert_date(request: HttpRequest) -> JsonResponse:
                 ad_date = NepaliDateService.bs_to_ad(parts[0], parts[1], parts[2])
                 if ad_date:
                     bs_date = str(NepaliDateService.ad_to_bs(ad_date))
+                    m_name = NEPALI_MONTHS.get(parts[1], "")
                     return JsonResponse({
                         "success": True,
                         "ad_date": ad_date.isoformat(),
@@ -172,8 +184,10 @@ def convert_date(request: HttpRequest) -> JsonResponse:
                         "bs_year": parts[0],
                         "bs_month": parts[1],
                         "bs_day": parts[2],
+                        "bs_month_name": m_name,
                         "formatted_ad": ad_date.strftime("%d %b %Y"),
                         "formatted_bs": bs_date,
+                        "formatted_bs_full": f"{parts[0]} {m_name} {parts[2]:02d}",
                     })
         else:
             parts = [int(p) for p in date_str.replace("/", "-").split("-") if p.isdigit()]
@@ -181,15 +195,21 @@ def convert_date(request: HttpRequest) -> JsonResponse:
                 ad_date = date(parts[0], parts[1], parts[2])
                 bs_date = str(NepaliDateService.ad_to_bs(ad_date))
                 bs_parts = [int(p) for p in bs_date.split("-") if p.isdigit()]
+                y_val = bs_parts[0] if bs_parts else 2083
+                m_idx = bs_parts[1] if len(bs_parts) > 1 else 1
+                d_val = bs_parts[2] if len(bs_parts) > 2 else 1
+                m_name = NEPALI_MONTHS.get(m_idx, "")
                 return JsonResponse({
                     "success": True,
                     "ad_date": ad_date.isoformat(),
                     "bs_date": bs_date,
-                    "bs_year": bs_parts[0] if bs_parts else 2083,
-                    "bs_month": bs_parts[1] if len(bs_parts) > 1 else 1,
-                    "bs_day": bs_parts[2] if len(bs_parts) > 2 else 1,
+                    "bs_year": y_val,
+                    "bs_month": m_idx,
+                    "bs_day": d_val,
+                    "bs_month_name": m_name,
                     "formatted_ad": ad_date.strftime("%d %b %Y"),
                     "formatted_bs": bs_date,
+                    "formatted_bs_full": f"{y_val} {m_name} {d_val:02d}",
                 })
     except Exception as exc:
         return JsonResponse({"success": False, "error": str(exc)}, status=400)

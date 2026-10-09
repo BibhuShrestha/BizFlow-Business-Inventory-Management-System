@@ -16,10 +16,24 @@
 </div>
 
 <div class="card" style="margin-bottom: 20px; padding: 16px;">
-  <form method="get" style="display:flex; gap:12px;">
-    <input type="text" name="q" value="{{ search_query }}" placeholder="Search PO number, supplier..." class="form-control" style="max-width:320px;">
-    <button type="submit" class="btn btn-secondary">Search</button>
-    {% if search_query %}<a href="{% url 'purchases:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search PO number, supplier..." class="form-control" style="max-width:260px;">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span style="font-size:13px; color:var(--text-secondary);">From:</span>
+      <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="width:145px;">
+    </div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span style="font-size:13px; color:var(--text-secondary);">To:</span>
+      <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="width:145px;">
+    </div>
+    <select name="status" class="form-control" style="width:140px;">
+      <option value="">All Statuses</option>
+      <option value="Paid" {% if status_filter == 'Paid' %}selected{% endif %}>Paid</option>
+      <option value="Partially Paid" {% if status_filter == 'Partially Paid' %}selected{% endif %}>Partially Paid</option>
+      <option value="Due" {% if status_filter == 'Due' %}selected{% endif %}>Due</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    {% if search_query or date_from or date_to or status_filter %}<a href="{% url 'purchases:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
   </form>
 </div>
 

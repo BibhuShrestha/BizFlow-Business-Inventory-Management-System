@@ -53,6 +53,8 @@ def credit_given_list(request: HttpRequest) -> HttpResponse:
     search = request.GET.get("q", request.GET.get("search", "")).strip()
     status_filter = request.GET.get("status", "")
     customer_id = request.GET.get("customer", "")
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
 
     query = Sale.objects.select_related("customer", "company").prefetch_related("payments").filter(is_active=True)
 
@@ -70,6 +72,11 @@ def credit_given_list(request: HttpRequest) -> HttpResponse:
 
     if customer_id:
         query = query.filter(customer_id=customer_id)
+
+    if date_from:
+        query = query.filter(sale_date__date__gte=date_from)
+    if date_to:
+        query = query.filter(sale_date__date__lte=date_to)
 
     # In-memory status filtering only when needed because status is dynamic based on payments and due date
     if status_filter:
@@ -89,6 +96,8 @@ def credit_given_list(request: HttpRequest) -> HttpResponse:
         "status_filter": status_filter,
         "customer_filter": customer_id,
         "customers": customers,
+        "date_from": date_from,
+        "date_to": date_to,
     })
 
 
@@ -99,6 +108,8 @@ def credit_taken_list(request: HttpRequest) -> HttpResponse:
     search = request.GET.get("q", request.GET.get("search", "")).strip()
     status_filter = request.GET.get("status", "")
     supplier_id = request.GET.get("supplier", "")
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
 
     query = Purchase.objects.select_related("supplier", "company").prefetch_related("payments").filter(is_active=True)
     company_id = getattr(request.user.active_company, "id", None) if getattr(request.user, "active_company", None) else None
@@ -115,6 +126,11 @@ def credit_taken_list(request: HttpRequest) -> HttpResponse:
 
     if supplier_id:
         query = query.filter(supplier_id=supplier_id)
+
+    if date_from:
+        query = query.filter(purchase_date__date__gte=date_from)
+    if date_to:
+        query = query.filter(purchase_date__date__lte=date_to)
 
     if status_filter:
         purchases = [p for p in query.order_by("-purchase_date") if p.calculated_status.lower() == status_filter.lower()]
@@ -133,6 +149,8 @@ def credit_taken_list(request: HttpRequest) -> HttpResponse:
         "status_filter": status_filter,
         "supplier_filter": supplier_id,
         "suppliers": suppliers,
+        "date_from": date_from,
+        "date_to": date_to,
     })
 
 

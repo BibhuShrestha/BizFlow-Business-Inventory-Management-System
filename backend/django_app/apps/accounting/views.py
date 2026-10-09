@@ -15,9 +15,11 @@ from apps.core_app.pagination import paginate_queryset
 @login_required_custom
 @staff_required
 def expense_list(request: HttpRequest) -> HttpResponse:
-    """List operational expenses with search, category filtering, and pagination."""
-    search = request.GET.get("search", "").strip()
+    """List operational expenses with search, category filtering, date range, and pagination."""
+    search = request.GET.get("q", request.GET.get("search", "")).strip()
     category = request.GET.get("category", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
 
     query = Expense.objects.all()
     company = getattr(request.user, "active_company", None)
@@ -34,13 +36,22 @@ def expense_list(request: HttpRequest) -> HttpResponse:
     if category:
         query = query.filter(category__iexact=category)
 
+    if date_from:
+        query = query.filter(expense_date__date__gte=date_from)
+    if date_to:
+        query = query.filter(expense_date__date__lte=date_to)
+
     page_obj = paginate_queryset(request, query.order_by("-expense_date"), per_page=15)
-    categories = query.values_list("category", flat=True).distinct()
+    categories = Expense.objects.filter(company=company).values_list("category", flat=True).distinct() if company else Expense.objects.values_list("category", flat=True).distinct()
     return render(request, "accounting/expense_list.html", {
         "page_obj": page_obj,
         "search": search,
+        "search_query": search,
         "selected_category": category,
+        "category_filter": category,
         "categories": categories,
+        "date_from": date_from,
+        "date_to": date_to,
     })
 
 
@@ -53,6 +64,8 @@ def expense_create(request: HttpRequest) -> HttpResponse:
         expense = form.save(commit=False)
         expense.user = request.user
         expense.company = getattr(request.user, "active_company", None)
+        if expense.expense_date and timezone.is_naive(expense.expense_date):
+            expense.expense_date = timezone.make_aware(expense.expense_date)
         expense.save()
         messages.success(request, f"Expense recorded: {expense.category} (Rs. {expense.amount}).")
         return redirect("expenses:list")

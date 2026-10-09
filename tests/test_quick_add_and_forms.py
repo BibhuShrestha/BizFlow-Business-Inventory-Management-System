@@ -286,3 +286,102 @@ class TestRedesignedFormsRendering:
         assert res.status_code == 302
         purchase = Purchase.objects.get(bill_number="PO-2001")
         assert purchase.company == company2
+
+    def test_sale_creation_with_custom_date_and_due_date(self, auth_client):
+        client, user, company = auth_client
+        cat = Category.objects.create(name="Monitors")
+        customer = Customer.objects.create(name="Date Test Customer", phone="9800000099")
+        product = Product.objects.create(
+            category=cat,
+            name="27 Inch 4K Display",
+            sku="DISP-4K",
+            current_stock=10,
+            selling_price=Decimal("45000.00"),
+            purchase_price=Decimal("38000.00"),
+            company=company
+        )
+
+        res = client.post("/sales/new/", {
+            "company": company.id,
+            "customer": customer.id,
+            "product": product.id,
+            "quantity": 1,
+            "unit_price": "45000.00",
+            "discount": "500.00",
+            "sale_date": "2026-09-15",
+            "due_date": "2026-10-15",
+            "payment_status": "Due",
+            "payment_method": "Credit",
+            "bill_number": "INV-DATED-01",
+            "notes": "Custom transaction and due date"
+        })
+        assert res.status_code == 302
+        sale = Sale.objects.get(bill_number="INV-DATED-01")
+        assert sale.sale_date.date().isoformat() == "2026-09-15"
+        assert sale.due_date.isoformat() == "2026-10-15"
+        assert sale.payment_status == "Due"
+
+    def test_purchase_creation_with_custom_date_and_due_date(self, auth_client):
+        client, user, company = auth_client
+        cat = Category.objects.create(name="Monitors")
+        supplier = Supplier.objects.create(name="Date Test Vendor", phone="9800000088")
+        product = Product.objects.create(
+            category=cat,
+            name="Keychron Mechanical Keyboard",
+            sku="KEY-M1",
+            current_stock=2,
+            selling_price=Decimal("12000.00"),
+            purchase_price=Decimal("8500.00"),
+            company=company
+        )
+
+        res = client.post("/purchases/new/", {
+            "company": company.id,
+            "supplier": supplier.id,
+            "product": product.id,
+            "quantity": 5,
+            "unit_price": "8500.00",
+            "discount": "0.00",
+            "purchase_date": "2026-08-20",
+            "due_date": "2026-09-20",
+            "payment_status": "Due",
+            "payment_method": "Credit",
+            "bill_number": "PO-DATED-01",
+            "notes": "Custom bill and due date"
+        })
+        assert res.status_code == 302
+        purchase = Purchase.objects.get(bill_number="PO-DATED-01")
+        assert purchase.purchase_date.date().isoformat() == "2026-08-20"
+        assert purchase.due_date.isoformat() == "2026-09-20"
+        assert purchase.payment_status == "Due"
+
+    def test_sales_and_purchases_list_date_range_filtering(self, auth_client):
+        client, user, company = auth_client
+        # Filter sales by date
+        res_sale = client.get("/sales/?date_from=2026-09-01&date_to=2026-09-30")
+        assert res_sale.status_code == 200
+        assert "From:" in res_sale.content.decode()
+
+        # Filter purchases by date
+        res_purch = client.get("/purchases/?date_from=2026-08-01&date_to=2026-08-31")
+        assert res_purch.status_code == 200
+        assert "From:" in res_purch.content.decode()
+
+    def test_expense_and_credit_list_date_range_filtering(self, auth_client):
+        client, user, company = auth_client
+        # Filter expenses by date
+        res_exp = client.get("/expenses/?date_from=2026-09-01&date_to=2026-09-30")
+        assert res_exp.status_code == 200
+        assert "From:" in res_exp.content.decode()
+
+        # Filter credit given (receivables) by date
+        res_given = client.get("/credit/given/?date_from=2026-09-01&date_to=2026-09-30")
+        assert res_given.status_code == 200
+        assert "From:" in res_given.content.decode()
+
+        # Filter credit taken (payables) by date
+        res_taken = client.get("/credit/taken/?date_from=2026-08-01&date_to=2026-08-31")
+        assert res_taken.status_code == 200
+        assert "From:" in res_taken.content.decode()
+
+

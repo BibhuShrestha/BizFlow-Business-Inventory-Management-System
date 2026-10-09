@@ -27,6 +27,8 @@ def sale_list(request: HttpRequest) -> HttpResponse:
     """List sales invoices with search, status filtering, and pagination."""
     search = request.GET.get("q", request.GET.get("search", "")).strip()
     status_filter = request.GET.get("status", "")
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
 
     query = Sale.objects.select_related("customer", "company").filter(is_active=True)
     if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
@@ -42,12 +44,19 @@ def sale_list(request: HttpRequest) -> HttpResponse:
     if status_filter:
         query = query.filter(payment_status=status_filter)
 
+    if date_from:
+        query = query.filter(sale_date__date__gte=date_from)
+    if date_to:
+        query = query.filter(sale_date__date__lte=date_to)
+
     page_obj = paginate_queryset(request, query.order_by("-sale_date"), per_page=15)
     return render(request, "sales/sale_list.html", {
         "page_obj": page_obj,
         "search_query": search,
         "search": search,
         "status_filter": status_filter,
+        "date_from": date_from,
+        "date_to": date_to,
     })
 
 
@@ -126,6 +135,15 @@ def sale_create(request: HttpRequest) -> HttpResponse:
         payment_method = form.cleaned_data["payment_method"]
         cheque_number = form.cleaned_data["cheque_number"]
         cheque_date = form.cleaned_data["cheque_date"]
+        sale_date_input = form.cleaned_data.get("sale_date")
+        if sale_date_input:
+            import datetime
+            now_time = timezone.now().time()
+            combined = datetime.datetime.combine(sale_date_input, now_time)
+            sale_date = timezone.make_aware(combined) if timezone.is_naive(combined) else combined
+        else:
+            sale_date = timezone.now()
+        due_date = form.cleaned_data.get("due_date")
         notes = form.cleaned_data["notes"]
 
         if product.current_stock < qty:
@@ -151,7 +169,8 @@ def sale_create(request: HttpRequest) -> HttpResponse:
                     bill_number=bill_number,
                     customer=customer,
                     company=active_company,
-                    sale_date=timezone.now(),
+                    sale_date=sale_date,
+                    due_date=due_date,
                     discount=discount,
                     tax=tax,
                     total=total,

@@ -12,11 +12,28 @@
 </div>
 
 <div class="card" style="margin-bottom: 20px; padding: 16px;">
-  <form method="get" style="display:flex; gap:12px;">
-    <input type="text" name="q" value="{{ search_query }}" placeholder="Search title or payee..." class="form-control" style="width:240px;">
-    <input type="text" name="category" value="{{ category_filter }}" placeholder="Filter category..." class="form-control" style="width:180px;">
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search description, reference, or category..." class="form-control" style="max-width:260px;">
+    {% if categories %}
+    <select name="category" class="form-control" style="width:160px;">
+      <option value="">All Categories</option>
+      {% for cat in categories %}
+        <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <input type="text" name="category" value="{{ selected_category }}" placeholder="Filter category..." class="form-control" style="width:160px;">
+    {% endif %}
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span style="font-size:13px; color:var(--text-secondary);">From:</span>
+      <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="width:145px;">
+    </div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span style="font-size:13px; color:var(--text-secondary);">To:</span>
+      <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="width:145px;">
+    </div>
     <button type="submit" class="btn btn-secondary">Filter</button>
-    {% if search_query or category_filter %}<a href="{% url 'expenses:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
+    {% if search_query or selected_category or date_from or date_to %}<a href="{% url 'expenses:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
   </form>
 </div>
 

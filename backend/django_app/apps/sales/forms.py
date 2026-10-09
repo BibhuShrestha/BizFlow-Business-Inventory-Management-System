@@ -1,6 +1,7 @@
 """Forms for Sales transactions and invoices."""
 from decimal import Decimal
 from django import forms
+from django.utils import timezone
 from apps.sales.models import Sale, Customer
 from apps.inventory.models import Product
 from apps.companies.models import Company
@@ -36,6 +37,17 @@ class SaleForm(forms.Form):
         initial=Decimal("0.00"),
         required=False,
         widget=forms.NumberInput(attrs={"class": "form-control", "step": "0.01"})
+    )
+    sale_date = forms.DateField(
+        required=False,
+        initial=timezone.localdate,
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        label="Invoice Date"
+    )
+    due_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        label="Payment Due Date"
     )
     bill_number = forms.CharField(max_length=64, required=False, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional Bill/Slip Number"}))
     payment_status = forms.ChoiceField(

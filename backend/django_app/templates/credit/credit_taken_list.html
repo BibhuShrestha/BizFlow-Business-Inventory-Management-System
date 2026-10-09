@@ -16,9 +16,18 @@
 
 <div class="card" style="margin-bottom: 20px; padding: 16px;">
   <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search PO #, supplier, phone..." class="form-control" style="max-width:280px;">
+    <input type="text" name="q" value="{{ search }}" placeholder="Search PO #, supplier, phone..." class="form-control" style="max-width:240px;">
     
-    <select name="status" class="form-control" style="max-width:180px;">
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span style="font-size:13px; color:var(--text-secondary);">From:</span>
+      <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="width:145px;">
+    </div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span style="font-size:13px; color:var(--text-secondary);">To:</span>
+      <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="width:145px;">
+    </div>
+
+    <select name="status" class="form-control" style="max-width:160px;">
       <option value="">All Statuses</option>
       <option value="unpaid" {% if status_filter == 'unpaid' %}selected{% endif %}>Unpaid</option>
       <option value="partially paid" {% if status_filter == 'partially paid' %}selected{% endif %}>Partially Paid</option>
@@ -26,7 +35,7 @@
       <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
     </select>
 
-    <select name="supplier" class="form-control" style="max-width:200px;">
+    <select name="supplier" class="form-control" style="max-width:180px;">
       <option value="">All Suppliers</option>
       {% for sp in suppliers %}
         <option value="{{ sp.id }}" {% if supplier_filter == sp.id|stringformat:"s" %}selected{% endif %}>{{ sp.name }}</option>
@@ -34,7 +43,7 @@
     </select>
 
     <button type="submit" class="btn btn-secondary">Filter</button>
-    {% if search or status_filter or supplier_filter %}
+    {% if search or status_filter or supplier_filter or date_from or date_to %}
       <a href="{% url 'credit:taken_list' %}" class="btn btn-ghost">Reset</a>
     {% endif %}
   </form>

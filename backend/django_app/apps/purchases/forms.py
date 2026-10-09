@@ -1,6 +1,7 @@
 """Forms for Purchase orders and bills."""
 from decimal import Decimal
 from django import forms
+from django.utils import timezone
 from apps.purchases.models import Purchase, Supplier
 from apps.inventory.models import Product
 from apps.companies.models import Company
@@ -37,6 +38,17 @@ class PurchaseForm(forms.Form):
         required=False,
         widget=forms.NumberInput(attrs={"class": "form-control", "step": "0.01"})
     )
+    purchase_date = forms.DateField(
+        required=False,
+        initial=timezone.localdate,
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        label="Bill Date"
+    )
+    due_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+        label="Payment Due Date"
+    )
     bill_number = forms.CharField(max_length=64, required=False, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Vendor Bill Number"}))
     payment_status = forms.ChoiceField(
         choices=Purchase.STATUS_CHOICES,
@@ -51,3 +63,4 @@ class PurchaseForm(forms.Form):
     cheque_number = forms.CharField(max_length=64, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
     cheque_date = forms.DateField(required=False, widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}))
     notes = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "form-control", "rows": 2}))
+

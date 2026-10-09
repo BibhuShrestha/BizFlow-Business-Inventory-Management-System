@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.1] - 2026-10-09
+
+### Added
+- **Transaction & Due Date Control in Sales and Purchases**:
+  - Added editable **Bill Date** (`purchase_date`, defaults to today) and **Payment Due Date** (`due_date`) to `PurchaseForm` and `templates/purchases/purchase_form.html`.
+  - Added editable **Invoice Date** (`sale_date`, defaults to today) and **Payment Due Date** (`due_date`) to `SaleForm` and `templates/sales/sale_form.html`.
+  - Updated `purchase_create` and `sale_create` views to persist user-specified dates atomically to the database.
+- **Unified Date Range & Search Filtering**:
+  - Added **Date Range Filter** (`From Date`, `To Date`) across Sales Invoices (`/sales/`), Purchase Bills (`/purchases/`), Operating Expenses (`/expenses/`), Credit Given Receivables (`/credit/given/`), and Credit Taken Payables (`/credit/taken/`).
+  - Added dynamic category dropdown and unified search parameter handling in `expense_list`.
+  - Enhanced `/api/v1/dashboard/convert-date` and `/dashboard/convert-date/` with Bikram Sambat month names (`Baisakh` through `Chaitra`) and full formatted BS strings.
+  - Added automated test cases in `tests/test_quick_add_and_forms.py` verifying custom transaction dates, due dates, and all date range filters (169 tests green, 100% pass rate).
+
+---
+
 ## [1.9.0] - 2026-10-08
 
 ### Changed & Optimized
