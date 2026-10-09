@@ -43,6 +43,7 @@
 | Part 19 | Double-Entry Accounting Indicators & Party Ledger Portal Suite | `[x]` Complete (170 passing tests) |
 | Part 20 | Minimal UI/UX, Performance & Resource Optimization | `[x]` Complete (170 passing / test suite optimized) |
 | Part 21 | Transaction Date Controls, Universal Date Filtering & Hardening | `[x]` Complete (170 passing tests) |
+| Part 22 | AI Business Analytics & Decision Support Suite | `[x]` Complete (180 passing tests) |
 
 ---
 
@@ -230,8 +231,53 @@
 - Added dual AD and BS date badges across Sales Invoices, Purchase Bills, Operating Expenses, Receivables, and Payables list tables.
 - Enhanced `/api/v1/dashboard/convert-date` and `/dashboard/convert-date/` with full Bikram Sambat month names (`Baisakh` - `Chaitra`) and formatted output strings (`formatted_bs_full`).
 
-### 4. Test Verification
-- Added automated test cases in `tests/test_quick_add_and_forms.py` verifying custom dates, due dates, date range filters, and dual date rendering across sales, purchases, expenses, receivables, and payables.
 - Complete test suite passes at 100% (170 passing tests).
+
+---
+
+## Part 22 — Business Analytics & AI Decision Support Suite Summary
+
+### 1. Multi-Tenant Aggregated Business Intelligence (`AnalyticsService`)
+- Pure Python, framework-agnostic domain service at `backend/domain/services/analytics_service.py`.
+- Computes single-pass multi-tenant operational KPIs across configurable lookback windows (7, 30, 90, 365 days):
+  - Revenue, Purchases (Cost of Goods), Operating Expenses, Gross Profit, Net Profit, Gross Margin %, Net Margin %.
+  - Period-over-period growth velocity and Average Order Value (AOV).
+  - Inventory velocity: Top 5 fast-moving items vs stagnant / dead-capital stock (in-stock items with zero sales).
+  - Operating expenses categorized by volume with percentage share.
+  - Trade receivables, payables, net working capital, and upcoming 7-day cheque maturities.
+  - Deterministic Business Health Score (0 - 100) and qualitative grade (Excellent, Healthy, Attention Needed, Critical Risk).
+
+### 2. Hybrid AI & Deterministic Decision Support (`integrations/ai_analytics.py`)
+- **LocalDeterministicAdvisor**:
+  - Instantaneous, zero-cost, zero-latency rule engine calculating strategic priority directives.
+  - Diagnoses out-of-stock liabilities, overdue receivables, negative working capital, and expense outliers.
+- **AIAnalyticsService**:
+  - Lightweight hybrid integration utilizing Google Gemini / OpenAI compatible models.
+  - Sends compact, anonymized financial telemetry (< 350 tokens) with zero raw customer names or transaction logs.
+  - Employs bounded 1-hour cache key hashing and 15 request/hour per-user rate limit controls.
+  - Gracefully falls back to `LocalDeterministicAdvisor` upon missing API keys, network errors, or rate exhaustion.
+
+### 3. FastAPI REST API Layer (`/api/v1/analytics/`)
+- Mounted routers in `backend/api/routers/analytics.py` and registered in `backend/api/main.py`:
+  - `GET /api/v1/analytics/summary`: Scoped business analytics and AI insights with Pydantic response validation (`BusinessAnalyticsResponse`).
+  - `POST /api/v1/analytics/insights/refresh`: Triggers on-demand AI recommendations refresh with rate-limiting guardrails.
+
+### 4. Dedicated Django Web UI (`/reports/analytics/`)
+- High-aesthetic dashboard adhering strictly to `DESIGN_SYSTEM.md`:
+  - Period selection pills (7d, 30d, 90d, 1y) with instant query persistence.
+  - Executive AI Decision Support hero card with Health Score gauge, qualitative grade, Cashflow Outlook, Growth Opportunities, and Priority Action Plan.
+  - Responsive pure CSS/HTML daily sales velocity sparkline/bar chart (zero external JS dependencies).
+  - Fast-moving vs Dead Capital stock comparison tables.
+  - Operating expenses distribution with visual meter bars.
+  - Dedicated "Refresh AI Advisor" form action with user flash messages.
+- Navigation integration:
+  - Added "AI Analytics & Insights" link in base navigation sidebar.
+  - Added prominent promo callout banner in Reports index (`/reports/`).
+  - Added AI Analytics quick-launch action button in Main Dashboard header (`/dashboard/`).
+
+### 5. Test Suite Verification
+- Added automated test suite `tests/test_analytics_and_ai.py` with 10 comprehensive tests.
+- Entire repository test suite passes with **180 tests green (100% pass rate)**.
+
 
 

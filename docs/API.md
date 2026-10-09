@@ -362,11 +362,79 @@ GET /api/v1/sales/?payment_status=Due
 
 ---
 
-## Utility Endpoints
+## Business Analytics & AI Decision Support Endpoints
 
 | Method | Endpoint | Auth | Permission | Description |
 |--------|----------|------|------------|-------------|
-| GET | /utils/convert-date | No | — | AD to BS or BS to AD conversion |
+| GET | /analytics/summary | Yes | Staff+ | Comprehensive multi-tenant KPIs, margins, inventory velocity, health score, and AI insights |
+| POST | /analytics/insights/refresh | Yes | Staff+ | Trigger on-demand AI decision support advice refresh |
+
+### Example Analytics Request
+```http
+GET /api/v1/analytics/summary?days=30&include_ai=true
+Authorization: Bearer <jwt-token>
+```
+
+### Example Analytics Response
+```json
+{
+  "period_days": 30,
+  "revenue": 145000.00,
+  "purchases": 98000.00,
+  "expenses": 12500.00,
+  "gross_profit": 47000.00,
+  "net_profit": 34500.00,
+  "net_margin_pct": 23.8,
+  "gross_margin_pct": 32.4,
+  "growth_pct": 14.5,
+  "sales_count": 84,
+  "average_order_value": 1726.19,
+  "total_products": 120,
+  "inventory_valuation": 412000.00,
+  "retail_valuation": 560000.00,
+  "low_stock_count": 3,
+  "out_of_stock_count": 0,
+  "fast_moving_products": [
+    {"id": 1, "name": "Basmati Rice 25kg", "sku": "RICE-01", "sold_units": 45, "revenue": 112500.00}
+  ],
+  "slow_moving_products": [
+    {"id": 4, "name": "Special Spice Mix", "sku": "SPICE-04", "stock": 15, "tied_up_capital": 3500.00}
+  ],
+  "top_expense_categories": [
+    {"category": "Rent", "amount": 8000.00, "percentage": 64.0}
+  ],
+  "receivables_total": 24000.00,
+  "receivables_overdue": 4500.00,
+  "payables_total": 18000.00,
+  "payables_overdue": 0.00,
+  "working_capital_net": 6000.00,
+  "cheques_due_7d": 2,
+  "cheques_due_amount": 15000.00,
+  "daily_trend": [
+    {"date": "Oct 01", "total": 5200.0}
+  ],
+  "health_score": 88,
+  "health_grade": "Excellent",
+  "ai_insights": {
+    "source": "local_rules",
+    "provider": "BizFlow Deterministic Engine",
+    "model": "Rules-v2.1",
+    "health_score": 88,
+    "executive_summary": "Strong financial health (88/100) with robust 23.8% net margins and controlled customer credit risk.",
+    "action_plan": [
+      {
+        "category": "Growth",
+        "priority": "Low",
+        "title": "Capitalize on high-margin product expansion",
+        "detail": "Current financial and stock indicators are balanced. Explore volume purchase discounts with key suppliers."
+      }
+    ],
+    "cashflow_outlook": "Positive working capital buffer of Rs. 6,000.00. Short-term obligations are covered by active trade receivables.",
+    "growth_opportunities": "Boost stock allocation for 'Basmati Rice 25kg', which generated the highest sales velocity this period.",
+    "timestamp": 1728475200.0
+  }
+}
+```
 
 ---
 

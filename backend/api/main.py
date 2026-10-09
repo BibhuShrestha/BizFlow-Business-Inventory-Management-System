@@ -37,7 +37,7 @@ django.setup()
 # ---------------------------------------------------------------------------
 # Import routers (added incrementally in Parts 13-16)
 # ---------------------------------------------------------------------------
-from api.routers import health, auth, credit, cheques, notifications  # noqa: E402
+from api.routers import health, auth, credit, cheques, notifications, analytics  # noqa: E402
 
 # from api.routers import auth, users, companies, sellers
 # from api.routers import products, inventory, customers, suppliers
@@ -111,3 +111,4 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(credit.router, prefix="/api/v1")
 app.include_router(cheques.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
+app.include_router(analytics.router, prefix="/api/v1")

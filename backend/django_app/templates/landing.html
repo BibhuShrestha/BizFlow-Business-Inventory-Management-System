@@ -4,112 +4,222 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="BizFlow — Modern, clean, minimal ERP and Inventory Management platform for SMEs in Nepal. Manage inventory, sales, purchases, and finances in one place.">
-  <title>BizFlow — Smart Business &amp; Inventory Management Platform</title>
-
-  {# Public landing page: allow indexing #}
+  <meta name="description" content="BizFlow brings inventory, sales, purchases, customer ledgers, and business reporting together for growing businesses in Nepal.">
+  <title>BizFlow — Business operations, in better flow</title>
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="{{ request.build_absolute_uri|cut:'?' }}">
-
-  {# Open Graph metadata #}
   <meta property="og:type" content="website">
-  <meta property="og:title" content="BizFlow — Smart Business &amp; Inventory Management Platform">
-  <meta property="og:description" content="Modern, clean, minimal ERP and Inventory Management platform for SMEs in Nepal.">
+  <meta property="og:title" content="BizFlow — Business operations, in better flow">
+  <meta property="og:description" content="Inventory, sales, purchases, and financial records in one clear workspace.">
   <meta property="og:url" content="{{ request.build_absolute_uri }}">
   <meta property="og:site_name" content="BizFlow">
-
-  {# Twitter/X card #}
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="BizFlow — Business Management Platform">
-  <meta name="twitter:description" content="Inventory, Sales, Purchases, and Finance management for SMEs in Nepal.">
-  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    .hero-container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 80px 24px 60px;
-      text-align: center;
-    }
-    .hero-title {
-      font-size: 2.75rem;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: -0.03em;
-      margin-bottom: 16px;
-      line-height: 1.2;
-    }
-    .hero-sub {
-      font-size: 1.15rem;
-      color: var(--text-secondary);
-      max-width: 640px;
-      margin: 0 auto 32px;
-      line-height: 1.6;
-    }
-    .features-section {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 0 24px 80px;
-    }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-    }
+    .landing { --ink: #10213a; --muted: #60718a; --line: #dce6f2; --soft: #f3f7fc; --blue: #2563eb; color: var(--ink); background: #fff; }
+    .landing a { text-decoration: none; }
+    .site-nav { position: sticky; top: 0; z-index: 20; background: rgb(255 255 255 / .94); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+    .nav-inner { width: min(1160px, calc(100% - 48px)); min-height: 72px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { color: var(--ink); display: inline-flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 800; letter-spacing: -.04em; }
+    .brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; color: white; background: var(--blue); box-shadow: 0 5px 12px rgb(37 99 235 / .2); }
+    .brand-mark svg { width: 19px; }
+    .nav-links { display: flex; align-items: center; gap: 28px; margin-left: auto; }
+    .nav-links a { color: var(--muted); font-size: 13px; font-weight: 600; }
+    .nav-links a:hover { color: var(--blue); }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .landing .btn { min-height: 42px; padding: 0 17px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; font-size: 13px; font-weight: 700; transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
+    .landing .btn:hover { transform: translateY(-1px); }
+    .landing .btn-primary { color: white; background: var(--blue); border: 1px solid var(--blue); box-shadow: 0 5px 12px rgb(37 99 235 / .16); }
+    .landing .btn-primary:hover { color: white; background: #1d4ed8; box-shadow: 0 7px 17px rgb(37 99 235 / .22); }
+    .landing .btn-quiet { color: var(--ink); background: white; border: 1px solid var(--line); }
+    .landing .btn-quiet:hover { color: var(--blue); border-color: #9bbbf5; }
+    .landing .btn-text { color: var(--blue); padding-inline: 5px; }
+    .hero { overflow: hidden; position: relative; background: linear-gradient(180deg, #f7faff 0%, #fff 100%); }
+    .hero::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .38; background-image: linear-gradient(#dbe7f6 1px, transparent 1px), linear-gradient(90deg, #dbe7f6 1px, transparent 1px); background-size: 48px 48px; mask-image: linear-gradient(to bottom, black, transparent 78%); }
+    .hero-inner { position: relative; width: min(1160px, calc(100% - 48px)); margin: auto; padding: 78px 0 76px; display: grid; grid-template-columns: minmax(0, .94fr) minmax(420px, 1.06fr); gap: 56px; align-items: center; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #1d4ed8; background: #eaf2ff; border: 1px solid #d5e4ff; border-radius: 999px; padding: 7px 11px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #2563eb; box-shadow: 0 0 0 3px #cfe0ff; }
+    .hero h1 { max-width: 610px; margin: 20px 0 17px; color: var(--ink); font-size: clamp(2.7rem, 5vw, 4.25rem); font-weight: 800; letter-spacing: -.065em; line-height: 1.04; }
+    .hero h1 span { color: var(--blue); }
+    .hero-copy { max-width: 490px; margin: 0; color: var(--muted); font-size: 16px; line-height: 1.75; }
+    .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 28px; }
+    .hero-note { display: flex; flex-wrap: wrap; gap: 17px; margin-top: 25px; color: var(--muted); font-size: 11px; font-weight: 600; }
+    .hero-note span { display: inline-flex; align-items: center; gap: 6px; }
+    .check { color: #16834c; font-weight: 800; }
+    .preview-wrap { position: relative; min-width: 0; perspective: 1000px; }
+    .preview-glow { position: absolute; inset: 12% -8% -8%; z-index: 0; border-radius: 50%; background: #d8e7ff; filter: blur(36px); opacity: .7; }
+    .app-preview { position: relative; z-index: 1; overflow: hidden; background: white; border: 1px solid #d5e0ee; border-radius: 15px; box-shadow: 0 28px 70px rgb(23 54 99 / .16), 0 5px 16px rgb(23 54 99 / .06); transform: rotateY(-4deg) rotateX(1deg); animation: preview-enter .65s ease-out both; }
+    @keyframes preview-enter { from { opacity: 0; transform: translateY(12px) rotateY(-4deg); } to { opacity: 1; transform: rotateY(-4deg) rotateX(1deg); } }
+    .preview-top { height: 42px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #edf1f6; background: #fbfcfe; }
+    .window-dots { display: flex; gap: 5px; }
+    .window-dots i { width: 7px; height: 7px; border-radius: 50%; background: #d3dce8; }
+    .preview-company { color: #61718a; font-size: 9px; font-weight: 700; }
+    .preview-status { color: #16834c; background: #e8f7ee; border-radius: 99px; padding: 4px 7px; font-size: 8px; font-weight: 700; }
+    .preview-layout { display: grid; grid-template-columns: 114px 1fr; min-height: 337px; }
+    .preview-side { padding: 16px 10px; background: #f8faff; border-right: 1px solid #edf1f6; }
+    .side-logo { color: #172844; font-size: 11px; font-weight: 800; margin: 0 0 18px 5px; }
+    .side-item { display: flex; align-items: center; gap: 7px; margin: 3px 0; padding: 8px 7px; border-radius: 6px; color: #6b7b92; font-size: 8px; font-weight: 600; }
+    .side-item.active { color: #2257c9; background: #e9f1ff; }
+    .side-icon { width: 12px; height: 12px; display: inline-grid; place-items: center; font-size: 10px; }
+    .preview-main { min-width: 0; padding: 20px 19px; }
+    .preview-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .preview-heading strong { display: block; color: #15233a; font-size: 13px; }
+    .preview-heading small { display: block; margin-top: 3px; color: #8290a4; font-size: 8px; }
+    .preview-period { padding: 6px 8px; border: 1px solid #e4eaf2; border-radius: 5px; color: #687890; font-size: 8px; }
+    .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+    .metric { min-width: 0; padding: 10px; border: 1px solid #edf1f6; border-radius: 7px; }
+    .metric-label { display: block; color: #8491a3; font-size: 7px; }
+    .metric-value { display: block; margin-top: 5px; color: #1b2b43; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; letter-spacing: -.04em; }
+    .metric-trend { display: block; margin-top: 4px; color: #16834c; font-size: 7px; }
+    .preview-lower { display: grid; grid-template-columns: 1.45fr 1fr; gap: 9px; margin-top: 9px; }
+    .preview-panel { min-width: 0; padding: 11px; border: 1px solid #edf1f6; border-radius: 7px; }
+    .panel-title { display: flex; justify-content: space-between; color: #35445b; font-size: 8px; font-weight: 700; }
+    .panel-title span { color: #97a3b3; font-weight: 500; }
+    .chart { width: 100%; height: 106px; margin-top: 8px; overflow: visible; }
+    .chart-grid { stroke: #edf1f6; stroke-width: 1; }
+    .chart-area { fill: url(#areaFill); }
+    .chart-line { fill: none; stroke: #3474eb; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 390; stroke-dashoffset: 390; animation: chart-draw 1.3s .25s ease forwards; }
+    @keyframes chart-draw { to { stroke-dashoffset: 0; } }
+    .chart-dot { fill: #fff; stroke: #3474eb; stroke-width: 2; }
+    .stock-list { margin-top: 11px; display: grid; gap: 11px; }
+    .stock-item { display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: center; color: #53627a; font-size: 7px; }
+    .stock-item b { color: #2d3d55; font-size: 7px; }
+    .stock-track { grid-column: 1 / -1; height: 4px; overflow: hidden; border-radius: 9px; background: #eff3f8; }
+    .stock-track i { display: block; height: 100%; border-radius: inherit; background: #5b8def; }
+    .stock-item.alert .stock-track i { background: #efaa3c; }
+    .preview-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 9px; border-top: 1px solid #edf1f6; color: #8794a6; font-size: 7px; }
+    .preview-foot b { color: #50627c; font-weight: 600; }
+    .floating-note { position: absolute; z-index: 2; right: -27px; bottom: 27px; display: flex; align-items: center; gap: 9px; padding: 11px 13px; background: white; border: 1px solid #e2eaf4; border-radius: 9px; box-shadow: 0 10px 28px rgb(23 54 99 / .12); animation: note-float 3.5s ease-in-out infinite; }
+    @keyframes note-float { 50% { transform: translateY(-5px); } }
+    .note-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; color: #a05e08; background: #fff4da; font-size: 13px; }
+    .floating-note b { display: block; color: #23334b; font-size: 9px; }
+    .floating-note small { display: block; margin-top: 2px; color: #8793a3; font-size: 8px; }
+    .trust-strip { border-top: 1px solid #eef2f7; border-bottom: 1px solid #eef2f7; background: #fff; }
+    .trust-inner { width: min(1160px, calc(100% - 48px)); margin: auto; min-height: 69px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .trust-label { color: #8390a3; font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+    .trust-item { display: flex; align-items: center; gap: 7px; color: #46566e; font-size: 11px; font-weight: 600; }
+    .trust-item i { color: #3972da; font-style: normal; font-size: 14px; }
+    .section { padding: 82px 0; }
+    .section-inner { width: min(1100px, calc(100% - 48px)); margin: auto; }
+    .section-kicker { margin-bottom: 10px; color: var(--blue); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .section-heading { max-width: 600px; margin: 0; color: var(--ink); font-size: clamp(1.8rem, 3vw, 2.55rem); font-weight: 800; letter-spacing: -.05em; line-height: 1.15; }
+    .section-intro { max-width: 550px; margin: 13px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 29px; }
+    .features { background: #fff; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .feature-card { min-height: 188px; padding: 22px; border: 1px solid var(--line); border-radius: 10px; background: #fff; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+    .feature-card:hover { transform: translateY(-3px); border-color: #abc5f5; box-shadow: 0 10px 24px rgb(26 57 105 / .07); }
+    .feature-icon { width: 36px; height: 36px; display: grid; place-items: center; margin-bottom: 17px; border-radius: 9px; color: #245fcf; background: #edf4ff; font-size: 16px; font-weight: 700; }
+    .feature-card h3 { margin: 0 0 7px; color: var(--ink); font-size: 14px; font-weight: 700; }
+    .feature-card p { max-width: 320px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+    .workflow { background: #f5f8fc; border-top: 1px solid #edf1f6; border-bottom: 1px solid #edf1f6; }
+    .workflow-grid { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 70px; }
+    .workflow-list { display: grid; gap: 17px; margin-top: 25px; }
+    .workflow-step { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
+    .step-number { width: 30px; height: 30px; display: grid; place-items: center; color: #245fcf; background: white; border: 1px solid #dbe6f7; border-radius: 9px; font-size: 11px; font-weight: 800; }
+    .workflow-step h3 { margin: 2px 0 4px; color: var(--ink); font-size: 13px; }
+    .workflow-step p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .locale-card { padding: 23px; background: white; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 25px rgb(31 58 95 / .05); }
+    .locale-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid #edf1f6; }
+    .locale-head strong { color: #23334b; font-size: 12px; }
+    .locale-head span { padding: 5px 8px; border-radius: 99px; color: #245fcf; background: #edf4ff; font-size: 9px; font-weight: 700; }
+    .locale-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 16px 0; border-bottom: 1px solid #f0f3f7; }
+    .locale-row:last-child { border: 0; padding-bottom: 0; }
+    .locale-row small { display: block; color: #8996a7; font-size: 9px; }
+    .locale-row b { color: #31435c; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .locale-arrow { color: #3a76dd; }
+    .cta-band { padding: 61px 0; background: #173b78; color: white; }
+    .cta-inner { width: min(1100px, calc(100% - 48px)); margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
+    .cta-inner h2 { max-width: 520px; margin: 0; font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: -.04em; line-height: 1.18; }
+    .cta-inner p { margin: 9px 0 0; color: #c3d4f0; font-size: 12px; }
+    .cta-inner .btn-primary { flex: none; color: #173b78; background: white; border-color: white; box-shadow: none; }
+    .cta-inner .btn-primary:hover { color: #173b78; background: #edf4ff; }
+    .site-footer { background: white; }
+    .footer-main { width: min(1100px, calc(100% - 48px)); margin: auto; padding: 31px 0; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+    .footer-copy { margin: 8px 0 0; color: #8793a3; font-size: 10px; }
+    .footer-links { display: flex; align-items: center; gap: 18px; }
+    .footer-links a { color: #63738a; font-size: 11px; font-weight: 600; }
+    .footer-links a:hover { color: var(--blue); }
+    @media (max-width: 960px) { .hero-inner { grid-template-columns: 1fr 1fr; gap: 30px; padding: 62px 0; } .preview-layout { grid-template-columns: 90px 1fr; } .preview-main { padding: 15px 12px; } .side-item { font-size: 7px; } .floating-note { right: -9px; } .trust-label { display: none; } .workflow-grid { gap: 35px; } }
+    @media (max-width: 720px) { .nav-inner { width: min(100% - 32px, 560px); min-height: 64px; } .nav-links { display: none; } .hero-inner { width: min(100% - 36px, 560px); grid-template-columns: 1fr; gap: 39px; padding: 54px 0 47px; } .hero h1 { max-width: 520px; font-size: clamp(2.65rem, 12vw, 3.8rem); } .hero-copy { font-size: 14px; } .preview-wrap { width: min(100%, 500px); margin: auto; } .app-preview { transform: none; } @keyframes preview-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } } .floating-note { right: -4px; bottom: -17px; } .trust-inner { width: min(100% - 32px, 560px); flex-wrap: wrap; justify-content: center; gap: 13px 22px; padding: 16px 0; } .trust-item { font-size: 10px; } .section { padding: 60px 0; } .section-inner { width: min(100% - 36px, 560px); } .section-head { display: block; } .section-head .btn-text { display: inline-flex; margin-top: 12px; } .feature-grid { grid-template-columns: repeat(2, 1fr); } .feature-card { min-height: 178px; padding: 18px; } .workflow-grid { grid-template-columns: 1fr; gap: 30px; } .cta-inner { width: min(100% - 36px, 560px); align-items: flex-start; flex-direction: column; } .footer-main { width: min(100% - 36px, 560px); align-items: flex-start; flex-direction: column; } }
+    @media (max-width: 440px) { .nav-inner { width: calc(100% - 26px); } .brand { font-size: 17px; } .brand-mark { width: 30px; height: 30px; } .nav-actions { gap: 5px; } .landing .btn { min-height: 39px; padding: 0 11px; font-size: 11px; } .hero-inner { width: calc(100% - 30px); padding-top: 43px; } .hero h1 { font-size: 2.65rem; } .hero-actions { align-items: stretch; } .hero-actions .btn { flex: 1; } .hero-note { gap: 10px; font-size: 10px; } .preview-layout { grid-template-columns: 68px 1fr; min-height: 293px; } .preview-side { padding: 12px 5px; } .side-logo { font-size: 9px; margin-left: 3px; } .side-item { gap: 3px; padding: 7px 4px; font-size: 6px; } .side-icon { width: 10px; } .preview-main { padding: 12px 8px; } .metric-row { gap: 4px; } .metric { padding: 7px 5px; } .metric-value { font-size: 10px; } .preview-lower { grid-template-columns: 1fr 1fr; gap: 5px; } .preview-panel { padding: 7px; } .chart { height: 83px; } .stock-list { gap: 8px; } .floating-note { padding: 8px 9px; } .feature-grid { grid-template-columns: 1fr; } .feature-card { min-height: 0; } .locale-card { padding: 17px; } .footer-links { flex-wrap: wrap; gap: 12px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
   </style>
 </head>
-<body style="background-color: var(--bg); color: var(--text); margin: 0; font-family: 'Inter', sans-serif;">
-  <!-- Public Top Navigation -->
-  <header style="background: var(--white); border-bottom: 1px solid var(--border); padding: 14px 32px;">
-    <div style="max-width: 1040px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: -0.02em;">BizFlow</span>
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-sm">Sign In</a>
-        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">Get Started</a>
-      </div>
-    </div>
+<body class="landing">
+  <header class="site-nav">
+    <nav class="nav-inner" aria-label="Main navigation">
+      <a class="brand" href="#home" aria-label="BizFlow home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 18V9l7-4 7 4v9M9 18v-5h6v5M3 19h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        BizFlow
+      </a>
+      <div class="nav-links"><a href="#features">Platform</a><a href="#workflow">Made for Nepal</a></div>
+      <div class="nav-actions"><a href="{% url 'accounts:login' %}" class="btn btn-text">Sign in</a><a href="{% url 'accounts:register' %}" class="btn btn-primary">Get started <span aria-hidden="true">→</span></a></div>
+    </nav>
   </header>
 
-  <main>
-    <!-- Minimal Clean Hero -->
-    <section class="hero-container">
-      <div style="display: inline-block; margin-bottom: 12px;">
-        <span class="badge badge-primary">Enterprise ERP & Inventory Suite</span>
-      </div>
-      <h1 class="hero-title">Simple, Fast Business Management</h1>
-      <p class="hero-sub">Multi-tenant accounting, automated stock auditing, dual AD/BS Bikram Sambat date conversion, real-time analytics, and role-based operational controls.</p>
-      <div style="display: flex; gap: 12px; justify-content: center;">
-        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg">Create Free Account</a>
-        <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-lg">Live Dashboard</a>
+  <main id="home">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-inner">
+        <div class="hero-message">
+          <span class="eyebrow"><i class="eyebrow-dot" aria-hidden="true"></i> Business management, made clear</span>
+          <h1 id="hero-title">Every part of your business, <span>in better flow.</span></h1>
+          <p class="hero-copy">Keep stock, sales, purchases, and customer balances together in one calm workspace. See what needs attention and move through the day with confidence.</p>
+          <div class="hero-actions"><a href="{% url 'accounts:register' %}" class="btn btn-primary">Create your workspace <span aria-hidden="true">→</span></a><a href="{% url 'accounts:login' %}" class="btn btn-quiet">Explore the dashboard</a></div>
+          <div class="hero-note"><span><b class="check" aria-hidden="true">✓</b> Inventory to invoice</span><span><b class="check" aria-hidden="true">✓</b> AD and BS dates</span><span><b class="check" aria-hidden="true">✓</b> Company workspaces</span></div>
+        </div>
+
+        <div class="preview-wrap" aria-label="Illustrative BizFlow dashboard preview">
+          <div class="preview-glow" aria-hidden="true"></div>
+          <div class="app-preview">
+            <div class="preview-top"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><span class="preview-company">BIZFLOW&nbsp; / &nbsp;ACME TRADERS</span><span class="preview-status">●&nbsp; All systems ready</span></div>
+            <div class="preview-layout">
+              <aside class="preview-side" aria-hidden="true"><div class="side-logo">BizFlow</div><div class="side-item active"><span class="side-icon">▦</span> Overview</div><div class="side-item"><span class="side-icon">▤</span> Inventory</div><div class="side-item"><span class="side-icon">↗</span> Sales</div><div class="side-item"><span class="side-icon">↙</span> Purchases</div><div class="side-item"><span class="side-icon">◷</span> Ledgers</div><div class="side-item"><span class="side-icon">▥</span> Reports</div></aside>
+              <div class="preview-main">
+                <div class="preview-heading"><div><strong>Good morning, Alex</strong><small>Here’s your business at a glance.</small></div><span class="preview-period">This month&nbsp;⌄</span></div>
+                <div class="metric-row"><div class="metric"><span class="metric-label">TOTAL SALES</span><strong class="metric-value">Rs 8.42L</strong><span class="metric-trend">↗ 12.8% this month</span></div><div class="metric"><span class="metric-label">INVENTORY</span><strong class="metric-value">1,284</strong><span class="metric-trend">items in stock</span></div><div class="metric"><span class="metric-label">TO COLLECT</span><strong class="metric-value">Rs 64.5K</strong><span class="metric-trend" style="color:#a05e08">8 open balances</span></div></div>
+                <div class="preview-lower">
+                  <div class="preview-panel"><div class="panel-title">Sales overview <span>Last 7 days</span></div>
+                    <svg class="chart" viewBox="0 0 300 108" role="img" aria-label="Illustrative weekly sales trend chart"><defs><linearGradient id="areaFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#4c83ee" stop-opacity=".22"/><stop offset="1" stop-color="#4c83ee" stop-opacity="0"/></linearGradient></defs><path class="chart-grid" d="M0 20H300M0 50H300M0 80H300"/><path class="chart-area" d="M5 83 C25 76 28 60 48 67 S78 78 95 55 S122 49 139 60 S163 44 181 47 S207 58 225 33 S255 44 273 23 S290 28 298 12V103H5Z"/><path class="chart-line" d="M5 83 C25 76 28 60 48 67 S78 78 95 55 S122 49 139 60 S163 44 181 47 S207 58 225 33 S255 44 273 23 S290 28 298 12"/><circle class="chart-dot" cx="298" cy="12" r="4"/></svg>
+                  </div>
+                  <div class="preview-panel"><div class="panel-title">Stock watch <span>View all</span></div><div class="stock-list"><div class="stock-item"><span>Arabica coffee</span><b>34 left</b><div class="stock-track"><i style="width:72%"></i></div></div><div class="stock-item alert"><span>Paper cups · 12oz</span><b>8 left</b><div class="stock-track"><i style="width:28%"></i></div></div><div class="stock-item"><span>Brown sugar</span><b>62 left</b><div class="stock-track"><i style="width:88%"></i></div></div></div></div>
+                </div>
+                <div class="preview-foot"><span>Workspace: <b>Acme Traders</b></span><span>AD&nbsp; 2026 &nbsp;·&nbsp; BS&nbsp; 2083</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="floating-note"><span class="note-icon" aria-hidden="true">!</span><span><b>Stock needs attention</b><small>Paper cups are running low</small></span></div>
+        </div>
       </div>
     </section>
 
-    <!-- Content-Focused Features Grid -->
-    <section class="features-section">
-      <div class="features-grid">
-        <div class="card" style="padding: 24px;">
-          <h3 style="font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Multi-Tenant Workspaces</h3>
-          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">Segregated company profiles, PAN/VAT credentials, and branch seller entities with independent sequential invoices.</p>
-        </div>
-        <div class="card" style="padding: 24px;">
-          <h3 style="font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Bikram Sambat (BS) Support</h3>
-          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">Dual Gregorian (AD) and Nepali (BS) date conversion with localized financial year reporting and fiscal audit readiness.</p>
-        </div>
-        <div class="card" style="padding: 24px;">
-          <h3 style="font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Real-time Stock Tracking</h3>
-          <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin: 0;">Automated stock ledger journal, low stock alert triggers, CSV/Excel bulk imports, and physical inventory reconciliations.</p>
-        </div>
+    <section class="trust-strip" aria-label="BizFlow capabilities"><div class="trust-inner"><span class="trust-label">One workspace for daily operations</span><span class="trust-item"><i aria-hidden="true">▤</i> Stock &amp; products</span><span class="trust-item"><i aria-hidden="true">↗</i> Sales &amp; invoices</span><span class="trust-item"><i aria-hidden="true">◷</i> Customer ledgers</span><span class="trust-item"><i aria-hidden="true">▥</i> Reports &amp; insights</span></div></section>
+
+    <section class="section features" id="features" aria-labelledby="features-title"><div class="section-inner">
+      <div class="section-head"><div><p class="section-kicker">One connected workspace</p><h2 class="section-heading" id="features-title">The details that keep a business moving.</h2><p class="section-intro">Bring everyday workflows into one place, so your team can spend less time reconciling and more time serving customers.</p></div><a href="{% url 'accounts:register' %}" class="btn btn-text">Start with BizFlow <span aria-hidden="true">→</span></a></div>
+      <div class="feature-grid">
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">▤</span><h3>Inventory you can trust</h3><p>Track products, categories, stock movements, and low-stock items as purchases and sales update quantities.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">↗</span><h3>Sales from checkout to receipt</h3><p>Create invoices with line items, discounts, tax, payment details, and stock updates in a connected flow.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">↙</span><h3>Purchases and suppliers</h3><p>Record vendor bills, manage supplier details, and keep inward stock and purchase history together.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">◷</span><h3>Customer and supplier ledgers</h3><p>Follow outstanding balances and payment history with a running view of what is due and settled.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">▥</span><h3>Reports that make sense</h3><p>Review sales, daybook activity, expenses, and business summaries from a single reporting area.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">⌘</span><h3>Workspaces for your company</h3><p>Manage company details and seller profiles with tenant-scoped records and role-aware operations.</p></article>
       </div>
-    </section>
+    </div></section>
+
+    <section class="section workflow" id="workflow" aria-labelledby="workflow-title"><div class="section-inner workflow-grid">
+      <div><p class="section-kicker">Built around your working day</p><h2 class="section-heading" id="workflow-title">Local context, clear records.</h2><p class="section-intro">BizFlow brings Nepal-specific dates and day-to-day business workflows into a familiar, straightforward interface.</p>
+        <div class="workflow-list"><div class="workflow-step"><span class="step-number">01</span><div><h3>Keep products and movement in view</h3><p>Maintain a product catalog and follow inward, outward, and adjusted quantities.</p></div></div><div class="workflow-step"><span class="step-number">02</span><div><h3>Connect transactions to stock</h3><p>Sales and purchases update inventory alongside their invoice and bill records.</p></div></div><div class="workflow-step"><span class="step-number">03</span><div><h3>Review dates in AD and BS</h3><p>Use dual-date support for transaction entry and financial reporting workflows.</p></div></div></div>
+      </div>
+      <div class="locale-card" aria-label="Illustration of dual date support"><div class="locale-head"><strong>Dates that fit your records</strong><span>AD / BS</span></div><div class="locale-row"><span><small>Gregorian calendar</small><b>October 09, 2026</b></span><span class="locale-arrow" aria-hidden="true">⇄</span></div><div class="locale-row"><span><small>Bikram Sambat calendar</small><b>असोज २३, २०८३</b></span><span class="locale-arrow" aria-hidden="true">✓</span></div></div>
+    </div></section>
+
+    <section class="cta-band"><div class="cta-inner"><div><h2>Make room for a smoother business day.</h2><p>Bring the moving parts of your business together with BizFlow.</p></div><a href="{% url 'accounts:register' %}" class="btn btn-primary">Create your workspace <span aria-hidden="true">→</span></a></div></section>
   </main>
 
-  <!-- Clean Footer -->
-  <footer style="background: var(--white); border-top: 1px solid var(--border); padding: 24px; text-align: center; color: var(--text-secondary); font-size: 12px;">
-    &copy; 2026 BizFlow Platform. Built with Django 6 and modern high-performance architecture.
-  </footer>
+  <footer class="site-footer"><div class="footer-main"><div><a class="brand" href="#home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 18V9l7-4 7 4v9M9 18v-5h6v5M3 19h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>BizFlow</a><p class="footer-copy">Business operations in better flow. © 2026 BizFlow.</p></div><div class="footer-links"><a href="#features">Platform</a><a href="#workflow">Local support</a><a href="{% url 'accounts:login' %}">Sign in</a><a href="{% url 'accounts:register' %}">Get started</a></div></div></footer>
 </body>
 </html>

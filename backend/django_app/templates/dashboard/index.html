@@ -3,10 +3,16 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
   <div>
     <h1 class="page-title">Dashboard</h1>
     <p class="page-subtitle">Welcome back, {{ user.name }}. Here's your business overview.</p>
+  </div>
+  <div>
+    <a href="{% url 'reports:analytics' %}" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+      AI Analytics & Insights &rarr;
+    </a>
   </div>
 </div>
 

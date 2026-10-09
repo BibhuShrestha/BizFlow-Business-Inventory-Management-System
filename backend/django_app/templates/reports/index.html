@@ -9,9 +9,21 @@
     <p class="page-subtitle">Period performance, revenue breakdowns, and daybook journals.</p>
   </div>
   <div style="display:flex; gap:8px;">
+    <a href="{% url 'reports:analytics' %}" class="btn btn-primary btn-sm" style="display:flex; align-items:center; gap:6px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+      AI Analytics & Intelligence
+    </a>
     <a href="{% url 'reports:export_summary_csv' %}" class="btn btn-secondary btn-sm">Export Summary CSV</a>
-    <a href="{% url 'reports:daybook' %}" class="btn btn-primary btn-sm">View Daybook</a>
+    <a href="{% url 'reports:daybook' %}" class="btn btn-secondary btn-sm">View Daybook</a>
   </div>
+</div>
+
+<div class="card" style="margin-bottom:24px; padding:20px; background:linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%); border-left:4px solid #1e40af; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h3 style="margin:0 0 4px 0; color:#1e40af; font-size:16px; font-weight:600;">Automated Decision Support & Executive Analytics</h3>
+    <p style="margin:0; color:#475569; font-size:13px;">View 30-day margins, fast-moving items, dead capital stock, cashflow outlook, and AI recommendations.</p>
+  </div>
+  <a href="{% url 'reports:analytics' %}" class="btn btn-primary" style="white-space:nowrap;">Open Analytics Dashboard &rarr;</a>
 </div>
 
 <div class="stat-grid" style="margin-bottom:24px;">

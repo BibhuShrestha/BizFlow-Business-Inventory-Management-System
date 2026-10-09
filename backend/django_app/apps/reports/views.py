@@ -4,8 +4,8 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.db.models import Sum
-from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import render, redirect
 from django.utils import timezone
 
 from apps.accounts.permissions import login_required_custom, manager_required
@@ -15,6 +15,7 @@ from apps.accounting.models import Expense
 from apps.inventory.models import Product, StockMovement
 from apps.core_app.exports import generate_csv_response
 from domain.services.report_service import ReportService
+from domain.services.analytics_service import AnalyticsService
 from services.nepali_date import NepaliDateService
 
 
@@ -34,6 +35,61 @@ def index(request: HttpRequest) -> HttpResponse:
         "sales_count": metrics.total_customers,
         "purchases_count": 0,
     })
+
+
+@login_required_custom
+@manager_required
+def analytics_view(request: HttpRequest) -> HttpResponse:
+    """Business Intelligence, KPIs, Inventory Velocity, and AI Decision Support."""
+    company_id = getattr(request.user.active_company, "id", None)
+    days_str = request.GET.get("days", "30").strip()
+    try:
+        days = int(days_str)
+        if days not in [7, 30, 90, 365]:
+            days = 30
+    except ValueError:
+        days = 30
+
+    force_refresh = request.GET.get("refresh_ai", "0") in ("1", "true")
+
+    analytics_data = AnalyticsService.get_business_analytics(
+        company_id=company_id,
+        days=days,
+        include_ai=True,
+        force_ai_refresh=force_refresh,
+        user_id=request.user.id,
+    )
+
+    return render(request, "reports/analytics.html", {
+        "analytics": analytics_data,
+        "selected_days": days,
+    })
+
+
+@login_required_custom
+@manager_required
+def analytics_ai_refresh(request: HttpRequest) -> HttpResponse:
+    """Explicitly trigger on-demand AI decision support refresh."""
+    company_id = getattr(request.user.active_company, "id", None)
+    days_str = request.POST.get("days", request.GET.get("days", "30")).strip()
+    try:
+        days = int(days_str)
+    except ValueError:
+        days = 30
+
+    AnalyticsService.get_business_analytics(
+        company_id=company_id,
+        days=days,
+        include_ai=True,
+        force_ai_refresh=True,
+        user_id=request.user.id,
+    )
+    messages.success(request, "AI Decision Support recommendations refreshed successfully.")
+
+    if request.headers.get("accept") == "application/json":
+        return JsonResponse({"status": "success", "message": "Refreshed"})
+
+    return redirect(f"/reports/analytics/?days={days}")
 
 
 @login_required_custom

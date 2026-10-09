@@ -1,0 +1,441 @@
+{% extends "base/base.html" %}
+{% block title %}AI Analytics & Business Intelligence - BizFlow{% endblock %}
+{% block page_title %}AI Analytics & Decision Support{% endblock %}
+
+{% block extra_head %}
+<meta name="robots" content="noindex, nofollow">
+<style>
+  .analytics-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px -1px rgba(30, 64, 175, 0.15), 0 2px 4px -2px rgba(30, 64, 175, 0.1);
+  }
+  .analytics-hero-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+  .health-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .action-plan-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .action-card {
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .chart-container {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .bar-chart-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    height: 180px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .bar-fill {
+    width: 100%;
+    max-width: 28px;
+    background: #2563eb;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease;
+  }
+  .bar-fill:hover {
+    background: #1d4ed8;
+  }
+  .bar-label {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 6px;
+    white-space: nowrap;
+  }
+  .badge-high {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+  .badge-med {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+  }
+  .badge-low {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+  .meter-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    overflow: hidden;
+    margin: 6px 0;
+  }
+  .meter-fill {
+    height: 100%;
+    background: #3b82f6;
+    border-radius: 4px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px;">
+  <div>
+    <h1 class="page-title" style="display:flex; align-items:center; gap:8px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#1e40af"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+      Executive Analytics & AI Decision Support
+    </h1>
+    <p class="page-subtitle">Real-time margin metrics, inventory velocity, cashflow risk, and automated advisory.</p>
+  </div>
+  
+  <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <!-- Period Selector -->
+    <div style="display:inline-flex; background:#e2e8f0; border-radius:6px; padding:3px;">
+      <a href="?days=7" class="btn btn-sm {% if selected_days == 7 %}btn-primary{% else %}btn-ghost{% endif %}" style="padding:4px 10px; font-size:12px;">7 Days</a>
+      <a href="?days=30" class="btn btn-sm {% if selected_days == 30 %}btn-primary{% else %}btn-ghost{% endif %}" style="padding:4px 10px; font-size:12px;">30 Days</a>
+      <a href="?days=90" class="btn btn-sm {% if selected_days == 90 %}btn-primary{% else %}btn-ghost{% endif %}" style="padding:4px 10px; font-size:12px;">90 Days</a>
+      <a href="?days=365" class="btn btn-sm {% if selected_days == 365 %}btn-primary{% else %}btn-ghost{% endif %}" style="padding:4px 10px; font-size:12px;">1 Year</a>
+    </div>
+
+    <!-- On-demand AI Refresh -->
+    <form method="POST" action="{% url 'reports:analytics_ai_refresh' %}" style="display:inline;">
+      {% csrf_token %}
+      <input type="hidden" name="days" value="{{ selected_days }}">
+      <button type="submit" class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+        Refresh AI Advisor
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- AI Decision Support Hero Banner -->
+<div class="analytics-hero">
+  <div class="analytics-hero-header">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <span style="font-size:12px; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; font-weight:600;">
+          {% if analytics.ai_insights.provider %}{{ analytics.ai_insights.provider }}{% else %}BizFlow Decision Advisor{% endif %}
+        </span>
+        <span style="font-size:11px; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:4px;">
+          Model: {{ analytics.ai_insights.model }}
+        </span>
+      </div>
+      <h2 style="font-size:20px; font-weight:700; margin:0 0 8px 0; color:#ffffff;">
+        Business Health Score: {{ analytics.health_score }} / 100
+      </h2>
+      <p style="margin:0; font-size:14px; opacity:0.95; line-height:1.5; max-width:850px;">
+        {{ analytics.ai_insights.executive_summary }}
+      </p>
+    </div>
+
+    <div>
+      <span class="health-badge-pill">
+        <span style="width:8px; height:8px; border-radius:50%; background:{% if analytics.health_score >= 80 %}#34d399{% elif analytics.health_score >= 60 %}#fbbf24{% else %}#f87171{% endif %};"></span>
+        Status: {{ analytics.health_grade }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Commentary Boxes -->
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px;">
+    <div style="background:rgba(255,255,255,0.1); border-radius:8px; padding:14px; border:1px solid rgba(255,255,255,0.15);">
+      <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; margin-bottom:4px;">
+        Cashflow & Working Capital Outlook
+      </div>
+      <div style="font-size:13px; line-height:1.4;">
+        {{ analytics.ai_insights.cashflow_outlook }}
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,0.1); border-radius:8px; padding:14px; border:1px solid rgba(255,255,255,0.15);">
+      <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; opacity:0.85; margin-bottom:4px;">
+        Growth & Inventory Recommendation
+      </div>
+      <div style="font-size:13px; line-height:1.4;">
+        {{ analytics.ai_insights.growth_opportunities }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Priority Strategic Actions -->
+  <h3 style="font-size:15px; font-weight:600; margin:20px 0 12px 0; color:#ffffff;">
+    Strategic Action Plan (Priority Directives)
+  </h3>
+  <div class="action-plan-grid">
+    {% for action in analytics.ai_insights.action_plan %}
+    <div class="action-card">
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:11px; font-weight:600; text-transform:uppercase; color:#64748b;">
+            {{ action.category }}
+          </span>
+          <span class="badge {% if action.priority == 'High' %}badge-high{% elif action.priority == 'Medium' %}badge-med{% else %}badge-low{% endif %}" style="font-size:11px; padding:2px 8px; border-radius:4px; font-weight:600;">
+            {{ action.priority }} Priority
+          </span>
+        </div>
+        <div style="font-weight:600; font-size:14px; color:#0f172a; margin-bottom:6px;">
+          {{ action.title }}
+        </div>
+        <div style="font-size:12px; color:#475569; line-height:1.4;">
+          {{ action.detail }}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div style="background:rgba(255,255,255,0.1); border-radius:8px; padding:16px; color:#ffffff; font-size:13px;">
+      All business indicators are stable. No urgent corrective actions flagged.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Core Financial KPIs Grid -->
+<div class="stat-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <span class="stat-label">Revenue ({{ selected_days }}d)</span>
+    <span class="stat-value">Rs. {{ analytics.revenue|floatformat:2 }}</span>
+    <span class="stat-badge {% if analytics.growth_pct >= 0 %}success{% else %}danger{% endif %}">
+      {% if analytics.growth_pct >= 0 %}&uarr; +{% else %}&darr; {% endif %}{{ analytics.growth_pct }}% vs prior period
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Cost of Goods (Purchases)</span>
+    <span class="stat-value">Rs. {{ analytics.purchases|floatformat:2 }}</span>
+    <span class="stat-badge info">
+      Gross Margin: {{ analytics.gross_margin_pct }}%
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Operating Expenses</span>
+    <span class="stat-value">Rs. {{ analytics.expenses|floatformat:2 }}</span>
+    <span class="stat-badge warning">
+      Net Profit: Rs. {{ analytics.net_profit|floatformat:2 }}
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Net Operating Margin</span>
+    <span class="stat-value {% if analytics.net_profit < 0 %}text-danger{% else %}text-success{% endif %}">
+      {{ analytics.net_margin_pct }}%
+    </span>
+    <span class="stat-badge {% if analytics.net_profit < 0 %}danger{% else %}success{% endif %}">
+      {% if analytics.net_profit >= 0 %}Profitable{% else %}Deficit{% endif %}
+    </span>
+  </div>
+</div>
+
+<!-- Working Capital & Cheques Row -->
+<div class="stat-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <span class="stat-label">Trade Receivables (Customer Dues)</span>
+    <span class="stat-value">Rs. {{ analytics.receivables_total|floatformat:2 }}</span>
+    <span class="stat-badge {% if analytics.receivables_overdue > 0 %}danger{% else %}success{% endif %}">
+      Overdue: Rs. {{ analytics.receivables_overdue|floatformat:2 }}
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Trade Payables (Vendor Dues)</span>
+    <span class="stat-value">Rs. {{ analytics.payables_total|floatformat:2 }}</span>
+    <span class="stat-badge {% if analytics.payables_overdue > 0 %}danger{% else %}info{% endif %}">
+      Overdue: Rs. {{ analytics.payables_overdue|floatformat:2 }}
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Net Working Capital</span>
+    <span class="stat-value {% if analytics.working_capital_net < 0 %}text-danger{% else %}text-success{% endif %}">
+      Rs. {{ analytics.working_capital_net|floatformat:2 }}
+    </span>
+    <span class="stat-badge info">
+      Receivables minus Payables
+    </span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Cheques Maturing (Next 7 Days)</span>
+    <span class="stat-value">{{ analytics.cheques_due_7d }}</span>
+    <span class="stat-badge warning">
+      Amount: Rs. {{ analytics.cheques_due_amount|floatformat:2 }}
+    </span>
+  </div>
+</div>
+
+<!-- Trend & Expense Breakdown Grid -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(450px, 1fr)); gap:24px; margin-bottom:24px;">
+  <!-- Daily Sales Velocity Chart -->
+  <div class="chart-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div>
+        <h3 style="font-size:15px; font-weight:600; margin:0 0 2px 0; color:#0f172a;">Daily Sales Velocity (Past 15 Days)</h3>
+        <p style="margin:0; font-size:12px; color:#64748b;">Daily revenue distribution and operational run-rate.</p>
+      </div>
+      <span style="font-size:12px; font-weight:600; color:#1e40af;">Avg Order: Rs. {{ analytics.average_order_value|floatformat:2 }}</span>
+    </div>
+
+    <div class="bar-chart-row">
+      {% for point in analytics.daily_trend %}
+      <div class="bar-col" title="{{ point.date }}: Rs. {{ point.total|floatformat:2 }}">
+        <div class="bar-fill" style="height:{% if analytics.revenue > 0 %}{% widthratio point.total analytics.revenue 300 %}{% else %}4{% endif %}px; min-height:4px;"></div>
+        <span class="bar-label">{{ point.date }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Expense Categories Breakdown -->
+  <div class="chart-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div>
+        <h3 style="font-size:15px; font-weight:600; margin:0 0 2px 0; color:#0f172a;">Top Operational Expenses</h3>
+        <p style="margin:0; font-size:12px; color:#64748b;">Expenditure distribution by operating category.</p>
+      </div>
+      <span style="font-size:12px; font-weight:600; color:#64748b;">Total: Rs. {{ analytics.expenses|floatformat:2 }}</span>
+    </div>
+
+    {% for exp in analytics.top_expense_categories %}
+    <div style="margin-bottom:14px;">
+      <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:500;">
+        <span>{{ exp.category }}</span>
+        <span>Rs. {{ exp.amount|floatformat:2 }} ({{ exp.percentage }}%)</span>
+      </div>
+      <div class="meter-bar">
+        <div class="meter-fill" style="width:{{ exp.percentage }}%;"></div>
+      </div>
+    </div>
+    {% empty %}
+    <div style="padding:24px 0; text-align:center; color:#94a3b8; font-size:13px;">
+      No operational expenses logged for this period.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Inventory Velocity: Fast-Moving vs Dead Capital Stock -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(450px, 1fr)); gap:24px; margin-bottom:24px;">
+  <!-- Fast-Moving Items -->
+  <div class="card" style="padding:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div>
+        <h3 style="font-size:15px; font-weight:600; margin:0 0 2px 0; color:#0f172a;">Fast-Moving Products (Top Velocity)</h3>
+        <p style="margin:0; font-size:12px; color:#64748b;">Highest turnover items in the active period.</p>
+      </div>
+      <span class="badge badge-success" style="font-size:11px;">High Demand</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" style="font-size:13px;">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>SKU</th>
+            <th style="text-align:right;">Sold Qty</th>
+            <th style="text-align:right;">Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in analytics.fast_moving_products %}
+          <tr>
+            <td style="font-weight:500;">{{ p.name }}</td>
+            <td style="color:#64748b; font-family:monospace;">{{ p.sku }}</td>
+            <td style="text-align:right; font-weight:600;">{{ p.sold_units }}</td>
+            <td style="text-align:right;">Rs. {{ p.revenue|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align:center; color:#94a3b8; padding:16px;">
+              No product sales recorded in this period.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Slow-Moving / Dead Stock Items -->
+  <div class="card" style="padding:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div>
+        <h3 style="font-size:15px; font-weight:600; margin:0 0 2px 0; color:#0f172a;">Stagnant / Tied-Up Capital Stock</h3>
+        <p style="margin:0; font-size:12px; color:#64748b;">In-stock items with zero sales in the active period.</p>
+      </div>
+      <span class="badge badge-warning" style="font-size:11px;">Capital Lockup</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" style="font-size:13px;">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>SKU</th>
+            <th style="text-align:right;">Stock</th>
+            <th style="text-align:right;">Tied-Up Capital</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in analytics.slow_moving_products %}
+          <tr>
+            <td style="font-weight:500;">{{ p.name }}</td>
+            <td style="color:#64748b; font-family:monospace;">{{ p.sku }}</td>
+            <td style="text-align:right; font-weight:600;">{{ p.stock }}</td>
+            <td style="text-align:right; color:#b45309; font-weight:500;">Rs. {{ p.tied_up_capital|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align:center; color:#94a3b8; padding:16px;">
+              Zero stagnant inventory detected. Excellent stock turnover!
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
