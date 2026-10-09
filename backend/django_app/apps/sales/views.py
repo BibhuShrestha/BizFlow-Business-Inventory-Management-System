@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from apps.accounts.permissions import login_required_custom, staff_required, manager_required
 from apps.sales.forms import SaleForm
@@ -28,6 +29,8 @@ def sale_list(request: HttpRequest) -> HttpResponse:
     status_filter = request.GET.get("status", "")
 
     query = Sale.objects.select_related("customer", "company").filter(is_active=True)
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        query = query.filter(company=request.user.active_company)
 
     if search:
         query = query.filter(
@@ -52,7 +55,10 @@ def sale_list(request: HttpRequest) -> HttpResponse:
 @staff_required
 def export_csv(request: HttpRequest) -> HttpResponse:
     """Export all sales invoices to CSV."""
-    sales = Sale.objects.select_related("customer", "company").filter(is_active=True).order_by("-sale_date")
+    query = Sale.objects.select_related("customer", "company").filter(is_active=True)
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        query = query.filter(company=request.user.active_company)
+    sales = query.order_by("-sale_date")
     headers = ["Invoice #", "Bill #", "Date", "Customer", "Subtotal", "Discount", "Tax", "Total", "Payment Status", "Payment Method"]
     rows = [
         [
@@ -76,7 +82,10 @@ def export_csv(request: HttpRequest) -> HttpResponse:
 @staff_required
 def export_excel(request: HttpRequest) -> HttpResponse:
     """Export all sales invoices to Excel (.xlsx)."""
-    sales = Sale.objects.select_related("customer", "company").filter(is_active=True).order_by("-sale_date")
+    query = Sale.objects.select_related("customer", "company").filter(is_active=True)
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        query = query.filter(company=request.user.active_company)
+    sales = query.order_by("-sale_date")
     headers = ["Invoice #", "Bill #", "Date", "Customer", "Subtotal", "Discount", "Tax", "Total", "Payment Status", "Payment Method"]
     rows = [
         [
@@ -192,15 +201,22 @@ def sale_create(request: HttpRequest) -> HttpResponse:
 @staff_required
 def sale_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """View sale invoice details with print-ready formatting."""
-    sale = get_object_or_404(Sale.objects.select_related("customer", "company").prefetch_related("items__product"), pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    sale = get_object_or_404(Sale.objects.select_related("customer", "company").prefetch_related("items__product"), **kwargs)
     return render(request, "sales/sale_detail.html", {"sale": sale})
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def sale_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Cancel/delete a sale invoice and restore stock atomically."""
-    sale = get_object_or_404(Sale.objects.prefetch_related("items__product"), pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    sale = get_object_or_404(Sale.objects.prefetch_related("items__product"), **kwargs)
     inv_num = sale.bill_number or sale.invoice_number
 
     with transaction.atomic():

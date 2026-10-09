@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.db.models import Q, F
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.accounts.permissions import login_required_custom, staff_required, manager_required
 from apps.inventory.forms import ProductForm, CategoryForm
@@ -12,6 +13,7 @@ from apps.inventory.models import Product, Category, StockMovement
 from apps.companies.models import Company, Seller
 from apps.core_app.exports import generate_csv_response, generate_excel_response, parse_uploaded_file
 from apps.core_app.pagination import paginate_queryset
+from apps.core_app.security_utils import get_safe_redirect_url
 from domain.services.stock_service import StockService
 
 
@@ -26,6 +28,8 @@ def product_list(request: HttpRequest) -> HttpResponse:
     sort = request.GET.get("sort", "name")
 
     query = Product.objects.select_related("category", "company", "seller").filter(is_active=True)
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        query = query.filter(company=request.user.active_company)
 
     if search:
         query = query.filter(Q(name__icontains=search) | Q(sku__icontains=search))
@@ -111,10 +115,12 @@ def product_create(request: HttpRequest) -> HttpResponse:
                 })
 
             messages.success(request, f'Product "{product.name}" created successfully.')
-            next_url = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
-            if next_url:
-                sep = "&" if "?" in next_url else "?"
-                return redirect(f"{next_url}{sep}product_id={product.id}")
+            raw_next = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
+            if raw_next:
+                safe_next = get_safe_redirect_url(raw_next, request, default="")
+                if safe_next:
+                    sep = "&" if "?" in safe_next else "?"
+                    return redirect(f"{safe_next}{sep}product_id={product.id}")
             return redirect("inventory:product_list")
         elif is_ajax:
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
@@ -130,7 +136,11 @@ def product_create(request: HttpRequest) -> HttpResponse:
 @staff_required
 def product_edit(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit existing product."""
-    product = get_object_or_404(Product, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    product = get_object_or_404(Product, **kwargs)
+
     form = ProductForm(request.POST or None, instance=product)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -139,11 +149,16 @@ def product_edit(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "inventory/product_form.html", {"form": form, "product": product, "title": "Edit Product"})
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def product_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Soft-delete product."""
-    product = get_object_or_404(Product, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    product = get_object_or_404(Product, **kwargs)
+
     product.is_active = False
     product.save(update_fields=["is_active"])
     messages.success(request, f'Product "{product.name}" has been deactivated.')
@@ -153,7 +168,10 @@ def product_delete(request: HttpRequest, pk: int) -> HttpResponse:
 @login_required_custom
 def export_csv(request: HttpRequest) -> HttpResponse:
     """Export all items to CSV file."""
-    products = Product.objects.select_related("category", "company", "seller").filter(is_active=True).order_by("name")
+    query = Product.objects.select_related("category", "company", "seller").filter(is_active=True)
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        query = query.filter(company=request.user.active_company)
+    products = query.order_by("name")
     headers = ["SKU", "Item Name", "Company", "Seller / Owner", "Seller Phone", "Category", "Unit", "Purchase Price", "Selling Price", "Current Stock", "Min Stock", "Active"]
     rows = [
         [
@@ -316,10 +334,12 @@ def category_create(request: HttpRequest) -> HttpResponse:
                     "message": f'Category "{cat.name}" created.',
                 })
             messages.success(request, f'Category "{cat.name}" created.')
-            next_url = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
-            if next_url:
-                sep = "&" if "?" in next_url else "?"
-                return redirect(f"{next_url}{sep}category_id={cat.id}")
+            raw_next = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
+            if raw_next:
+                safe_next = get_safe_redirect_url(raw_next, request, default="")
+                if safe_next:
+                    sep = "&" if "?" in safe_next else "?"
+                    return redirect(f"{safe_next}{sep}category_id={cat.id}")
             return redirect("inventory:category_list")
         elif is_ajax:
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
@@ -344,6 +364,7 @@ def category_edit(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "inventory/category_form.html", {"form": form, "category": cat, "title": "Edit Category"})
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def category_delete(request: HttpRequest, pk: int) -> HttpResponse:

@@ -5,7 +5,7 @@ Supports Web, Mobile, and Desktop clients.
 from datetime import UTC, datetime, timedelta
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 try:
     from jose import jwt, JWTError, ExpiredSignatureError
@@ -42,6 +42,12 @@ from api.schemas.auth import (
     TokenResponse,
     UserOut,
 )
+from apps.core_app.security_utils import (
+    is_rate_limited,
+    increment_rate_limit,
+    clear_rate_limit,
+    record_login_attempt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,11 +68,24 @@ def _user_to_out(user) -> UserOut:
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(req: LoginRequest):
+def login(req: LoginRequest, request: Request):
     """Authenticate with email and password to receive access & refresh tokens."""
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    rate_key = f"api_login_failures:{client_ip}"
+
+    if is_rate_limited(rate_key, max_attempts=10, period_seconds=900):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed login attempts. Please wait 15 minutes before trying again.",
+        )
+
     try:
         user = AuthService.authenticate(email=req.email, password=req.password)
+        clear_rate_limit(rate_key)
+        record_login_attempt(user=user, request=None, success=True, method="api", message="API login success")
     except AuthenticationError as exc:
+        increment_rate_limit(rate_key, period_seconds=900)
+        record_login_attempt(email=req.email, request=None, success=False, method="api", message=str(exc))
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc))
 
     token_data = {
@@ -188,8 +207,17 @@ def get_me(user=Depends(get_current_user)):
 
 
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
-def register(req: RegisterRequest):
-    """Register a new user account."""
+def register(req: RegisterRequest, request: Request):
+    """Register a new user account with rate limiting."""
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    rate_key = f"api_reg_attempts:{client_ip}"
+    if is_rate_limited(rate_key, max_attempts=10, period_seconds=900):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many registration attempts. Please wait 15 minutes before trying again.",
+        )
+    increment_rate_limit(rate_key, period_seconds=900)
+
     try:
         user, token = AuthService.register(
             name=req.name,
@@ -208,8 +236,17 @@ def register(req: RegisterRequest):
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
-def forgot_password(req: ForgotPasswordRequest):
-    """Request a password reset link."""
+def forgot_password(req: ForgotPasswordRequest, request: Request):
+    """Request a password reset link with rate limiting."""
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    rate_key = f"api_pwd_reset:{client_ip}"
+    if is_rate_limited(rate_key, max_attempts=5, period_seconds=900):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many password reset requests. Please wait 15 minutes before trying again.",
+        )
+    increment_rate_limit(rate_key, period_seconds=900)
+
     result = AuthService.request_password_reset(req.email)
     if result:
         user, token = result

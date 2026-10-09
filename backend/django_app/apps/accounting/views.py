@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from apps.accounts.permissions import login_required_custom, staff_required, manager_required
 from apps.accounting.forms import ExpenseForm
@@ -62,7 +63,10 @@ def expense_create(request: HttpRequest) -> HttpResponse:
 @staff_required
 def expense_edit(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit an existing expense."""
-    expense = get_object_or_404(Expense, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    expense = get_object_or_404(Expense, **kwargs)
     form = ExpenseForm(request.POST or None, instance=expense)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -71,11 +75,15 @@ def expense_edit(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "accounting/expense_form.html", {"form": form, "expense": expense, "title": "Edit Expense"})
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def expense_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Delete an expense."""
-    expense = get_object_or_404(Expense, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    expense = get_object_or_404(Expense, **kwargs)
     expense.delete()
     messages.success(request, "Expense deleted successfully.")
     return redirect("expenses:list")

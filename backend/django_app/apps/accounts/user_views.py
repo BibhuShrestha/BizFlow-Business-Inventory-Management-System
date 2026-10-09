@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.accounts.permissions import login_required_custom, admin_required
 from apps.accounts.models import User, Role
@@ -64,6 +65,7 @@ def user_edit(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "accounts/user_form.html", {"form": form, "user_obj": user, "title": "Edit User"})
 
 
+@require_POST
 @login_required_custom
 @admin_required
 def user_delete(request: HttpRequest, pk: int) -> HttpResponse:

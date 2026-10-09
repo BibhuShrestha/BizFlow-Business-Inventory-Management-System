@@ -4,11 +4,13 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from django.views.decorators.http import require_POST
 from apps.accounts.permissions import login_required_custom, manager_required
 from apps.companies.forms import CompanyForm
 from apps.companies.models import Company
 from apps.core_app.exports import generate_csv_response, generate_excel_response
 from apps.core_app.pagination import paginate_queryset
+from apps.core_app.security_utils import get_safe_redirect_url
 
 
 @login_required_custom
@@ -67,10 +69,12 @@ def company_create(request: HttpRequest) -> HttpResponse:
                 })
 
             messages.success(request, f'Company "{company.company_name}" created successfully.')
-            next_url = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
-            if next_url:
-                sep = "&" if "?" in next_url else "?"
-                return redirect(f"{next_url}{sep}company_id={company.id}")
+            raw_next = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
+            if raw_next:
+                safe_next = get_safe_redirect_url(raw_next, request, default="")
+                if safe_next:
+                    sep = "&" if "?" in safe_next else "?"
+                    return redirect(f"{safe_next}{sep}company_id={company.id}")
             return redirect("companies:list")
         elif is_ajax:
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
@@ -95,6 +99,7 @@ def company_edit(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "companies/form.html", {"form": form, "company": company, "title": "Edit Company"})
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def company_delete(request: HttpRequest, pk: int) -> HttpResponse:
@@ -115,8 +120,9 @@ def set_active_company(request: HttpRequest, pk: int) -> HttpResponse:
         request.user.active_company = company
         request.user.save(update_fields=["active_company"])
     messages.success(request, f'Switched active company to "{company.company_name}".')
-    next_url = request.META.get("HTTP_REFERER") or "/dashboard/"
-    return redirect(next_url)
+    safe_next = get_safe_redirect_url(request.META.get("HTTP_REFERER"), request, default="/dashboard/")
+    return redirect(safe_next)
+
 
 
 @login_required_custom

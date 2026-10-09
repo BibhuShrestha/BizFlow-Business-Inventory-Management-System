@@ -23,6 +23,15 @@ from apps.accounts.forms import (
 )
 from apps.accounts.permissions import login_required_custom
 
+from apps.core_app.security_utils import (
+    get_safe_redirect_url,
+    is_rate_limited,
+    increment_rate_limit,
+    clear_rate_limit,
+    record_login_attempt,
+    get_client_ip,
+)
+
 logger = logging.getLogger(__name__)
 
 def _get_dashboard_url() -> str:
@@ -33,28 +42,42 @@ def _get_dashboard_url() -> str:
         return "/dashboard/"
 
 
-
 def login_view(request: HttpRequest) -> HttpResponse:
-    """Email + password login form."""
+    """Email + password login form with rate limiting, audit logging, and open redirect defense."""
     if request.user.is_authenticated:
         return redirect(_get_dashboard_url())
 
     form = LoginForm(request.POST or None)
 
-    if request.method == "POST" and form.is_valid():
-        try:
-            user = AuthService.authenticate(
-                email=form.cleaned_data["email"],
-                password=form.cleaned_data["password"],
+    if request.method == "POST":
+        client_ip = get_client_ip(request)
+        rate_key = f"login_failures:{client_ip}"
+
+        if is_rate_limited(rate_key, max_attempts=5, period_seconds=900):
+            messages.error(
+                request,
+                "Too many failed login attempts. Please wait 15 minutes before trying again."
             )
-            login(request, user)
-            next_url = request.GET.get("next") or request.POST.get("next") or _get_dashboard_url()
-            # Protect against open redirect
-            if not next_url.startswith("/") and not next_url.startswith("dashboard"):
-                next_url = _get_dashboard_url()
-            return redirect(next_url)
-        except AuthenticationError as exc:
-            messages.error(request, str(exc))
+            return render(request, "accounts/login.html", {"form": form})
+
+        if form.is_valid():
+            email = form.cleaned_data["email"]
+            try:
+                user = AuthService.authenticate(
+                    email=email,
+                    password=form.cleaned_data["password"],
+                )
+                clear_rate_limit(rate_key)
+                record_login_attempt(user=user, request=request, success=True, method="web", message="Login success")
+                login(request, user)
+
+                raw_next = request.GET.get("next") or request.POST.get("next") or _get_dashboard_url()
+                safe_next = get_safe_redirect_url(raw_next, request, default=_get_dashboard_url())
+                return redirect(safe_next)
+            except AuthenticationError as exc:
+                increment_rate_limit(rate_key, period_seconds=900)
+                record_login_attempt(email=email, request=request, success=False, method="web", message=str(exc))
+                messages.error(request, str(exc))
 
     return render(request, "accounts/login.html", {"form": form})
 
@@ -68,28 +91,40 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 
 
 def register_view(request: HttpRequest) -> HttpResponse:
-    """New account registration form."""
+    """New account registration form with rate limiting."""
     if request.user.is_authenticated:
         return redirect(_get_dashboard_url())
 
     form = RegisterForm(request.POST or None)
 
-    if request.method == "POST" and form.is_valid():
-        try:
-            user, token = AuthService.register(
-                name=form.cleaned_data["name"],
-                email=form.cleaned_data["email"],
-                password=form.cleaned_data["password"],
-            )
-            from core.email import EmailService
-            EmailService.send_verification_email(user, token, request)
-            messages.success(
+    if request.method == "POST":
+        client_ip = get_client_ip(request)
+        rate_key = f"web_reg_attempts:{client_ip}"
+        if is_rate_limited(rate_key, max_attempts=10, period_seconds=900):
+            messages.error(
                 request,
-                "Account created! Please check your email to verify your address before logging in.",
+                "Too many registration attempts. Please wait 15 minutes before trying again."
             )
-            return redirect("accounts:login")
-        except (DuplicateEmailError, ValidationError) as exc:
-            messages.error(request, str(exc))
+            return render(request, "accounts/register.html", {"form": form})
+
+        increment_rate_limit(rate_key, period_seconds=900)
+
+        if form.is_valid():
+            try:
+                user, token = AuthService.register(
+                    name=form.cleaned_data["name"],
+                    email=form.cleaned_data["email"],
+                    password=form.cleaned_data["password"],
+                )
+                from core.email import EmailService
+                EmailService.send_verification_email(user, token, request)
+                messages.success(
+                    request,
+                    "Account created! Please check your email to verify your address before logging in.",
+                )
+                return redirect("accounts:login")
+            except (DuplicateEmailError, ValidationError) as exc:
+                messages.error(request, str(exc))
 
     return render(request, "accounts/register.html", {"form": form})
 
@@ -105,21 +140,33 @@ def verify_email_view(request: HttpRequest, token: str) -> HttpResponse:
 
 
 def forgot_password_view(request: HttpRequest) -> HttpResponse:
-    """Request a password reset email."""
+    """Request a password reset email with abuse rate limiting."""
     form = ForgotPasswordForm(request.POST or None)
 
-    if request.method == "POST" and form.is_valid():
-        result = AuthService.request_password_reset(email=form.cleaned_data["email"])
-        if result:
-            user, token = result
-            from core.email import EmailService
-            EmailService.send_password_reset_email(user, token, request)
-        # Always show success to prevent email enumeration
-        messages.success(
-            request,
-            "If that email is registered, you will receive a password reset link shortly.",
-        )
-        return redirect("accounts:login")
+    if request.method == "POST":
+        client_ip = get_client_ip(request)
+        rate_key = f"web_pwd_reset:{client_ip}"
+        if is_rate_limited(rate_key, max_attempts=5, period_seconds=900):
+            messages.error(
+                request,
+                "Too many password reset requests. Please wait 15 minutes before trying again."
+            )
+            return render(request, "accounts/forgot_password.html", {"form": form})
+
+        increment_rate_limit(rate_key, period_seconds=900)
+
+        if form.is_valid():
+            result = AuthService.request_password_reset(email=form.cleaned_data["email"])
+            if result:
+                user, token = result
+                from core.email import EmailService
+                EmailService.send_password_reset_email(user, token, request)
+            # Always show success to prevent email enumeration
+            messages.success(
+                request,
+                "If that email is registered, you will receive a password reset link shortly.",
+            )
+            return redirect("accounts:login")
 
     return render(request, "accounts/forgot_password.html", {"form": form})
 

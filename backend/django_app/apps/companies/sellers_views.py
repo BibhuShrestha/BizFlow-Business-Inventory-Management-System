@@ -4,11 +4,13 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from django.views.decorators.http import require_POST
 from apps.accounts.permissions import login_required_custom, manager_required
 from apps.companies.forms import SellerForm
 from apps.companies.models import Company, Seller
 from apps.core_app.exports import generate_csv_response, generate_excel_response
 from apps.core_app.pagination import paginate_queryset
+from apps.core_app.security_utils import get_safe_redirect_url
 
 
 @login_required_custom
@@ -65,10 +67,12 @@ def seller_create(request: HttpRequest) -> HttpResponse:
                 })
 
             messages.success(request, f'Seller "{seller.seller_name}" created successfully.')
-            next_url = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
-            if next_url:
-                sep = "&" if "?" in next_url else "?"
-                return redirect(f"{next_url}{sep}seller_id={seller.id}")
+            raw_next = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
+            if raw_next:
+                safe_next = get_safe_redirect_url(raw_next, request, default="")
+                if safe_next:
+                    sep = "&" if "?" in safe_next else "?"
+                    return redirect(f"{safe_next}{sep}seller_id={seller.id}")
             return redirect("sellers:list")
         elif is_ajax:
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
@@ -93,6 +97,7 @@ def seller_edit(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "companies/seller_form.html", {"form": form, "seller": seller, "title": "Edit Seller"})
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def seller_delete(request: HttpRequest, pk: int) -> HttpResponse:

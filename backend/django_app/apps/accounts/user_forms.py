@@ -4,6 +4,9 @@ from apps.accounts.models import User, Role
 from apps.companies.models import Company
 
 
+from domain.validators.password import check_password_strength
+
+
 class UserCreateForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Password"}))
 
@@ -18,6 +21,14 @@ class UserCreateForm(forms.ModelForm):
             "active_company": forms.Select(attrs={"class": "form-control"}),
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
+
+    def clean_password(self):
+        password = self.cleaned_data.get("password")
+        if password:
+            result = check_password_strength(password)
+            if not result.valid:
+                raise forms.ValidationError(result.error_message)
+        return password
 
     def save(self, commit=True):
         user = super().save(commit=False)

@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from apps.accounts.permissions import login_required_custom, staff_required, manager_required
 from apps.purchases.forms import PurchaseForm
@@ -27,6 +28,8 @@ def purchase_list(request: HttpRequest) -> HttpResponse:
     status_filter = request.GET.get("status", "")
 
     query = Purchase.objects.select_related("supplier", "company").filter(is_active=True)
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        query = query.filter(company=request.user.active_company)
 
     if search:
         query = query.filter(
@@ -51,7 +54,10 @@ def purchase_list(request: HttpRequest) -> HttpResponse:
 @staff_required
 def export_csv(request: HttpRequest) -> HttpResponse:
     """Export all purchase bills to CSV."""
-    purchases = Purchase.objects.select_related("supplier", "company").filter(is_active=True).order_by("-purchase_date")
+    query = Purchase.objects.select_related("supplier", "company").filter(is_active=True)
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        query = query.filter(company=request.user.active_company)
+    purchases = query.order_by("-purchase_date")
     headers = ["PO Number", "Bill #", "Date", "Supplier", "Subtotal", "Discount", "Tax", "Total", "Payment Status", "Payment Method"]
     rows = [
         [
@@ -75,7 +81,10 @@ def export_csv(request: HttpRequest) -> HttpResponse:
 @staff_required
 def export_excel(request: HttpRequest) -> HttpResponse:
     """Export all purchase bills to Excel (.xlsx)."""
-    purchases = Purchase.objects.select_related("supplier", "company").filter(is_active=True).order_by("-purchase_date")
+    query = Purchase.objects.select_related("supplier", "company").filter(is_active=True)
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        query = query.filter(company=request.user.active_company)
+    purchases = query.order_by("-purchase_date")
     headers = ["PO Number", "Bill #", "Date", "Supplier", "Subtotal", "Discount", "Tax", "Total", "Payment Status", "Payment Method"]
     rows = [
         [
@@ -187,15 +196,22 @@ def purchase_create(request: HttpRequest) -> HttpResponse:
 @staff_required
 def purchase_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """View purchase bill details."""
-    purchase = get_object_or_404(Purchase.objects.select_related("supplier", "company").prefetch_related("items__product"), pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    purchase = get_object_or_404(Purchase.objects.select_related("supplier", "company").prefetch_related("items__product"), **kwargs)
     return render(request, "purchases/purchase_detail.html", {"purchase": purchase})
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def purchase_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Cancel purchase bill and revert product stock atomically."""
-    purchase = get_object_or_404(Purchase.objects.prefetch_related("items__product"), pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    purchase = get_object_or_404(Purchase.objects.prefetch_related("items__product"), **kwargs)
     purch_num = purchase.bill_number or purchase.purchase_number
 
     with transaction.atomic():

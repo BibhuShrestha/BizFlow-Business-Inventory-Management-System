@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -24,8 +24,23 @@ backend/django_app/static/collected/
 
 # Environment secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.env
+
+# Certificates and private keys
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+*.cer
+
+# Database dumps and backups
+*.sql
+*.dump
+*.bak
+*.backup
 
 # IDE
 .idea/

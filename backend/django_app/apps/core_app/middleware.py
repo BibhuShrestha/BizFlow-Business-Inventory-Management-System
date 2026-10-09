@@ -28,3 +28,44 @@ class PerformanceTimingMiddleware(MiddlewareMixin):
                     response.status_code,
                 )
         return response
+
+
+class SecurityHeadersMiddleware(MiddlewareMixin):
+    """
+    Enforces robust HTTP security headers across all web responses:
+    - Content-Security-Policy (CSP)
+    - Permissions-Policy
+    - Referrer-Policy
+    - X-Content-Type-Options
+    - X-Frame-Options
+    """
+
+    CSP_POLICY = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com data:; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none';"
+    )
+
+    def process_response(self, request, response):
+        # Only attach CSP if not already present
+        if "Content-Security-Policy" not in response:
+            response["Content-Security-Policy"] = self.CSP_POLICY
+
+        if "Permissions-Policy" not in response:
+            response["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
+
+        if "Referrer-Policy" not in response:
+            response["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        if "X-Content-Type-Options" not in response:
+            response["X-Content-Type-Options"] = "nosniff"
+
+        if "X-Frame-Options" not in response:
+            response["X-Frame-Options"] = "DENY"
+
+        return response
+

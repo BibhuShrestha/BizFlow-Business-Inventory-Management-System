@@ -4,10 +4,12 @@ from django.db.models import Q, Sum
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
+from django.views.decorators.http import require_POST
 from apps.accounts.permissions import login_required_custom, staff_required, manager_required
 from apps.sales.customer_forms import CustomerForm
 from apps.sales.models import Customer, Sale
 from apps.core_app.pagination import paginate_queryset
+from apps.core_app.security_utils import get_safe_redirect_url
 
 
 @login_required_custom
@@ -57,10 +59,12 @@ def customer_create(request: HttpRequest) -> HttpResponse:
                 })
 
             messages.success(request, f'Customer "{customer.name}" created successfully.')
-            next_url = request.GET.get("next") or request.POST.get("next")
-            if next_url:
-                sep = "&" if "?" in next_url else "?"
-                return redirect(f"{next_url}{sep}customer_id={customer.id}")
+            raw_next = request.GET.get("next") or request.POST.get("next")
+            if raw_next:
+                safe_next = get_safe_redirect_url(raw_next, request, default="")
+                if safe_next:
+                    sep = "&" if "?" in safe_next else "?"
+                    return redirect(f"{safe_next}{sep}customer_id={customer.id}")
             return redirect("customers:list")
         else:
             if is_ajax:
@@ -76,7 +80,11 @@ def customer_create(request: HttpRequest) -> HttpResponse:
 @staff_required
 def customer_edit(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit existing customer."""
-    customer = get_object_or_404(Customer, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    customer = get_object_or_404(Customer, **kwargs)
+
     form = CustomerForm(request.POST or None, instance=customer)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -85,11 +93,16 @@ def customer_edit(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "sales/customer_form.html", {"form": form, "customer": customer, "title": "Edit Customer"})
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def customer_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Deactivate customer."""
-    customer = get_object_or_404(Customer, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    customer = get_object_or_404(Customer, **kwargs)
+
     customer.is_active = False
     customer.save(update_fields=["is_active"])
     messages.success(request, f'Customer "{customer.name}" has been deactivated.')
@@ -100,7 +113,10 @@ def customer_delete(request: HttpRequest, pk: int) -> HttpResponse:
 @staff_required
 def customer_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """View customer ledger and invoice history."""
-    customer = get_object_or_404(Customer, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    customer = get_object_or_404(Customer, **kwargs)
     sales = customer.sales.filter(is_active=True).order_by("-sale_date")
     total_sales = sales.aggregate(s=Sum("total"))["s"] or 0
 

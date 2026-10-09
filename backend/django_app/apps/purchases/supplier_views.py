@@ -1,13 +1,15 @@
 """Views for Supplier management and purchase order history."""
 from django.contrib import messages
 from django.db.models import Q, Sum
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.accounts.permissions import login_required_custom, staff_required, manager_required
 from apps.purchases.supplier_forms import SupplierForm
 from apps.purchases.models import Supplier, Purchase
 from apps.core_app.pagination import paginate_queryset
+from apps.core_app.security_utils import get_safe_redirect_url
 
 
 @login_required_custom
@@ -60,10 +62,12 @@ def supplier_create(request: HttpRequest) -> HttpResponse:
                 })
 
             messages.success(request, f'Supplier "{supplier.name}" created successfully.')
-            next_url = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
-            if next_url:
-                sep = "&" if "?" in next_url else "?"
-                return redirect(f"{next_url}{sep}supplier_id={supplier.id}")
+            raw_next = request.GET.get("next") or request.POST.get("next") or request.GET.get("return_to") or request.POST.get("return_to")
+            if raw_next:
+                safe_next = get_safe_redirect_url(raw_next, request, default="")
+                if safe_next:
+                    sep = "&" if "?" in safe_next else "?"
+                    return redirect(f"{safe_next}{sep}supplier_id={supplier.id}")
             return redirect("suppliers:list")
         elif is_ajax:
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
@@ -79,7 +83,11 @@ def supplier_create(request: HttpRequest) -> HttpResponse:
 @staff_required
 def supplier_edit(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit existing supplier."""
-    supplier = get_object_or_404(Supplier, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    supplier = get_object_or_404(Supplier, **kwargs)
+
     form = SupplierForm(request.POST or None, instance=supplier)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -88,11 +96,16 @@ def supplier_edit(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "purchases/supplier_form.html", {"form": form, "supplier": supplier, "title": "Edit Supplier"})
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def supplier_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Deactivate supplier."""
-    supplier = get_object_or_404(Supplier, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    supplier = get_object_or_404(Supplier, **kwargs)
+
     supplier.is_active = False
     supplier.save(update_fields=["is_active"])
     messages.success(request, f'Supplier "{supplier.name}" has been deactivated.')
@@ -103,7 +116,10 @@ def supplier_delete(request: HttpRequest, pk: int) -> HttpResponse:
 @staff_required
 def supplier_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """View supplier purchase order history."""
-    supplier = get_object_or_404(Supplier, pk=pk)
+    kwargs = {"pk": pk}
+    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+        kwargs["company"] = request.user.active_company
+    supplier = get_object_or_404(Supplier, **kwargs)
     purchases = supplier.purchases.filter(is_active=True).order_by("-purchase_date")
     total_purchases = purchases.aggregate(s=Sum("total"))["s"] or 0
 

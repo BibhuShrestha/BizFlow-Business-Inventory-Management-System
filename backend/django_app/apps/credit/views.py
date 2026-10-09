@@ -10,6 +10,7 @@ from django.db.models import Q, Sum
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from apps.accounts.permissions import login_required_custom, staff_required, manager_required
 from apps.sales.models import Sale, Payment, Customer
@@ -352,6 +353,7 @@ def payment_list(request: HttpRequest) -> HttpResponse:
     })
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def payment_delete(request: HttpRequest, pk: int) -> HttpResponse:
@@ -381,6 +383,7 @@ def payment_delete(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect(redirect_target)
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def credit_given_delete(request: HttpRequest, pk: int) -> HttpResponse:
@@ -393,6 +396,7 @@ def credit_given_delete(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("credit:given_list")
 
 
+@require_POST
 @login_required_custom
 @manager_required
 def credit_taken_delete(request: HttpRequest, pk: int) -> HttpResponse:
