@@ -1,4 +1,5 @@
 {% extends "base/base.html" %}
+{% load nepali_tags %}
 {% block title %}Purchases - BizFlow{% endblock %}
 {% block page_title %}Purchase Bills{% endblock %}
 
@@ -57,7 +58,12 @@
         {% for p in page_obj %}
         <tr>
           <td class="font-mono"><a href="{% url 'purchases:detail' p.id %}" style="font-weight:600;">{{ p.purchase_number }}</a></td>
-          <td>{{ p.purchase_date|date:"Y-m-d" }}</td>
+          <td>
+            <div>{{ p.purchase_date|date:"Y-m-d" }}</div>
+            <div style="font-size:11px; margin-top:2px;">
+              <span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:10px; padding:1px 5px; font-weight:500;">{{ p.purchase_date|nepali_date }} BS</span>
+            </div>
+          </td>
           <td>{{ p.supplier.name|default:"General Supplier" }}</td>
           <td style="text-align:right;" class="font-mono">Rs. {{ p.subtotal|floatformat:2 }}</td>
           <td style="text-align:right;" class="font-mono">Rs. {{ p.discount|floatformat:2 }}</td>

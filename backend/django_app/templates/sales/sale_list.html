@@ -1,4 +1,5 @@
 {% extends "base/base.html" %}
+{% load nepali_tags %}
 {% block title %}Sales Invoices - BizFlow{% endblock %}
 {% block page_title %}Sales Invoices{% endblock %}
 
@@ -57,7 +58,12 @@
         {% for s in page_obj %}
         <tr>
           <td class="font-mono"><a href="{% url 'sales:detail' s.id %}" style="font-weight:600;">{{ s.invoice_number }}</a></td>
-          <td>{{ s.sale_date|date:"Y-m-d" }}</td>
+          <td>
+            <div>{{ s.sale_date|date:"Y-m-d" }}</div>
+            <div style="font-size:11px; margin-top:2px;">
+              <span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:10px; padding:1px 5px; font-weight:500;">{{ s.sale_date|nepali_date }} BS</span>
+            </div>
+          </td>
           <td>{{ s.customer.name|default:"Walk-in Customer" }}</td>
           <td style="text-align:right;" class="font-mono">Rs. {{ s.subtotal|floatformat:2 }}</td>
           <td style="text-align:right;" class="font-mono">Rs. {{ s.discount|floatformat:2 }}</td>

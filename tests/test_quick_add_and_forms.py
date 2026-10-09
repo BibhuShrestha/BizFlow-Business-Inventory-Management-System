@@ -10,6 +10,7 @@ import json
 import pytest
 from decimal import Decimal
 from django.test import Client
+from django.utils import timezone
 
 from apps.accounts.models import User, Role
 from apps.companies.models import Company, Seller
@@ -383,5 +384,50 @@ class TestRedesignedFormsRendering:
         res_taken = client.get("/credit/taken/?date_from=2026-08-01&date_to=2026-08-31")
         assert res_taken.status_code == 200
         assert "From:" in res_taken.content.decode()
+
+    def test_dual_nepali_date_display_and_asset(self, auth_client):
+        client, user, company = auth_client
+        cat = Category.objects.create(name="Gadgets")
+        cust = Customer.objects.create(name="Nepali Date Customer", phone="9800000077")
+        supp = Supplier.objects.create(name="Nepali Date Supplier", phone="9800000066")
+        prod = Product.objects.create(
+            category=cat,
+            name="Wireless Mouse",
+            sku="WM-001",
+            current_stock=15,
+            selling_price=Decimal("1500.00"),
+            purchase_price=Decimal("1000.00"),
+            company=company
+        )
+        Sale.objects.create(
+            company=company,
+            customer=cust,
+            bill_number="INV-BS-01",
+            invoice_number="INV-2026-0001",
+            total=Decimal("1500.00"),
+            sale_date=timezone.now()
+        )
+        Purchase.objects.create(
+            company=company,
+            supplier=supp,
+            bill_number="PO-BS-01",
+            purchase_number="PO-2026-0001",
+            total=Decimal("5000.00"),
+            purchase_date=timezone.now()
+        )
+
+        # Base template includes date_switcher.js and table rows include BS badge
+        res_sales = client.get("/sales/")
+        assert res_sales.status_code == 200
+        content = res_sales.content.decode()
+        assert "date_switcher.js" in content
+        assert "BS" in content
+
+        res_purch = client.get("/purchases/")
+        assert res_purch.status_code == 200
+        content_purch = res_purch.content.decode()
+        assert "date_switcher.js" in content_purch
+        assert "BS" in content_purch
+
 
 

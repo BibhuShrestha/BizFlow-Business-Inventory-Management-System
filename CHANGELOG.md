@@ -18,7 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added **Date Range Filter** (`From Date`, `To Date`) across Sales Invoices (`/sales/`), Purchase Bills (`/purchases/`), Operating Expenses (`/expenses/`), Credit Given Receivables (`/credit/given/`), and Credit Taken Payables (`/credit/taken/`).
   - Added dynamic category dropdown and unified search parameter handling in `expense_list`.
   - Enhanced `/api/v1/dashboard/convert-date` and `/dashboard/convert-date/` with Bikram Sambat month names (`Baisakh` through `Chaitra`) and full formatted BS strings.
-  - Added automated test cases in `tests/test_quick_add_and_forms.py` verifying custom transaction dates, due dates, and all date range filters (169 tests green, 100% pass rate).
+- **Interactive BS / AD Date Switcher & Dual Date Badges**:
+  - Implemented client-side `date_switcher.js` providing real-time bidirectional toggle between Gregorian (AD) and Bikram Sambat (BS) with synchronized persistence.
+  - Added dual AD and BS date badges across Sales Invoices, Purchase Bills, Operating Expenses, Receivables, and Payables list tables.
+  - Added automated test cases in `tests/test_quick_add_and_forms.py` verifying custom transaction dates, due dates, date range filters, and dual date rendering (170 tests green, 100% pass rate).
 
 ---
 

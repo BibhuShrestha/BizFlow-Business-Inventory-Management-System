@@ -1,4 +1,5 @@
 {% extends "base/base.html" %}
+{% load nepali_tags %}
 {% block title %}Receivables Register (Customer Credit Given) - BizFlow{% endblock %}
 {% block page_title %}Receivables Register (Customer Credit Given){% endblock %}
 
@@ -72,7 +73,12 @@
             <a href="{% url 'credit:given_detail' s.id %}" style="font-weight:600; color:var(--primary);">{{ s.invoice_number }}</a>
             {% if s.bill_number %}<br><small style="color:var(--text-secondary);">Ref: {{ s.bill_number }}</small>{% endif %}
           </td>
-          <td>{{ s.sale_date|date:"Y-m-d" }}</td>
+          <td>
+            <div>{{ s.sale_date|date:"Y-m-d" }}</div>
+            <div style="font-size:11px; margin-top:2px;">
+              <span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:10px; padding:1px 5px; font-weight:500;">{{ s.sale_date|nepali_date }} BS</span>
+            </div>
+          </td>
           <td>
             {% if s.due_date %}
               <span {% if s.is_overdue %}style="color:#DC2626; font-weight:600;"{% endif %}>

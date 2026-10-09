@@ -42,7 +42,7 @@
 | Part 18 | Inline Quick-Add Modals, Entity Resolvers & Form State Persistence | `[x]` Complete (166 passing tests) |
 | Part 19 | Double-Entry Accounting Indicators & Party Ledger Portal Suite | `[x]` Complete (170 passing tests) |
 | Part 20 | Minimal UI/UX, Performance & Resource Optimization | `[x]` Complete (170 passing / test suite optimized) |
-| Part 21 | Transaction Date Controls, Universal Date Filtering & Hardening | `[x]` Complete (169 passing tests) |
+| Part 21 | Transaction Date Controls, Universal Date Filtering & Hardening | `[x]` Complete (170 passing tests) |
 
 ---
 
@@ -225,10 +225,13 @@
 - **Receivables / Credit Given (`/credit/given/`)**: Added `date_from` and `date_to` range filters alongside status and customer selectors.
 - **Payables / Credit Taken (`/credit/taken/`)**: Added `date_from` and `date_to` range filters alongside status and supplier selectors.
 
-### 3. Nepali Calendar Conversion API Enhancements
+### 3. Interactive BS / AD Date Switcher & Dual Date Badges
+- Implemented client-side `date_switcher.js` providing real-time bidirectional toggle between Gregorian (AD) and Bikram Sambat (BS) with synchronized persistence.
+- Added dual AD and BS date badges across Sales Invoices, Purchase Bills, Operating Expenses, Receivables, and Payables list tables.
 - Enhanced `/api/v1/dashboard/convert-date` and `/dashboard/convert-date/` with full Bikram Sambat month names (`Baisakh` - `Chaitra`) and formatted output strings (`formatted_bs_full`).
 
 ### 4. Test Verification
-- Added automated test cases in `tests/test_quick_add_and_forms.py` verifying custom dates, due dates, and date range filters across sales, purchases, expenses, receivables, and payables.
-- Complete test suite passes at 100% (169 passing tests).
+- Added automated test cases in `tests/test_quick_add_and_forms.py` verifying custom dates, due dates, date range filters, and dual date rendering across sales, purchases, expenses, receivables, and payables.
+- Complete test suite passes at 100% (170 passing tests).
+
 
