@@ -286,5 +286,29 @@
 - Added automated test suite `tests/test_analytics_and_ai.py` with 12 comprehensive tests.
 - Entire repository test suite passes with **182 tests green (100% pass rate)**.
 
+---
 
+## Part 23 — Admin User Visibility, Activity Tracking & Advanced Analytics Suite Summary
 
+### 1. Admin User Management & Immediate Visibility
+- **Table Data Synchronization**: Fixed context variable alignment between `user_views.py` and `user_list.html` (`page_obj` / `users`), ensuring newly created users immediately appear in the user list.
+- **Search, Filtering & Pagination**: Implemented real-time multi-field search (username, name, email), role dropdown filtering, status filtering, and paginated table navigation.
+- **Form Error Transparency**: Upgraded `UserCreateForm` and `user_form.html` to render prominent field-level validation feedback for duplicate emails and password strength violations.
+- **Role Permission Alignment**: Updated `User.is_staff_member` property to treat cashier alongside staff, manager, and admin.
+
+### 2. User Activity Tracking & Presence Monitoring
+- **Lightweight Presence Middleware**: Implemented `UserActivityMiddleware` recording `last_activity` timestamps with a 60-second in-session write throttle to minimize database I/O.
+- **Presence Status Properties**: Added `User.is_online`, `User.online_status_label`, and `User.account_status_label` with configurable `USER_ONLINE_TIMEOUT_MINUTES`.
+- **Visual Presence Indicators**: Added pulsating green status dots for online users, neutral badges for offline users, and status toggle buttons.
+- **Dashboard & User KPIs**: Added top-level metric counters: Total Users, Online Now, Offline Users, Active Accounts, and Disabled Accounts.
+
+### 3. Advanced Business Analytics Suite & Strict Financial Distinction
+- **Authoritative Accounting Principles**: Strictly decoupled earned Sales Revenue from actual Cash Received (customer settlement vouchers); classified outstanding receivables separately from liquid cash.
+- **COGS & Cash Flow Precision**: Computed exact Cost of Goods Sold from product purchase costs, Gross/Net Margins, and Net Cash Flow (`Cash In - Cash Out`).
+- **Intelligent Stock Reorder Intelligence**: Added automated low-stock reorder suggestions with estimated working capital requirements.
+- **Extended Timeframe Horizons**: Added period presets (Today, Yesterday, This Week, This Month, This Quarter, This Year, Previous Year) and custom date range pickers.
+- **Export & Reporting Hub**: Added CSV export endpoint at `/reports/analytics/export/csv/` and print-ready stylesheet for one-click PDF generation.
+
+### 4. Test Suite Verification
+- Added comprehensive test suite `tests/test_user_management_and_analytics.py` with 12 tests.
+- Entire repository test suite passes with **194 tests green (100% pass rate)**.

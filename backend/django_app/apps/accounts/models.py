@@ -157,8 +157,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_staff_member(self) -> bool:
-        """True if user is staff, manager, or admin."""
-        return self.is_admin or self.role_name == "staff" or self.is_manager
+        """True if user is staff, cashier, manager, or admin."""
+        return self.is_admin or self.is_manager or self.role_name in ("staff", "cashier")
 
     @property
     def is_customer(self) -> bool:
