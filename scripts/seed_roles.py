@@ -28,7 +28,8 @@ def seed():
     roles_data = [
         {"name": Role.ROLE_ADMIN, "description": "System Administrator with full access"},
         {"name": Role.ROLE_MANAGER, "description": "Store Manager with management access"},
-        {"name": Role.ROLE_STAFF, "description": "Staff Member / Cashier"},
+        {"name": Role.ROLE_STAFF, "description": "Staff Member with operations access"},
+        {"name": "cashier", "description": "Cashier with POS checkout and counter sales access"},
         {"name": Role.ROLE_CUSTOMER, "description": "Customer with view-only catalog access"},
     ]
 

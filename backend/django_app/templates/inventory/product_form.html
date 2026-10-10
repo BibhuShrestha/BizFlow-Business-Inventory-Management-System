@@ -4,108 +4,319 @@
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1 class="page-title">{{ title }}</h1>
-    <p class="page-subtitle">Configure item specifications, tax rate, and inventory thresholds.</p>
+<div class="form-page-container">
+  <!-- Top Navigation & Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
+        <a href="{% url 'inventory:product_list' %}" style="color:var(--text-secondary); text-decoration:none;">Inventory</a>
+        <span>/</span>
+        <a href="{% url 'inventory:product_list' %}" style="color:var(--text-secondary); text-decoration:none;">Products</a>
+        <span>/</span>
+        <span style="color:var(--text); font-weight:600;">{{ title }}</span>
+      </div>
+      <h1 class="page-title" style="margin:0; display:flex; align-items:center; gap:10px;">
+        {{ title }}
+        <span class="stat-badge primary" style="font-size:11px; font-weight:600;">Catalog Item</span>
+      </h1>
+      <p class="page-subtitle">Configure item specifications, pricing model, tax rate, and inventory thresholds.</p>
+    </div>
+
+    <!-- Header Action Buttons -->
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="{% if request.GET.return_to %}{{ request.GET.return_to }}{% elif request.GET.next %}{{ request.GET.next }}{% else %}{% url 'inventory:product_list' %}{% endif %}" class="btn btn-secondary">
+        Cancel
+      </a>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('productForm').requestSubmit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Product
+      </button>
+    </div>
   </div>
-</div>
 
-<div class="card" style="max-width: 880px; margin-bottom: 40px;">
-  <form method="post" id="productForm" style="padding: 24px;">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-      <div class="alert alert-danger" style="margin-bottom:16px;">{{ form.non_field_errors }}</div>
-    {% endif %}
+  <!-- 2-Column Responsive Layout -->
+  <div class="form-two-col-layout">
+    <!-- Left Column: Structured Form Cards -->
+    <div class="product-form-main">
+      <form method="post" id="productForm">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" style="margin-bottom:20px;">{{ form.non_field_errors }}</div>
+        {% endif %}
 
-    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:16px; margin-bottom:16px;">
-      <div class="form-group">
-        <label class="form-label" for="id_name">Product Name *</label>
-        {{ form.name }}
-        {% if form.name.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.name.errors }}</div>{% endif %}
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="id_sku">SKU / Code *</label>
-        {{ form.sku }}
-        {% if form.sku.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.sku.errors }}</div>{% endif %}
-      </div>
-    </div>
+        <!-- Card 1: Basic Identification -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>📦</span> Basic Information
+              </h2>
+              <p class="form-section-desc">Item name, barcode/SKU, and general description</p>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary); background:#F1F5F9; padding:2px 8px; border-radius:4px;">Identity</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:18px; margin-bottom:18px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_name">
+                  Product Name <span class="required">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.name.errors }}</div>{% endif %}
+                <span class="form-hint">Official trade name as it appears on receipts and customer invoices.</span>
+              </div>
 
-    <!-- Company, Category, Seller -->
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:16px;">
-      <div class="form-group">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label class="form-label" style="margin-bottom:0;" for="id_company">Company</label>
-          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-company')">+ New Company</button>
+              <div class="form-group" style="margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label class="form-label" style="margin-bottom:0;" for="id_sku">
+                    SKU / Barcode <span class="required">*</span>
+                  </label>
+                  <button type="button" class="btn-inline-add" id="btn-generate-sku" title="Generate random SKU code">⚡ Auto SKU</button>
+                </div>
+                {{ form.sku }}
+                {% if form.sku.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.sku.errors }}</div>{% endif %}
+                <span class="form-hint">Unique identifier or hardware barcode scanner code.</span>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="id_description">Description / Specifications</label>
+              {{ form.description }}
+              <span class="form-hint">Optional technical notes, dimensions, warranty, or catalog details.</span>
+            </div>
+          </div>
         </div>
-        {{ form.company }}
-        {% if form.company.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.company.errors }}</div>{% endif %}
-      </div>
 
-      <div class="form-group">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label class="form-label" style="margin-bottom:0;" for="id_category">Category *</label>
-          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-category')">+ New Category</button>
+        <!-- Card 2: Organization & Attribution -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>🏢</span> Organization & Attribution
+              </h2>
+              <p class="form-section-desc">Classify this item into categories and assign company ownership</p>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary); background:#F1F5F9; padding:2px 8px; border-radius:4px;">Classification</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:18px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label class="form-label" style="margin-bottom:0;" for="id_company">Company</label>
+                  <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-company')">+ New Company</button>
+                </div>
+                {{ form.company }}
+                {% if form.company.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.company.errors }}</div>{% endif %}
+                <span class="form-hint">Multi-tenant business owner.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label class="form-label" style="margin-bottom:0;" for="id_category">Category <span class="required">*</span></label>
+                  <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-category')">+ New Category</button>
+                </div>
+                {{ form.category }}
+                {% if form.category.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.category.errors }}</div>{% endif %}
+                <span class="form-hint">Product line classification.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label class="form-label" style="margin-bottom:0;" for="id_seller">Seller / Owner</label>
+                  <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-seller')">+ New Seller</button>
+                </div>
+                {{ form.seller }}
+                {% if form.seller.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.seller.errors }}</div>{% endif %}
+                <span class="form-hint">Supplier or consignment owner.</span>
+              </div>
+            </div>
+          </div>
         </div>
-        {{ form.category }}
-        {% if form.category.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.category.errors }}</div>{% endif %}
-      </div>
 
-      <div class="form-group">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label class="form-label" style="margin-bottom:0;" for="id_seller">Seller / Owner</label>
-          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-seller')">+ New Seller</button>
+        <!-- Card 3: Pricing & Financials -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>💰</span> Pricing & Profitability
+              </h2>
+              <p class="form-section-desc">Manage cost baseline, sales price, tax rate, and gross margins</p>
+            </div>
+            <span style="font-size:11px; color:#15803D; background:#DCFCE7; padding:2px 8px; border-radius:4px; font-weight:600;">Financials</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:18px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_purchase_price">Cost / Buy Price (Rs.)</label>
+                {{ form.purchase_price }}
+                {% if form.purchase_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.purchase_price.errors }}</div>{% endif %}
+                <span class="form-hint">Purchase cost per unit.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_selling_price">Selling Price (Rs.) <span class="required">*</span></label>
+                {{ form.selling_price }}
+                {% if form.selling_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.selling_price.errors }}</div>{% endif %}
+                <span class="form-hint">Customer retail / POS price.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_unit">Unit of Measure</label>
+                {{ form.unit }}
+                {% if form.unit.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.unit.errors }}</div>{% endif %}
+                <span class="form-hint">e.g. pcs, box, kg, pack.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_tax_rate">Tax / VAT Rate (%)</label>
+                {{ form.tax_rate }}
+                {% if form.tax_rate.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.tax_rate.errors }}</div>{% endif %}
+                <span class="form-hint">e.g. 13 for 13% VAT, or 0.</span>
+              </div>
+            </div>
+
+            <!-- Real-time Embedded Profit Indicator Strip -->
+            <div class="profit-metric-strip">
+              <div class="profit-metric-item">
+                <span class="profit-metric-label">Unit Profit</span>
+                <span class="profit-metric-val" id="strip-profit-val">Rs. 0.00</span>
+              </div>
+              <div class="profit-metric-item">
+                <span class="profit-metric-label">Profit Margin</span>
+                <span class="profit-metric-val" id="strip-margin-val">0.0%</span>
+              </div>
+              <div class="profit-metric-item">
+                <span class="profit-metric-label">Markup</span>
+                <span class="profit-metric-val" id="strip-markup-val">0.0%</span>
+              </div>
+              <div class="profit-metric-item">
+                <span class="profit-metric-label">Est. Tax (per unit)</span>
+                <span class="profit-metric-val" id="strip-tax-val" style="color:var(--text-secondary);">Rs. 0.00</span>
+              </div>
+            </div>
+          </div>
         </div>
-        {{ form.seller }}
-        {% if form.seller.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.seller.errors }}</div>{% endif %}
-      </div>
+
+        <!-- Card 4: Inventory & Alerts -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>📊</span> Stock & Alert Thresholds
+              </h2>
+              <p class="form-section-desc">Track opening quantity and configure automated low-stock warnings</p>
+            </div>
+            <span style="font-size:11px; color:#1E40AF; background:#EFF6FF; padding:2px 8px; border-radius:4px; font-weight:600;">Inventory</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:18px; margin-bottom:14px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_current_stock">Opening Stock</label>
+                {{ form.current_stock }}
+                {% if form.current_stock.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.current_stock.errors }}</div>{% endif %}
+                <span class="form-hint">Physical stock available right now.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_minimum_stock">Min Stock Alert Level</label>
+                {{ form.minimum_stock }}
+                {% if form.minimum_stock.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.minimum_stock.errors }}</div>{% endif %}
+                <span class="form-hint">Alert threshold for reordering.</span>
+              </div>
+            </div>
+
+            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:12px 14px; display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-secondary);">
+              <span style="font-size:18px;">🔔</span>
+              <div>
+                BizFlow monitors warehouse levels continuously. When stock drops to or below the alert level, it will be flagged in low-stock reports and shown on the dashboard.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Submission Footer -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; margin-bottom:40px; border-top:1px solid var(--border);">
+          <div style="font-size:12px; color:var(--text-secondary);">
+            Fields marked with <span class="required">*</span> are mandatory.
+          </div>
+          <div style="display:flex; gap:12px;">
+            <a href="{% if request.GET.return_to %}{{ request.GET.return_to }}{% elif request.GET.next %}{{ request.GET.next }}{% else %}{% url 'inventory:product_list' %}{% endif %}" class="btn btn-secondary">
+              Cancel
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Save Product
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
 
-    <!-- Pricing & Stock -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
-      <div class="form-group">
-        <label class="form-label" for="id_purchase_price">Cost / Buy Price (Rs.)</label>
-        {{ form.purchase_price }}
-        {% if form.purchase_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.purchase_price.errors }}</div>{% endif %}
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="id_selling_price">Selling Price (Rs.) *</label>
-        {{ form.selling_price }}
-        {% if form.selling_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.selling_price.errors }}</div>{% endif %}
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="id_current_stock">Opening Stock</label>
-        {{ form.current_stock }}
-        {% if form.current_stock.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.current_stock.errors }}</div>{% endif %}
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="id_minimum_stock">Min Stock Alert</label>
-        {{ form.minimum_stock }}
-        {% if form.minimum_stock.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.minimum_stock.errors }}</div>{% endif %}
-      </div>
-    </div>
+    <!-- Right Column: Sticky Live Preview & Intelligence Panel -->
+    <aside class="form-sticky-panel">
+      <!-- 1. Real-Time Product Preview Card -->
+      <div class="preview-card">
+        <div class="preview-card-banner">
+          <span class="preview-card-badge" id="preview-badge-status">Active Item</span>
+          <div class="preview-avatar-badge" id="preview-avatar-initials">📦</div>
+        </div>
+        <div class="preview-card-body">
+          <div class="preview-item-title" id="preview-title">New Catalog Product</div>
+          <div class="preview-item-sku" id="preview-sku">SKU: NOT SET</div>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
-      <div class="form-group">
-        <label class="form-label" for="id_unit">Unit of Measure</label>
-        {{ form.unit }}
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="id_tax_rate">Tax Rate (%)</label>
-        {{ form.tax_rate }}
-      </div>
-    </div>
+          <div class="preview-price-display">
+            <span class="preview-price-currency">Rs.</span>
+            <span class="preview-price-number" id="preview-price">0.00</span>
+            <span class="preview-price-unit" id="preview-unit">/ pcs</span>
+          </div>
 
-    <div class="form-group" style="margin-bottom:24px;">
-      <label class="form-label" for="id_description">Description / Specifications</label>
-      {{ form.description }}
-    </div>
+          <div class="preview-meta-tags">
+            <span class="preview-tag" id="preview-category">🏷️ General</span>
+            <span class="preview-tag preview-tag-stock" id="preview-stock-pill">📦 0 in stock</span>
+            <span class="preview-tag" id="preview-company-tag" style="display:none;">🏢 Business</span>
+          </div>
 
-    <div style="display:flex; gap:12px;">
-      <button type="submit" class="btn btn-primary" id="submitBtn">Save Product</button>
-      <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary">Cancel</a>
-    </div>
-  </form>
+          <!-- Margin Progress Gauge -->
+          <div class="margin-gauge-container">
+            <div class="margin-gauge-header">
+              <span>Gross Profit Margin</span>
+              <span id="preview-margin-badge" style="font-weight:700; color:#10B981;">0.0%</span>
+            </div>
+            <div class="margin-gauge-track">
+              <div class="margin-gauge-fill" id="preview-margin-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Fast Save & Keyboard Action Box -->
+      <div class="preview-actions-card">
+        <button type="button" class="btn btn-primary btn-lg" style="width:100%;" onclick="document.getElementById('productForm').requestSubmit()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Save Product
+        </button>
+        <span class="keyboard-shortcut-hint">
+          Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save anytime
+        </span>
+      </div>
+
+      <!-- 3. Smart Inventory Tips -->
+      <div class="preview-tip-card">
+        <strong>💡 Inventory Best Practices</strong>
+        <ul>
+          <li><strong>Barcode Scanner:</strong> Connect any USB or Bluetooth scanner to scan barcodes straight into the SKU field.</li>
+          <li><strong>Alert Threshold:</strong> Set the Minimum Stock Alert to at least 3-5 days of expected sales velocity.</li>
+          <li><strong>Automatic Ledger:</strong> Opening stock immediately creates a tracked opening inventory journal movement.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <!-- ========================================== -->
@@ -211,7 +422,191 @@
 <script src="{% static 'js/quick_add.js' %}"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize draft persistence
     initFormStatePersistence('productForm', 'bizflow_product_draft');
+
+    // 2. Element references
+    const nameInput = document.getElementById('id_name');
+    const skuInput = document.getElementById('id_sku');
+    const costInput = document.getElementById('id_purchase_price');
+    const priceInput = document.getElementById('id_selling_price');
+    const unitInput = document.getElementById('id_unit');
+    const taxInput = document.getElementById('id_tax_rate');
+    const stockInput = document.getElementById('id_current_stock');
+    const minStockInput = document.getElementById('id_minimum_stock');
+    const categorySelect = document.getElementById('id_category');
+    const companySelect = document.getElementById('id_company');
+
+    // Preview elements
+    const previewTitle = document.getElementById('preview-title');
+    const previewSku = document.getElementById('preview-sku');
+    const previewPrice = document.getElementById('preview-price');
+    const previewUnit = document.getElementById('preview-unit');
+    const previewCategory = document.getElementById('preview-category');
+    const previewCompanyTag = document.getElementById('preview-company-tag');
+    const previewStockPill = document.getElementById('preview-stock-pill');
+    const previewAvatar = document.getElementById('preview-avatar-initials');
+    const previewMarginBadge = document.getElementById('preview-margin-badge');
+    const previewMarginFill = document.getElementById('preview-margin-fill');
+
+    // Strip metric elements
+    const stripProfitVal = document.getElementById('strip-profit-val');
+    const stripMarginVal = document.getElementById('strip-margin-val');
+    const stripMarkupVal = document.getElementById('strip-markup-val');
+    const stripTaxVal = document.getElementById('strip-tax-val');
+
+    // Format helper
+    const formatRs = (num) => {
+      return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    // 3. Live Preview & Calculation Engine
+    function updateLivePreview() {
+      // Product Name & Avatar initials
+      const nameVal = nameInput ? nameInput.value.trim() : '';
+      if (previewTitle) {
+        previewTitle.textContent = nameVal || 'New Catalog Product';
+      }
+      if (previewAvatar) {
+        if (nameVal.length > 0) {
+          previewAvatar.textContent = nameVal.substring(0, 2).toUpperCase();
+        } else {
+          previewAvatar.textContent = '📦';
+        }
+      }
+
+      // SKU
+      const skuVal = skuInput ? skuInput.value.trim() : '';
+      if (previewSku) {
+        previewSku.textContent = skuVal ? `SKU: ${skuVal}` : 'SKU: NOT SET';
+      }
+
+      // Selling Price
+      const sellVal = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+      if (previewPrice) {
+        previewPrice.textContent = formatRs(sellVal);
+      }
+
+      // Unit
+      const unitVal = unitInput ? unitInput.value.trim() : '';
+      if (previewUnit) {
+        previewUnit.textContent = `/ ${unitVal || 'pcs'}`;
+      }
+
+      // Category
+      if (previewCategory && categorySelect) {
+        const catText = categorySelect.options[categorySelect.selectedIndex]?.text;
+        if (catText && !catText.includes('---------')) {
+          previewCategory.textContent = `🏷️ ${catText}`;
+          previewCategory.style.display = 'inline-block';
+        } else {
+          previewCategory.textContent = '🏷️ General';
+        }
+      }
+
+      // Company
+      if (previewCompanyTag && companySelect) {
+        const compText = companySelect.options[companySelect.selectedIndex]?.text;
+        if (compText && !compText.includes('---------')) {
+          previewCompanyTag.textContent = `🏢 ${compText}`;
+          previewCompanyTag.style.display = 'inline-block';
+        } else {
+          previewCompanyTag.style.display = 'none';
+        }
+      }
+
+      // Stock Pill
+      const curStock = stockInput ? parseInt(stockInput.value, 10) || 0 : 0;
+      const minStock = minStockInput ? parseInt(minStockInput.value, 10) || 0 : 0;
+      if (previewStockPill) {
+        previewStockPill.textContent = `📦 ${curStock} ${unitVal || 'pcs'} in stock`;
+        if (curStock <= minStock && minStock > 0) {
+          previewStockPill.className = 'preview-tag preview-tag-low';
+        } else {
+          previewStockPill.className = 'preview-tag preview-tag-stock';
+        }
+      }
+
+      // Financials: Cost, Profit, Margins, Tax
+      const costVal = costInput ? parseFloat(costInput.value) || 0 : 0;
+      const taxRate = taxInput ? parseFloat(taxInput.value) || 0 : 0;
+
+      const grossProfit = sellVal - costVal;
+      const marginPct = sellVal > 0 ? (grossProfit / sellVal) * 100 : 0;
+      const markupPct = costVal > 0 ? (grossProfit / costVal) * 100 : 0;
+      const estTax = sellVal * (taxRate / 100);
+
+      // Update Strip
+      if (stripProfitVal) {
+        stripProfitVal.textContent = `Rs. ${formatRs(grossProfit)}`;
+        stripProfitVal.className = 'profit-metric-val ' + (grossProfit > 0 ? 'profit-positive' : (grossProfit < 0 ? 'profit-negative' : ''));
+      }
+      if (stripMarginVal) {
+        stripMarginVal.textContent = `${marginPct.toFixed(1)}%`;
+        stripMarginVal.className = 'profit-metric-val ' + (marginPct >= 20 ? 'profit-positive' : (marginPct < 0 ? 'profit-negative' : 'profit-warning'));
+      }
+      if (stripMarkupVal) {
+        stripMarkupVal.textContent = `${markupPct.toFixed(1)}%`;
+      }
+      if (stripTaxVal) {
+        stripTaxVal.textContent = `Rs. ${formatRs(estTax)}`;
+      }
+
+      // Update Margin Gauge in Preview Card
+      if (previewMarginBadge && previewMarginFill) {
+        previewMarginBadge.textContent = `${marginPct.toFixed(1)}%`;
+        const boundedFill = Math.max(0, Math.min(100, marginPct));
+        previewMarginFill.style.width = `${boundedFill}%`;
+
+        if (marginPct >= 25) {
+          previewMarginBadge.style.color = '#10B981';
+          previewMarginFill.style.backgroundColor = '#10B981';
+        } else if (marginPct > 0) {
+          previewMarginBadge.style.color = '#F59E0B';
+          previewMarginFill.style.backgroundColor = '#F59E0B';
+        } else {
+          previewMarginBadge.style.color = '#EF4444';
+          previewMarginFill.style.backgroundColor = '#EF4444';
+        }
+      }
+    }
+
+    // Bind input listeners
+    const watchedInputs = [nameInput, skuInput, costInput, priceInput, unitInput, taxInput, stockInput, minStockInput, categorySelect, companySelect];
+    watchedInputs.forEach(el => {
+      if (el) {
+        el.addEventListener('input', updateLivePreview);
+        el.addEventListener('change', updateLivePreview);
+      }
+    });
+
+    // Run initial update
+    updateLivePreview();
+
+    // 4. Auto-Generate SKU Button
+    const genSkuBtn = document.getElementById('btn-generate-sku');
+    if (genSkuBtn && skuInput) {
+      genSkuBtn.addEventListener('click', () => {
+        const prefix = nameInput && nameInput.value.trim().length >= 2 
+          ? nameInput.value.trim().substring(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, 'PRD')
+          : 'PRD';
+        const randNum = Math.floor(1000 + Math.random() * 9000);
+        skuInput.value = `${prefix}-${randNum}`;
+        updateLivePreview();
+        skuInput.focus();
+      });
+    }
+
+    // 5. Global Keyboard Shortcut: Ctrl + Enter to submit
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const form = document.getElementById('productForm');
+        if (form) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      }
+    });
   });
 </script>
 {% endblock %}

@@ -1022,3 +1022,397 @@ details.disclosure[open] summary::before {
   border-color: #2563EB;
 }
 
+/* ============================================================
+   Enhanced Responsive Form Layouts & Intelligence Cards
+   ============================================================ */
+.form-page-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.form-centered-container {
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.form-narrow-container {
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.form-two-col-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1120px) {
+  .form-two-col-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-section-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  margin-bottom: 20px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-section-card:focus-within {
+  border-color: #93C5FD;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+}
+
+.form-section-header {
+  padding: 14px 20px;
+  background: #F8FAFC;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.form-section-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.form-section-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 2px 0 0 0;
+}
+
+.form-section-body {
+  padding: 20px;
+}
+
+/* Currency and Suffix Input Groups */
+.input-with-affix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-affix-prefix {
+  position: absolute;
+  left: 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  pointer-events: none;
+  user-select: none;
+}
+
+.input-with-prefix .form-control {
+  padding-left: 38px;
+}
+
+.input-affix-suffix {
+  position: absolute;
+  right: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  pointer-events: none;
+  user-select: none;
+}
+
+.input-with-suffix .form-control {
+  padding-right: 36px;
+}
+
+/* Profit Metric Indicator Strip inside form */
+.profit-metric-strip {
+  background: #F8FAFC;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+  align-items: center;
+}
+
+.profit-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.profit-metric-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.profit-metric-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.profit-metric-val.profit-positive {
+  color: #16A34A;
+}
+
+.profit-metric-val.profit-warning {
+  color: #D97706;
+}
+
+.profit-metric-val.profit-negative {
+  color: #DC2626;
+}
+
+/* Sticky Intelligence & Live Preview Column */
+.form-sticky-panel {
+  position: sticky;
+  top: 76px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Live Product Preview Card */
+.preview-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.preview-card-banner {
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+  height: 52px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 16px;
+}
+
+.preview-card-badge {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  color: #FFFFFF;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.preview-avatar-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E40AF;
+  position: absolute;
+  bottom: -22px;
+  left: 18px;
+}
+
+.preview-card-body {
+  padding: 30px 18px 18px;
+}
+
+.preview-item-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.preview-item-sku {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  background: #EFF6FF;
+  color: #1E40AF;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.preview-price-display {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.preview-price-currency {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.preview-price-number {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.preview-price-unit {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.preview-meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.preview-tag {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.preview-tag.preview-tag-stock {
+  background: #DCFCE7;
+  color: #15803D;
+  font-weight: 600;
+}
+
+.preview-tag.preview-tag-low {
+  background: #FEF3C7;
+  color: #B45309;
+  font-weight: 600;
+}
+
+/* Margin Gauge Bar */
+.margin-gauge-container {
+  margin-top: 12px;
+  padding: 12px;
+  background: #F8FAFC;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.margin-gauge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.margin-gauge-track {
+  width: 100%;
+  height: 8px;
+  background: #E2E8F0;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.margin-gauge-fill {
+  height: 100%;
+  background: #10B981;
+  width: 0%;
+  border-radius: 9999px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Tip / Guidance Card */
+.preview-tip-card {
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  font-size: 12.5px;
+  color: #1E3A8A;
+  line-height: 1.5;
+}
+
+.preview-tip-card strong {
+  color: #1E40AF;
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.preview-tip-card ul {
+  padding-left: 18px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-tip-card li {
+  font-size: 12px;
+}
+
+/* Action button bar */
+.preview-actions-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.keyboard-shortcut-hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  display: block;
+}
+
+.keyboard-shortcut-hint kbd {
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+
