@@ -74,8 +74,8 @@ def manager_required(func):
 
 
 def staff_required(func):
-    """Accessible by Admin, Owner, Manager, and Staff."""
-    return roles_required("admin", "owner", "manager", "staff")(func)
+    """Accessible by Admin, Owner, Manager, Staff, and Cashier."""
+    return roles_required("admin", "owner", "manager", "staff", "cashier")(func)
 
 
 # ---------------------------------------------------------------------------
@@ -113,4 +113,4 @@ class ManagerRequiredMixin(RoleRequiredMixin):
 
 
 class StaffRequiredMixin(RoleRequiredMixin):
-    allowed_roles = ("admin", "owner", "manager", "staff")
+    allowed_roles = ("admin", "owner", "manager", "staff", "cashier")
