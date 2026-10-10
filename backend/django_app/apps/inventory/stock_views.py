@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 
-from apps.accounts.permissions import login_required_custom, manager_required
+from apps.accounts.permissions import login_required_custom, staff_required, manager_required
 from apps.inventory.forms import StockAdjustmentForm
 from apps.inventory.models import StockMovement
 from apps.core_app.pagination import paginate_queryset
@@ -11,6 +11,7 @@ from domain.services.stock_service import StockService
 
 
 @login_required_custom
+@staff_required
 def stock_movements(request: HttpRequest) -> HttpResponse:
     """List stock movement ledger."""
     movement_type = request.GET.get("type", "")

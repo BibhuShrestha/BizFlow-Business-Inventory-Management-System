@@ -5,15 +5,24 @@
 {% block content %}
 <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
   <div>
-    <h1 class="page-title">Products Inventory</h1>
-    <p class="page-subtitle">Track SKUs, selling prices, physical quantities, and low stock warnings.</p>
+    {% if user.is_customer %}
+      <h1 class="page-title">Product Catalog</h1>
+      <p class="page-subtitle">Browse available items, categories, and current prices.</p>
+    {% else %}
+      <h1 class="page-title">Products Inventory</h1>
+      <p class="page-subtitle">Track SKUs, selling prices, physical quantities, and low stock warnings.</p>
+    {% endif %}
   </div>
   <div style="display:flex; gap:8px;">
-    <a href="{% url 'inventory:import' %}" class="btn btn-secondary btn-sm">Import Excel/CSV</a>
-    <a href="{% url 'inventory:export_csv' %}" class="btn btn-secondary btn-sm">Export CSV</a>
-    <a href="{% url 'inventory:export_excel' %}" class="btn btn-secondary btn-sm">Export Excel</a>
-    <a href="{% url 'inventory:category_list' %}" class="btn btn-secondary btn-sm">Categories</a>
-    <a href="{% url 'inventory:product_create' %}" class="btn btn-primary btn-sm">+ Add Product</a>
+    {% if 'import_export.view' in user_permissions %}
+      <a href="{% url 'inventory:import' %}" class="btn btn-secondary btn-sm">Import Excel/CSV</a>
+      <a href="{% url 'inventory:export_csv' %}" class="btn btn-secondary btn-sm">Export CSV</a>
+      <a href="{% url 'inventory:export_excel' %}" class="btn btn-secondary btn-sm">Export Excel</a>
+    {% endif %}
+    {% if 'inventory.manage' in user_permissions %}
+      <a href="{% url 'inventory:category_list' %}" class="btn btn-secondary btn-sm">Categories</a>
+      <a href="{% url 'inventory:product_create' %}" class="btn btn-primary btn-sm">+ Add Product</a>
+    {% endif %}
   </div>
 </div>
 
@@ -27,10 +36,12 @@
         <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
       {% endfor %}
     </select>
+    {% if 'inventory.manage' in user_permissions %}
     <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
       <input type="checkbox" name="low_stock" value="1" {% if low_stock_filter %}checked{% endif %}>
       Low Stock Only
     </label>
+    {% endif %}
     <button type="submit" class="btn btn-secondary">Apply Filters</button>
     {% if search_query or selected_category or low_stock_filter %}
       <a href="{% url 'inventory:product_list' %}" class="btn btn-ghost">Reset</a>
@@ -48,11 +59,17 @@
           <th>SKU / Code</th>
           <th>Category</th>
           <th>Unit</th>
-          <th style="text-align:right;">Buy Price</th>
+          {% if not user.is_customer and 'purchases.view' in user_permissions %}
+            <th style="text-align:right;">Buy Price</th>
+          {% endif %}
           <th style="text-align:right;">Sell Price</th>
-          <th style="text-align:center;">Current Stock</th>
-          <th>Status</th>
-          <th style="text-align:right;">Actions</th>
+          <th style="text-align:center;">{% if user.is_customer %}Availability{% else %}Current Stock{% endif %}</th>
+          {% if not user.is_customer %}
+            <th>Status</th>
+          {% endif %}
+          {% if 'inventory.manage' in user_permissions or 'inventory.delete' in user_permissions %}
+            <th style="text-align:right;">Actions</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
@@ -62,30 +79,48 @@
           <td class="font-mono">{{ p.sku|default:"—" }}</td>
           <td>{{ p.category.name|default:"Uncategorized" }}</td>
           <td>{{ p.unit|default:"pcs" }}</td>
-          <td style="text-align:right;" class="font-mono">Rs. {{ p.purchase_price|floatformat:2 }}</td>
+          {% if not user.is_customer and 'purchases.view' in user_permissions %}
+            <td style="text-align:right;" class="font-mono">Rs. {{ p.purchase_price|floatformat:2 }}</td>
+          {% endif %}
           <td style="text-align:right;" class="font-mono">Rs. {{ p.selling_price|floatformat:2 }}</td>
           <td style="text-align:center;">
-            {% if p.current_stock <= p.minimum_stock %}
-              <span class="badge badge-danger">{{ p.current_stock }}</span>
+            {% if user.is_customer %}
+              {% if p.current_stock > 0 %}
+                <span class="badge badge-success">In Stock</span>
+              {% else %}
+                <span class="badge badge-danger">Out of Stock</span>
+              {% endif %}
             {% else %}
-              <span class="badge badge-success">{{ p.current_stock }}</span>
+              {% if p.current_stock <= p.minimum_stock %}
+                <span class="badge badge-danger">{{ p.current_stock }}</span>
+              {% else %}
+                <span class="badge badge-success">{{ p.current_stock }}</span>
+              {% endif %}
             {% endif %}
           </td>
+          {% if not user.is_customer %}
           <td>
             {% if p.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-secondary">Inactive</span>{% endif %}
           </td>
+          {% endif %}
+          {% if 'inventory.manage' in user_permissions or 'inventory.delete' in user_permissions %}
           <td style="text-align:right;">
             <div style="display:inline-flex; gap:6px;">
-              <a href="{% url 'inventory:product_edit' p.id %}" class="btn btn-ghost btn-sm">Edit</a>
-              <form method="post" action="{% url 'inventory:product_delete' p.id %}" style="display:inline;" onsubmit="return confirm('Deactivate this product?');">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
-              </form>
+              {% if 'inventory.manage' in user_permissions %}
+                <a href="{% url 'inventory:product_edit' p.id %}" class="btn btn-ghost btn-sm">Edit</a>
+              {% endif %}
+              {% if 'inventory.delete' in user_permissions or user.is_manager %}
+                <form method="post" action="{% url 'inventory:product_delete' p.id %}" style="display:inline;" onsubmit="return confirm('Deactivate this product?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+                </form>
+              {% endif %}
             </div>
           </td>
+          {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="9" class="table-empty">No products found matching criteria</td></tr>
+        <tr><td colspan="10" class="table-empty">No products found matching criteria</td></tr>
         {% endfor %}
       </tbody>
     </table>

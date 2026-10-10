@@ -14,6 +14,7 @@ from apps.core_app.security_utils import get_safe_redirect_url
 
 
 @login_required_custom
+@manager_required
 def seller_list(request: HttpRequest) -> HttpResponse:
     """List sellers with search, company filtering, and pagination."""
     search = request.GET.get("search", "").strip()

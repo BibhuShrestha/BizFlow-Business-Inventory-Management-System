@@ -402,3 +402,71 @@ class TestGranularRBAC:
         assert "user_permissions" in ctx
         assert Permission.SALES_CREATE.value in ctx["user_permissions"]
         assert Permission.PURCHASES_CREATE.value not in ctx["user_permissions"]
+
+    def test_customer_ui_restricted_to_catalog_only(self, db, rbac_users):
+        customer = rbac_users["customer"]
+        client = Client()
+        client.force_login(customer)
+
+        # Dashboard redirects customer to product list
+        dash_res = client.get(reverse("dashboard:index"))
+        assert dash_res.status_code == 302
+        assert reverse("inventory:product_list") in dash_res.url
+
+        # In product list, customer sees Catalog and Sell Price, but NOT wholesale Buy Price or management actions
+        prod_res = client.get(reverse("inventory:product_list"))
+        assert prod_res.status_code == 200
+        content = prod_res.content.decode("utf-8")
+        assert "Product Catalog" in content
+        assert "Buy Price" not in content
+        assert "+ Add Product" not in content
+        assert "Import Excel/CSV" not in content
+        assert "Export CSV" not in content
+        assert reverse("inventory:category_list") not in content
+        # Sidebar for customer only shows Customer Portal, not internal financial sections
+        assert "Customer Portal" in content
+        assert "AI Analytics &amp; Insights" not in content
+        assert "Reports &amp; Daybook" not in content
+        assert "Supplier Payables (Cr)" not in content
+
+    def test_cashier_ui_hides_purchases_and_reports(self, db, rbac_users):
+        cashier = rbac_users["cashier"]
+        client = Client()
+        client.force_login(cashier)
+
+        # Dashboard for cashier hides Net Profit, Purchases, Expenses, AI Analytics
+        res = client.get(reverse("dashboard:index"))
+        assert res.status_code == 200
+        content = res.content.decode("utf-8")
+        assert "Total Sales" in content
+        assert "Net Profit" not in content
+        assert "Total Purchases" not in content
+        assert "Total Expenses" not in content
+        assert "AI Analytics &amp; Insights" not in content
+        assert "Recent Purchases" not in content
+        assert "Supplier Payables (Cr)" not in content
+
+    def test_staff_ui_hides_executive_analytics_and_companies(self, db, rbac_users):
+        staff = rbac_users["staff"]
+        client = Client()
+        client.force_login(staff)
+
+        # Staff dashboard shows Sales and Purchases, but hides Net Profit and AI Analytics
+        res = client.get(reverse("dashboard:index"))
+        assert res.status_code == 200
+        content = res.content.decode("utf-8")
+        assert "Total Sales" in content
+        assert "Total Purchases" in content
+        assert "Total Expenses" in content
+        assert "Net Profit" not in content
+        assert "AI Analytics &amp; Insights" not in content
+        assert "Receivables &amp; Payables Hub" not in content
+
+        # Staff visiting /companies/ or /import-export/ is blocked by manager_required
+        comp_res = client.get(reverse("companies:list"))
+        assert comp_res.status_code == 302
+        assert "/dashboard/" in comp_res.url
+
+        imp_res = client.get(reverse("core_app:import_export_hub"))
+        assert imp_res.status_code == 302
+        assert "/dashboard/" in imp_res.url

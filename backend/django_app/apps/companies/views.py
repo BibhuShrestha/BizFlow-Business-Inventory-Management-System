@@ -14,6 +14,7 @@ from apps.core_app.security_utils import get_safe_redirect_url
 
 
 @login_required_custom
+@manager_required
 def company_list(request: HttpRequest) -> HttpResponse:
     """List all companies with search and pagination."""
     search = request.GET.get("search", "").strip()

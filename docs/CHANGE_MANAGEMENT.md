@@ -102,6 +102,7 @@ Status:               [Proposed | In Progress | Completed | Superseded]
 | **CR-0020** | 2026-10-09 | Analytics / AI | Feature | Pure-Python `AnalyticsService`, local deterministic decision advisor & hybrid AI decision support, `/api/v1/analytics/` endpoints, and interactive reports dashboard (Part 22). | Completed |
 | **CR-0021** | 2026-10-09 | Accounts / Analytics | Feature | Admin user immediate visibility, online/offline presence tracking middleware, cash received vs revenue distinction, low-stock reorder suggestions, and analytics CSV/print suite (Part 23). | Completed |
 | **CR-0022** | 2026-10-10 | Accounts / Security | Feature | Google OAuth2 OpenID Connect social authentication, user auto-provisioning, `/api/v1/auth/google` endpoints, centralized RBAC Permission enum, and granular view/API authorization decorators (Part 24). | Completed |
+| **CR-0023** | 2026-10-10 | Accounts / UI | Security / UX | Role-based UI feature filtering and view protection across Customer, Cashier, Staff, Manager, and Admin roles (hiding internal wholesale prices, executive analytics, and unpermitted navigation links). | Completed |
 
 ---
 

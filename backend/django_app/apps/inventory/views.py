@@ -166,6 +166,7 @@ def product_delete(request: HttpRequest, pk: int) -> HttpResponse:
 
 
 @login_required_custom
+@manager_required
 def export_csv(request: HttpRequest) -> HttpResponse:
     """Export all items to CSV file."""
     query = Product.objects.select_related("category", "company", "seller").filter(is_active=True)
@@ -194,6 +195,7 @@ def export_csv(request: HttpRequest) -> HttpResponse:
 
 
 @login_required_custom
+@manager_required
 def export_excel(request: HttpRequest) -> HttpResponse:
     """Export all items to Excel (.xlsx) file."""
     products = Product.objects.select_related("category", "company", "seller").filter(is_active=True).order_by("name")
@@ -219,6 +221,7 @@ def export_excel(request: HttpRequest) -> HttpResponse:
 
 
 @login_required_custom
+@manager_required
 def sample_template(request: HttpRequest) -> HttpResponse:
     """Download sample CSV template for bulk product import."""
     headers = ["SKU", "Item Name", "Company", "Seller / Owner", "Seller Phone", "Category", "Unit", "Purchase Price", "Selling Price", "Current Stock"]
@@ -310,6 +313,7 @@ def import_products(request: HttpRequest) -> HttpResponse:
 
 # Categories CRUD
 @login_required_custom
+@staff_required
 def category_list(request: HttpRequest) -> HttpResponse:
     """List product categories."""
     categories = Category.objects.all().order_by("name")

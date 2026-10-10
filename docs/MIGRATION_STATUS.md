@@ -51,7 +51,7 @@
 | Part 21 | Transaction Date Controls, Universal Date Filtering & Hardening | `[x]` Complete (170 passing tests) |
 | Part 22 | AI Business Analytics & Decision Support Suite | `[x]` Complete (182 passing tests) |
 | Part 23 | Admin User Visibility, Activity Tracking & Advanced Analytics Suite | `[x]` Complete (194 passing tests) |
-| Part 24 | Google OAuth2 Social Authentication & Granular RBAC Permissions | `[x]` Complete (218 passing tests) |
+| Part 24 | Google OAuth2 Social Authentication & Granular RBAC Permissions | `[x]` Complete (221 passing tests) |
 
 ---
 
@@ -349,8 +349,14 @@
   - `permission_required_custom` decorator and `PermissionRequiredMixin` CBV mixin in `apps.accounts.permissions`.
   - `require_permission` and `require_any_permission` FastAPI dependencies in `backend/api/deps.py`.
   - `active_company` Django context processor injecting `user_permissions` into all templates.
+  - **Role-Based UI Feature Filtering (`base.html`, `dashboard/index.html`, `inventory/product_list.html`)**:
+    - **Customer Role**: Restricted strictly to Customer Portal (`Product Catalog`). Hidden from internal financial dashboard, transactions (sales/purchases/expenses), parties, reports, AI analytics, supplier payables, cheques, import/export, and wholesale buy prices.
+    - **Cashier Role**: Restricted to Counter POS duties: sales checkout, product sell prices, customer directory, and customer credit settlement vouchers. Hidden from procurement purchases, vendor payables, expenses, cheques, daybook, and business profit reports.
+    - **Staff Role**: Operational duties: sales, purchases, physical stock movements, suppliers, and basic expenses. Hidden from company settings, executive P&L net profit, AI analytics, supplier payables oversight, cheques, and bulk data import/export.
+    - **Manager Role**: Unrestricted operational oversight across all business transactions, payables, cheques, and reports, excluding admin user provisioning.
+    - **Admin/Owner Role**: Unrestricted full access across all modules, configurations, and user management.
 
 ### 3. Test Suite Verification
-- Added comprehensive test suite `tests/test_google_oauth_and_rbac.py` with 24 tests.
-- Entire repository test suite passes with **218 tests green (100% pass rate)**.
+- Added comprehensive test suite `tests/test_google_oauth_and_rbac.py` with 27 tests.
+- Entire repository test suite passes with **221 tests green (100% pass rate)**.
 

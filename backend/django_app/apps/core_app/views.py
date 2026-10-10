@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
-from apps.accounts.permissions import login_required_custom, staff_required
+from apps.accounts.permissions import login_required_custom, staff_required, manager_required
 from apps.core_app.exports import parse_uploaded_file
 from domain.services.import_export_service import ImportExportService
 
@@ -32,7 +32,7 @@ def error_400(request: HttpRequest, exception=None) -> HttpResponse:
 
 
 @login_required_custom
-@staff_required
+@manager_required
 def import_export_hub(request: HttpRequest) -> HttpResponse:
     """
     Central hub for importing and exporting data across:
@@ -63,7 +63,7 @@ def import_export_hub(request: HttpRequest) -> HttpResponse:
 
 
 @login_required_custom
-@staff_required
+@manager_required
 def export_dataset(request: HttpRequest) -> HttpResponse:
     """Trigger multi-format export with filters."""
     module = request.GET.get("module", "products").lower().strip()
@@ -88,7 +88,7 @@ def export_dataset(request: HttpRequest) -> HttpResponse:
 
 
 @login_required_custom
-@staff_required
+@manager_required
 def import_dataset(request: HttpRequest) -> HttpResponse:
     """
     Handle two-step import:
