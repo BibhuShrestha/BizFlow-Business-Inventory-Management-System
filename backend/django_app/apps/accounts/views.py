@@ -264,20 +264,55 @@ def google_login_view(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect(_get_dashboard_url())
 
-    from integrations.google_oauth import GoogleOAuthClient
+    from django.conf import settings
     from django.urls import reverse
+    from integrations.google_oauth import GoogleOAuthClient
     import secrets
+
+    raw_next = request.GET.get("next") or request.POST.get("next") or _get_dashboard_url()
+    safe_next = get_safe_redirect_url(raw_next, request, default=_get_dashboard_url())
+
+    # If real Google credentials are not configured
+    if not GoogleOAuthClient.is_configured() and not getattr(settings, "TESTING", False):
+        if settings.DEBUG:
+            # Handle developer simulation submission
+            if request.method == "POST" and request.POST.get("dev_simulate") == "1":
+                sim_email = request.POST.get("email", "").lower().strip() or "bibhustha111@gmail.com"
+                sim_name = request.POST.get("name", "").strip() or sim_email.split("@")[0].title()
+                user_info = {
+                    "sub": f"google_dev_{abs(hash(sim_email))}",
+                    "email": sim_email,
+                    "name": sim_name,
+                    "email_verified": True,
+                    "picture": "",
+                }
+                user, created = AuthService.login_or_register_via_google(user_info)
+                login(request, user)
+                record_login_attempt(user=user, request=request, success=True, method="google_dev_sim", message="Google dev simulation login")
+                if created:
+                    messages.success(request, f"Welcome to BizFlow, {user.name}! Your account has been created via Google.")
+                else:
+                    messages.success(request, f"Welcome back, {user.name}!")
+                return redirect(safe_next)
+
+            redirect_uri = request.build_absolute_uri(reverse("accounts:google_callback"))
+            return render(request, "accounts/google_dev_login.html", {
+                "next": safe_next,
+                "redirect_uri": redirect_uri,
+                "default_email": "bibhustha111@gmail.com",
+            })
+        else:
+            messages.error(request, "Google sign-in is currently unavailable. Please sign in with your email and password.")
+            return redirect("accounts:login")
 
     state = secrets.token_urlsafe(32)
     request.session["google_oauth_state"] = state
-
-    raw_next = request.GET.get("next") or _get_dashboard_url()
-    safe_next = get_safe_redirect_url(raw_next, request, default=_get_dashboard_url())
     request.session["google_oauth_next"] = safe_next
 
     redirect_uri = request.build_absolute_uri(reverse("accounts:google_callback"))
     auth_url = GoogleOAuthClient.get_auth_url(redirect_uri=redirect_uri, state=state)
     return redirect(auth_url)
+
 
 
 def google_callback_view(request: HttpRequest) -> HttpResponse:

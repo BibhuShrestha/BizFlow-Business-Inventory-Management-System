@@ -260,6 +260,27 @@ class TestDjangoWebGoogleOAuth:
         assert user.is_active is True
         assert user.email_verified is True
 
+    def test_google_login_dev_sandbox_render(self, db, settings):
+        settings.TESTING = False
+        settings.DEBUG = True
+        client = Client()
+        response = client.get(reverse("accounts:google_login"))
+        assert response.status_code == 200
+        assert "Google OAuth Development Sandbox" in response.content.decode()
+
+    def test_google_login_dev_sandbox_post_simulation(self, db, settings, rbac_roles):
+        settings.TESTING = False
+        settings.DEBUG = True
+        client = Client()
+        response = client.post(
+            reverse("accounts:google_login"),
+            {"dev_simulate": "1", "email": "bibhutest@gmail.com", "name": "Bibhu Test", "next": "/dashboard/"},
+        )
+        assert response.status_code == 302
+        assert response.url == "/dashboard/"
+        user = User.objects.get(email="bibhutest@gmail.com")
+        assert user.name == "Bibhu Test"
+
 
 # ===========================================================================
 # 4. FastAPI Google OAuth Endpoints Tests

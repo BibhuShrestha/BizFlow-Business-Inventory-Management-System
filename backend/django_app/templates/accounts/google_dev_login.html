@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google OAuth Sandbox — BizFlow</title>
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <style>
+    .setup-step {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text, #0f172a);
+    }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #eff6ff;
+      color: #2563eb;
+      font-weight: 700;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid #bfdbfe;
+    }
+    .code-snippet {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      margin-top: 6px;
+      overflow-x: auto;
+      border: 1px solid #334155;
+    }
+  </style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card" style="max-width: 520px;">
+    <div class="auth-logo">
+      <h1>BizFlow</h1>
+      <p>Business Management System</p>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
+      <svg width="22" height="22" viewBox="0 0 24 24">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+      </svg>
+      <h2 class="auth-title" style="margin-bottom:0;">Google OAuth Development Sandbox</h2>
+    </div>
+    <p class="auth-subtitle" style="margin-bottom:16px;">Local testing environment</p>
+
+    <!-- Info banner -->
+    <div style="background:#fef3c7;border:1px solid #fcd34d;border-left:4px solid #d97706;padding:12px 14px;border-radius:6px;margin-bottom:20px;font-size:13px;color:#92400e;line-height:1.45;">
+      <strong>Google OAuth Credentials Not Configured:</strong>
+      <div style="margin-top:4px;">
+        <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> are set to default placeholders in your <code>.env</code> file. To prevent Google's <em>Error 401: invalid_client</em>, you can simulate sign-in right here or add real credentials below.
+      </div>
+    </div>
+
+    <!-- Quick simulation form -->
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:18px;margin-bottom:24px;">
+      <h3 style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
+        Instant Dev Sign-In Simulation
+      </h3>
+
+      <form method="post" action="{% url 'accounts:google_login' %}">
+        {% csrf_token %}
+        <input type="hidden" name="dev_simulate" value="1">
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label" for="sim_name" style="font-size:12.5px;">Full Name</label>
+          <input type="text" id="sim_name" name="name" class="form-control" value="Bibhu Shrestha" style="font-size:13px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label" for="sim_email" style="font-size:12.5px;">Google Email Address</label>
+          <input type="email" id="sim_email" name="email" class="form-control" value="{{ default_email }}" required style="font-size:13px;">
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full btn-lg" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
+          </svg>
+          Complete Simulated Google Sign-In
+        </button>
+      </form>
+    </div>
+
+    <!-- Instructions to configure real OAuth -->
+    <details class="disclosure" style="background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:12px 16px;">
+      <summary style="font-size:13px;font-weight:600;color:#2563eb;">How to configure live Google OAuth credentials</summary>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;">
+        <div class="setup-step">
+          <span class="step-num">1</span>
+          <div>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener" style="color:#2563eb;">Google Cloud Console &rarr; Credentials</a> and create an <strong>OAuth client ID</strong> (Application type: <em>Web application</em>).</div>
+        </div>
+        <div class="setup-step">
+          <span class="step-num">2</span>
+          <div>Add this exact Authorized Redirect URI:
+            <div class="code-snippet">{{ redirect_uri }}</div>
+          </div>
+        </div>
+        <div class="setup-step">
+          <span class="step-num">3</span>
+          <div>Open your local <code>.env</code> file and update:
+            <div class="code-snippet">GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-your-client-secret</div>
+          </div>
+        </div>
+        <div class="setup-step">
+          <span class="step-num">4</span>
+          <div>Restart the server. Real Google Sign-In will immediately take over!</div>
+        </div>
+      </div>
+    </details>
+
+    <div class="auth-link" style="margin-top:16px;">
+      <a href="{% url 'accounts:login' %}">&larr; Back to Email / Password Sign In</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>
