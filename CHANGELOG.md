@@ -5,6 +5,26 @@ All notable changes to the **BizFlow** project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-10-10
+
+### Added & Enhanced
+- **UI/UX Component Standardization & Responsive Polish**:
+  - Implemented cohesive `.filter-bar` and `.search-input-wrap` components across all system registers (Sales Invoices, Purchase Orders, Products, Customers, Suppliers, Receivables Register, Payables Register, Payment Vouchers, Cheques).
+  - Standardized `.empty-state` components across all table views with custom contextual icons, descriptive guidance, and quick action CTA buttons.
+  - Added robust pagination controls with record range indicators and persistent query parameters across all list views.
+  - Enhanced table row micro-interactions, subtle hover states, and button press feedback animations (`.btn:active`).
+  - Added skeleton shimmer loader utilities in `main.css` for asynchronous state transitions.
+- **Form Layouts & Cashier Ergonomics**:
+  - Streamlined Sales and Purchase transaction forms with two-column responsive layouts, sticky live summary sidebars, and real-time Nepali currency formatting (`Rs. X,XX,XXX.XX`).
+  - Added global `Ctrl + Enter` / `Cmd + Enter` keyboard shortcut for accelerated POS invoice submission.
+  - Added live customer and supplier label synchronizers with selected entity names.
+  - Redesigned Quick-Add entity modals (Customer, Supplier, Product) with clean grid inputs and error handling.
+  - Added `/inventory/create/` route alias matching standard URL conventions.
+- **Verification & Test Suite**:
+  - Full pytest verification passing with **221 tests green (100% pass rate)**.
+
+---
+
 ## [2.2.0] - 2026-10-10
 
 ### Added
