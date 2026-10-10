@@ -220,7 +220,16 @@
       <div style="padding:16px 24px 0;">
         {% for message in messages %}
           <div class="alert alert-{{ message.tags }}" role="alert">
-            {{ message }}
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              {% if "error" in message.tags or "danger" in message.tags %}
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+              {% elif "success" in message.tags %}
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM13.78 8.22a.75.75 0 00-1.06-1.06L9 10.94l-1.72-1.72a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.06 0l4.25-4.25z" clip-rule="evenodd"/>
+              {% else %}
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.75.75 0 01.747.75v3.5a.75.75 0 01-.75.75H9a.75.75 0 000 1.5h2a.75.75 0 00.75-.75v-4.25A1.75 1.75 0 0010 9H9z" clip-rule="evenodd"/>
+              {% endif %}
+            </svg>
+            <div>{{ message }}</div>
           </div>
         {% endfor %}
       </div>

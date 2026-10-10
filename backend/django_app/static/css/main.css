@@ -586,6 +586,79 @@ a:hover {
   margin-top: 4px;
 }
 
+/* Form Feedback & Hints */
+.form-error {
+  font-size: 12px;
+  color: var(--danger, #DC2626);
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text-secondary, #64748B);
+  margin-top: 4px;
+  display: block;
+}
+
+.required {
+  color: var(--danger, #DC2626);
+  font-weight: 700;
+}
+
+/* === Alerts & Notification Banners === */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md, 8px);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.alert svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.alert-error,
+.alert-danger {
+  background-color: #FEF2F2 !important;
+  border-color: #F87171 !important;
+  color: #991B1B !important;
+  border-left: 4px solid #DC2626 !important;
+}
+
+.alert-warning {
+  background-color: #FFFBEB !important;
+  border-color: #FCD34D !important;
+  color: #92400E !important;
+  border-left: 4px solid #D97706 !important;
+}
+
+.alert-success {
+  background-color: #F0FDF4 !important;
+  border-color: #86EFAC !important;
+  color: #166534 !important;
+  border-left: 4px solid #16A34A !important;
+}
+
+.alert-info {
+  background-color: #EFF6FF !important;
+  border-color: #93C5FD !important;
+  color: #1E40AF !important;
+  border-left: 4px solid #2563EB !important;
+}
+
+
 /* === Tables === */
 .table-container {
   overflow-x: auto;
@@ -734,6 +807,39 @@ tbody tr:hover td {
   font-size: 13px;
   margin-top: 4px;
 }
+
+.auth-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text, #0F172A);
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.auth-subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary, #64748B);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.auth-link {
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--text-secondary, #64748B);
+  margin-top: 20px;
+}
+
+.auth-link a {
+  color: var(--primary, #2563EB);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-link a:hover {
+  text-decoration: underline;
+}
+
 
 /* === Progressive Disclosure === */
 details.disclosure summary {
