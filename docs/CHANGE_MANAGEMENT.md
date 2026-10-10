@@ -97,6 +97,10 @@ Status:               [Proposed | In Progress | Completed | Superseded]
 | **CR-0015** | 2026-10-03 | Documentation | Architecture | Implemented centralized living documentation tree, traceability matrix, and diagrams. | Completed |
 | **CR-0016** | 2026-10-05 | Sales / Purchases | UI / UX | Inline quick-add modals for companies, suppliers, products, and form state persistence. | Completed |
 | **CR-0017** | 2026-10-05 | Credit / Accounting | Feature / UI | Standardized Debit (Dr) and Credit (Cr) double-entry indicators, redesigned party ledger suite, multi-tenant scoping. | Completed |
+| **CR-0018** | 2026-10-08 | Performance / UI | Optimization | Minimal UI/UX, N+1 query elimination via prefetch cache, date boundary scoping, asset loading optimization (Part 20). | Completed |
+| **CR-0019** | 2026-10-09 | Sales / Purchases | Feature | Granular transaction & due date controls, universal date range filtering, interactive BS/AD date switcher and dual date badges (Part 21). | Completed |
+| **CR-0020** | 2026-10-09 | Analytics / AI | Feature | Pure-Python `AnalyticsService`, local deterministic decision advisor & hybrid AI decision support, `/api/v1/analytics/` endpoints, and interactive reports dashboard (Part 22). | Completed |
+| **CR-0021** | 2026-10-09 | Accounts / Analytics | Feature | Admin user immediate visibility, online/offline presence tracking middleware, cash received vs revenue distinction, low-stock reorder suggestions, and analytics CSV/print suite (Part 23). | Completed |
 
 ---
 
