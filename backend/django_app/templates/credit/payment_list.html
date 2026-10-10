@@ -23,9 +23,14 @@
   </div>
 </div>
 
-<div class="card" style="margin-bottom: 20px; padding: 16px;">
-  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search voucher #, customer, supplier, ref..." class="form-control" style="max-width:320px;">
+<div class="filter-bar">
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; width:100%;">
+    <div class="search-input-wrap">
+      <svg class="search-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input type="text" name="q" value="{{ search }}" placeholder="Search voucher #, customer, supplier, ref..." class="form-control">
+    </div>
     
     <select name="method" class="form-control" style="max-width:180px;">
       <option value="">All Payment Methods</option>
@@ -111,7 +116,15 @@
           {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="10" class="table-empty">No payment vouchers found matching your filter criteria.</td></tr>
+        <tr>
+          <td colspan="10" class="table-empty">
+            <div class="empty-state" style="padding: 36px 16px;">
+              <div class="empty-state-icon-wrap" style="width:48px; height:48px; font-size:22px; margin-bottom:12px;">💳</div>
+              <div class="empty-state-title">No payment vouchers found matching your filter criteria</div>
+              <div class="empty-state-desc">Customer receipts and supplier disbursement vouchers will appear here.</div>
+            </div>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>

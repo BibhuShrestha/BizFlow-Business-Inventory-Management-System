@@ -4,37 +4,53 @@
 {% block page_title %}Sales Invoices{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
   <div>
     <h1 class="page-title">Sales Invoices</h1>
-    <p class="page-subtitle">Create and manage tax invoices, bill printouts, and payment receipts.</p>
+    <p class="page-subtitle">Create and manage tax invoices, bill printouts, and customer payment receipts.</p>
   </div>
-  <div style="display:flex; gap:8px;">
-    <a href="{% url 'sales:export_csv' %}" class="btn btn-secondary btn-sm">Export CSV</a>
-    <a href="{% url 'sales:export_excel' %}" class="btn btn-secondary btn-sm">Export Excel</a>
-    <a href="{% url 'sales:create' %}" class="btn btn-primary btn-sm">+ Create Invoice</a>
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <a href="{% url 'sales:export_csv' %}" class="btn btn-secondary btn-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+      Export CSV
+    </a>
+    <a href="{% url 'sales:export_excel' %}" class="btn btn-secondary btn-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+      Export Excel
+    </a>
+    <a href="{% url 'sales:create' %}" class="btn btn-primary btn-sm">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+      Create Invoice
+    </a>
   </div>
 </div>
 
-<div class="card" style="margin-bottom: 20px; padding: 16px;">
-  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-    <input type="text" name="q" value="{{ search_query }}" placeholder="Search invoice number, customer..." class="form-control" style="max-width:260px;">
+<div class="filter-bar">
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; width:100%;">
+    <div class="search-input-wrap">
+      <svg class="search-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Search invoice number, customer name..." class="form-control">
+    </div>
     <div style="display:flex; align-items:center; gap:6px;">
-      <span style="font-size:13px; color:var(--text-secondary);">From:</span>
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">From:</span>
       <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="width:145px;">
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
-      <span style="font-size:13px; color:var(--text-secondary);">To:</span>
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">To:</span>
       <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="width:145px;">
     </div>
-    <select name="status" class="form-control" style="width:140px;">
+    <select name="status" class="form-control" style="width:145px;">
       <option value="">All Statuses</option>
       <option value="Paid" {% if status_filter == 'Paid' %}selected{% endif %}>Paid</option>
       <option value="Partially Paid" {% if status_filter == 'Partially Paid' %}selected{% endif %}>Partially Paid</option>
       <option value="Due" {% if status_filter == 'Due' %}selected{% endif %}>Due</option>
     </select>
     <button type="submit" class="btn btn-secondary">Filter</button>
-    {% if search_query or date_from or date_to or status_filter %}<a href="{% url 'sales:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
+    {% if search_query or date_from or date_to or status_filter %}
+      <a href="{% url 'sales:list' %}" class="btn btn-ghost">Reset</a>
+    {% endif %}
   </form>
 </div>
 
@@ -68,9 +84,9 @@
           <td style="text-align:right;" class="font-mono">Rs. {{ s.subtotal|floatformat:2 }}</td>
           <td style="text-align:right;" class="font-mono">Rs. {{ s.discount|floatformat:2 }}</td>
           <td style="text-align:right;" class="font-mono">Rs. {{ s.tax|floatformat:2 }}</td>
-          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ s.total|floatformat:2 }}</strong></td>
+          <td style="text-align:right;" class="font-mono"><strong style="color:#1E40AF;">Rs. {{ s.total|floatformat:2 }}</strong></td>
           <td>
-            <span class="badge {% if s.payment_status == 'Paid' %}badge-success{% else %}badge-warning{% endif %}">
+            <span class="badge {% if s.payment_status == 'Paid' %}badge-success{% elif s.payment_status == 'Partial' %}badge-warning{% else %}badge-danger{% endif %}">
               {{ s.payment_status }}
             </span>
           </td>
@@ -85,10 +101,36 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="9" class="table-empty">No sales invoices recorded yet</td></tr>
+        <tr>
+          <td colspan="9" class="table-empty">
+            <div class="empty-state" style="padding: 36px 16px;">
+              <div class="empty-state-icon-wrap" style="width:48px; height:48px; font-size:22px; margin-bottom:12px;">🧾</div>
+              <div class="empty-state-title">No sales invoices recorded yet</div>
+              <div class="empty-state-desc">Generate your first counter sale or tax invoice to track revenue and automatic inventory deductions.</div>
+              <a href="{% url 'sales:create' %}" class="btn btn-primary btn-sm">+ Create Invoice</a>
+            </div>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-top:1px solid var(--border); flex-wrap:wrap; gap:12px;">
+    <span style="font-size:13px; color:var(--text-secondary);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} total records)
+    </span>
+    <div style="display:flex; gap:8px;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}&status={{ status_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-secondary btn-sm">&laquo; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}&status={{ status_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

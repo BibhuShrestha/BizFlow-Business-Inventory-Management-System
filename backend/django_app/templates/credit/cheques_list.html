@@ -66,9 +66,14 @@
     </div>
 
     <!-- Search Form -->
-    <form method="GET" style="display:flex; gap:8px; margin:0;">
+    <form method="GET" style="display:flex; gap:8px; margin:0; align-items:center;">
       <input type="hidden" name="tab" value="{{ current_tab }}">
-      <input type="text" name="q" value="{{ search }}" placeholder="Search cheque #, bank, party..." class="form-control" style="width:240px; padding:6px 12px; font-size:13px;">
+      <div class="search-input-wrap" style="min-width:220px;">
+        <svg class="search-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" name="q" value="{{ search }}" placeholder="Search cheque #, bank, party..." class="form-control" style="font-size:13px;">
+      </div>
       <button type="submit" class="btn btn-secondary btn-sm">Search</button>
       {% if search %}
         <a href="?tab={{ current_tab }}" class="btn btn-ghost btn-sm">Clear</a>
@@ -168,10 +173,13 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="9" class="table-empty" style="text-align:center; padding:48px 16px;">
-            <div style="font-size:32px; margin-bottom:8px;">🧾</div>
-            <div style="font-weight:600; font-size:16px;">No cheques found</div>
-            <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Record incoming or outgoing cheques to manage clearance and reminders.</div>
+          <td colspan="9" class="table-empty">
+            <div class="empty-state" style="padding: 36px 16px;">
+              <div class="empty-state-icon-wrap" style="width:48px; height:48px; font-size:22px; margin-bottom:12px;">🧾</div>
+              <div class="empty-state-title">No cheques found</div>
+              <div class="empty-state-desc">Record incoming customer cheques or outgoing supplier cheques to manage clearance schedules and alerts.</div>
+              <a href="{% url 'credit:cheque_create' %}" class="btn btn-primary btn-sm">+ Record Cheque</a>
+            </div>
           </td>
         </tr>
         {% endfor %}

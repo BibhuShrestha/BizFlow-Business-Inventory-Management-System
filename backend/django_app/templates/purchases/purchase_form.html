@@ -4,159 +4,296 @@
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1 class="page-title">{{ title }}</h1>
-    <p class="page-subtitle">Record supplier invoice or inward purchase order with automatic inventory stock addition.</p>
-  </div>
-</div>
-
-{% if not companies_exist %}
-  <div class="alert alert-warning" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-left:4px solid #F59E0B;">
+<div class="form-page-container">
+  <!-- Top Navigation & Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
     <div>
-      <strong>⚠️ No Company Profile Registered Yet</strong>
-      <p style="margin:4px 0 0; font-size:13px;">Purchase bills belong to a company. You can create your company profile right now without losing any form details.</p>
-    </div>
-    <button type="button" class="btn btn-primary btn-sm" onclick="openQuickModal('modal-add-company')">+ Add Company Now</button>
-  </div>
-{% endif %}
-
-<div class="card form-centered-container" style="max-width: 1040px; margin: 0 auto 40px;">
-  <form method="post" id="purchaseForm" style="padding: 24px;">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-      <div class="alert alert-danger" style="margin-bottom:16px;">{{ form.non_field_errors }}</div>
-    {% endif %}
-
-    <!-- Party & Company Row -->
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:16px; margin-bottom:18px;">
-      <div class="form-group">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label class="form-label" style="margin-bottom:0;" for="id_supplier">Supplier / Vendor *</label>
-          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-supplier')">+ New Supplier</button>
-        </div>
-        {{ form.supplier }}
-        {% if form.supplier.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.supplier.errors }}</div>{% endif %}
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
+        <a href="{% url 'purchases:list' %}" style="color:var(--text-secondary); text-decoration:none;">Purchases</a>
+        <span>/</span>
+        <a href="{% url 'purchases:list' %}" style="color:var(--text-secondary); text-decoration:none;">Vendor Bills</a>
+        <span>/</span>
+        <span style="color:var(--text); font-weight:600;">{{ title }}</span>
       </div>
-
-      <div class="form-group">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label class="form-label" style="margin-bottom:0;" for="id_company">Company</label>
-          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-company')">+ New Company</button>
-        </div>
-        {{ form.company }}
-        {% if form.company.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.company.errors }}</div>{% endif %}
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="id_bill_number">Vendor Bill # / Invoice #</label>
-        {{ form.bill_number }}
-        {% if form.bill_number.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.bill_number.errors }}</div>{% endif %}
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="id_purchase_date">Bill Date *</label>
-        {{ form.purchase_date }}
-        {% if form.purchase_date.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.purchase_date.errors }}</div>{% endif %}
-      </div>
+      <h1 class="page-title" style="margin:0; display:flex; align-items:center; gap:10px;">
+        {{ title }}
+        <span class="stat-badge warning" style="font-size:11px; font-weight:600;">Inward Stock PO</span>
+      </h1>
+      <p class="page-subtitle">Record supplier invoice or inward purchase order with automatic inventory stock addition and payables ledger tracking.</p>
     </div>
 
-    <!-- Product & Quantity Row -->
-    <div style="background-color: var(--bg-primary, #F8FAFC); padding: 18px; border-radius: 8px; border: 1px solid var(--border, #E2E8F0); margin-bottom: 20px;">
-      <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:14px; align-items:flex-start;">
-        <div class="form-group">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <label class="form-label" style="margin-bottom:0;" for="id_product">Product / Item *</label>
-            <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-product')">+ New Product</button>
-          </div>
-          {{ form.product }}
-          {% if form.product.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.product.errors }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="id_quantity">Quantity *</label>
-          {{ form.quantity }}
-          {% if form.quantity.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.quantity.errors }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="id_unit_price">Cost Price (Rs.)</label>
-          {{ form.unit_price }}
-          {% if form.unit_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.unit_price.errors }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="id_discount">Discount (Rs.)</label>
-          {{ form.discount }}
-          {% if form.discount.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.discount.errors }}</div>{% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Payment Row -->
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:18px;">
-      <div class="form-group">
-        <label class="form-label" for="id_payment_method">Payment Method</label>
-        {{ form.payment_method }}
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="id_payment_status">Payment Status</label>
-        {{ form.payment_status }}
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="id_due_date">Payment Due Date</label>
-        {{ form.due_date }}
-        {% if form.due_date.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.due_date.errors }}</div>{% endif %}
-      </div>
-    </div>
-
-    <!-- Conditional Cheque Row -->
-    <div id="cheque_details_group" style="display:none; background:#F1F5F9; padding:16px; border-radius:6px; border:1px solid #CBD5E1; margin-bottom:18px;">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-        <div class="form-group">
-          <label class="form-label" for="id_cheque_number">Cheque Number</label>
-          {{ form.cheque_number }}
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="id_cheque_date">Cheque Clearing Date</label>
-          {{ form.cheque_date }}
-        </div>
-      </div>
-    </div>
-
-    <!-- Notes -->
-    <div class="form-group" style="margin-bottom:20px;">
-      <label class="form-label" for="id_notes">Notes / Special Remarks</label>
-      {{ form.notes }}
-    </div>
-
-    <!-- Live Financial Summary Card -->
-    <div style="background:#FFFFFF; border:1px solid var(--border, #E2E8F0); border-radius:8px; padding:18px; margin-bottom:24px; display:flex; justify-content:flex-end;">
-      <div style="width:280px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px; color:var(--text-secondary);">
-          <span>Subtotal:</span>
-          <span id="preview_subtotal">Rs. 0.00</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:14px; color:var(--text-secondary);">
-          <span>Discount:</span>
-          <span id="preview_discount">- Rs. 0.00</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; color:var(--text-secondary);">
-          <span>Tax:</span>
-          <span id="preview_tax">+ Rs. 0.00</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; padding-top:8px; border-top:2px solid var(--border, #E2E8F0); font-size:18px; font-weight:700; color:#1E40AF;">
-          <span>Grand Total:</span>
-          <span id="preview_grand_total">Rs. 0.00</span>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:flex; gap:12px;">
-      <button type="submit" class="btn btn-primary" id="submitBtn">Save Purchase</button>
+    <!-- Header Actions -->
+    <div style="display:flex; align-items:center; gap:12px;">
       <a href="{% url 'purchases:list' %}" class="btn btn-secondary">Cancel</a>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('purchaseForm').requestSubmit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Purchase Order
+      </button>
     </div>
-  </form>
+  </div>
+
+  {% if not companies_exist %}
+    <div class="alert alert-warning" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; border-left:4px solid #F59E0B;">
+      <div>
+        <strong>⚠️ No Company Profile Registered Yet</strong>
+        <p style="margin:4px 0 0; font-size:13px;">Purchase bills belong to a company. You can create your company profile right now without losing any form details.</p>
+      </div>
+      <button type="button" class="btn btn-primary btn-sm" onclick="openQuickModal('modal-add-company')">+ Add Company Now</button>
+    </div>
+  {% endif %}
+
+  <!-- 2-Column Responsive Layout -->
+  <div class="form-two-col-layout">
+    <!-- Left Column: Form Fields -->
+    <div class="purchase-form-main">
+      <form method="post" id="purchaseForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" style="margin-bottom:20px;">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <!-- Card 1: Vendor & Header Details -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>🏢</span> 1. Supplier & Procurement Header
+              </h2>
+              <p class="form-section-desc">Assign vendor party, purchasing company, and supplier invoice reference</p>
+            </div>
+            <span style="font-size:11px; color:#6D28D9; background:#F5F3FF; padding:2px 8px; border-radius:4px; font-weight:600;">Vendor</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:16px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label class="form-label" style="margin-bottom:0;" for="id_supplier">Supplier / Vendor <span class="required">*</span></label>
+                  <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-supplier')">+ New Supplier</button>
+                </div>
+                {{ form.supplier }}
+                {% if form.supplier.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.supplier.errors }}</div>{% endif %}
+                <span class="form-hint">Supplier to credit.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label class="form-label" style="margin-bottom:0;" for="id_company">Company</label>
+                  <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-company')">+ New Company</button>
+                </div>
+                {{ form.company }}
+                {% if form.company.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.company.errors }}</div>{% endif %}
+                <span class="form-hint">Purchasing company entity.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_bill_number">Vendor Bill # / Invoice #</label>
+                {{ form.bill_number }}
+                {% if form.bill_number.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.bill_number.errors }}</div>{% endif %}
+                <span class="form-hint">Supplier bill / tax invoice number.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_purchase_date">Bill Date <span class="required">*</span></label>
+                {{ form.purchase_date }}
+                {% if form.purchase_date.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.purchase_date.errors }}</div>{% endif %}
+                <span class="form-hint">Goods receipt or invoice date.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Inward Goods & Quantity -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>📦</span> 2. Inward Product & Costing <span class="required">*</span>
+              </h2>
+              <p class="form-section-desc">Select received inventory item, batch quantity, and cost price</p>
+            </div>
+            <span style="font-size:11px; color:#15803D; background:#DCFCE7; padding:2px 8px; border-radius:4px; font-weight:600;">Inventory In</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:16px; align-items:flex-start;">
+              <div class="form-group" style="margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label class="form-label" style="margin-bottom:0;" for="id_product">Product / Item <span class="required">*</span></label>
+                  <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-product')">+ New Product</button>
+                </div>
+                {{ form.product }}
+                {% if form.product.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.product.errors }}</div>{% endif %}
+                <span class="form-hint">Item to add to inventory.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_quantity">Quantity <span class="required">*</span></label>
+                {{ form.quantity }}
+                {% if form.quantity.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.quantity.errors }}</div>{% endif %}
+                <span class="form-hint">Units received.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_unit_price">Cost Price (Rs.)</label>
+                {{ form.unit_price }}
+                {% if form.unit_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.unit_price.errors }}</div>{% endif %}
+                <span class="form-hint">Purchase cost per unit.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_discount">Discount (Rs.)</label>
+                {{ form.discount }}
+                {% if form.discount.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.discount.errors }}</div>{% endif %}
+                <span class="form-hint">Supplier discount.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Settlement & Payment Terms -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>💳</span> 3. Payment Terms & Payables Schedule
+              </h2>
+              <p class="form-section-desc">Vendor disbursement method, settlement status, and maturity due date</p>
+            </div>
+            <span style="font-size:11px; color:#D97706; background:#FEF3C7; padding:2px 8px; border-radius:4px; font-weight:600;">Payables</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:18px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_payment_method">Payment Method</label>
+                {{ form.payment_method }}
+                <span class="form-hint">e.g. Cash, Bank, Cheque, Credit.</span>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_payment_status">Payment Status</label>
+                {{ form.payment_status }}
+                <span class="form-hint">Paid in full, Partial, or Due on credit.</span>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_due_date">Payment Due Date</label>
+                {{ form.due_date }}
+                {% if form.due_date.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.due_date.errors }}</div>{% endif %}
+                <span class="form-hint">Required for credit purchases.</span>
+              </div>
+            </div>
+
+            <!-- Conditional Cheque Inputs -->
+            <div id="cheque_details_group" style="display:none; background:#F8FAFC; padding:16px; border-radius:8px; border:1px solid #CBD5E1; margin-bottom:18px;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="id_cheque_number">Cheque Number</label>
+                  {{ form.cheque_number }}
+                  <span class="form-hint">Issued bank cheque leaf number.</span>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="id_cheque_date">Cheque Clearing Date</label>
+                  {{ form.cheque_date }}
+                  <span class="form-hint">Maturity date for bank clearance.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="id_notes">Notes / Special Remarks</label>
+              {{ form.notes }}
+              <span class="form-hint">Internal PO notes, batch details, or vendor agreement notes.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Form Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; margin-bottom:40px; border-top:1px solid var(--border);">
+          <div style="font-size:12px; color:var(--text-secondary);">
+            Fields marked with <span class="required">*</span> are mandatory.
+          </div>
+          <div style="display:flex; gap:12px;">
+            <a href="{% url 'purchases:list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Save Purchase Order
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: Sticky Live Purchase Summary Panel -->
+    <aside class="form-sticky-panel">
+      <!-- 1. Live Purchase Breakdown Card -->
+      <div class="preview-card">
+        <div class="preview-card-banner" style="background:linear-gradient(135deg, #7C3AED 0%, #A78BFA 100%);">
+          <span class="preview-card-badge" id="preview-purchase-badge">PURCHASE ORDER</span>
+          <div class="preview-avatar-badge" style="color:#7C3AED;">📥</div>
+        </div>
+        <div class="preview-card-body" style="padding-top:28px;">
+          <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px;">
+            Purchase Bill Calculation
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;" id="preview-supplier-label">
+            Supplier: Not Selected
+          </div>
+
+          <!-- Breakdown List -->
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+            <div style="display:flex; justify-content:space-between; color:var(--text-secondary);">
+              <span>Gross Cost:</span>
+              <span class="font-mono" id="preview_subtotal" style="font-weight:600; color:var(--text);">Rs. 0.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:var(--text-secondary);">
+              <span>Discount:</span>
+              <span class="font-mono" id="preview_discount" style="font-weight:600; color:#DC2626;">- Rs. 0.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:var(--text-secondary);">
+              <span>Tax / VAT:</span>
+              <span class="font-mono" id="preview_tax" style="font-weight:600; color:var(--text);">+ Rs. 0.00</span>
+            </div>
+
+            <!-- Grand Total -->
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border); padding-top:10px; margin-top:4px;">
+              <span style="font-weight:700; font-size:14px;">Total Payable:</span>
+              <span class="font-mono" id="preview_grand_total" style="font-size:22px; font-weight:800; color:#7C3AED;">Rs. 0.00</span>
+            </div>
+          </div>
+
+          <!-- Inventory Notice -->
+          <div style="margin-top:14px; padding:10px 12px; background:#F5F3FF; border-radius:6px; border:1px solid #DDD6FE; font-size:12px; color:#5B21B6;">
+            &bull; <strong>Stock Impact:</strong> Quantity will be automatically added to warehouse inventory upon bill confirmation.
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Fast Save Actions Card -->
+      <div class="preview-actions-card">
+        <button type="button" class="btn btn-primary btn-lg" style="width:100%;" onclick="document.getElementById('purchaseForm').requestSubmit()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Save Purchase Order
+        </button>
+        <span class="keyboard-shortcut-hint">
+          Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save anytime
+        </span>
+      </div>
+
+      <!-- 3. Procurement Best Practices -->
+      <div class="preview-tip-card">
+        <strong>💡 Procurement & Costing Practices</strong>
+        <ul>
+          <li><strong>Inventory Cost:</strong> Recording purchase bills updates product purchase cost and inventory valuation.</li>
+          <li><strong>Payables Ledger:</strong> Unpaid bills are tracked in Supplier Payables with due date alerts.</li>
+          <li><strong>Stock Movements:</strong> Creates an automatic audit trail movement in the stock ledger.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <!-- ========================================== -->
@@ -174,11 +311,11 @@
         <div class="quick-form-errors"></div>
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label">Supplier / Vendor Name *</label>
-          <input type="text" name="name" class="form-control" required placeholder="e.g. Acme Wholesalers">
+          <input type="text" name="name" class="form-control" required placeholder="Supplier Name">
         </div>
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label">Phone Number</label>
-          <input type="text" name="phone" class="form-control" placeholder="e.g. 9841223344">
+          <input type="text" name="phone" class="form-control" placeholder="98XXXXXXXX">
         </div>
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label">Email</label>
@@ -216,7 +353,7 @@
         </div>
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label">VAT / PAN Number</label>
-          <input type="text" name="vat_pan_number" class="form-control" placeholder="9-digit PAN or VAT #">
+          <input type="text" name="vat_pan_number" class="form-control" placeholder="PAN / VAT Number">
         </div>
         <div class="form-group" style="margin-bottom:12px;">
           <label class="form-label">Company Phone</label>
@@ -239,43 +376,47 @@
 <!-- 3. Quick Add Product Modal -->
 <!-- ========================================== -->
 <div id="modal-add-product" class="quick-modal">
-  <div class="quick-modal-dialog">
+  <div class="quick-modal-dialog" style="max-width: 600px;">
     <div class="quick-modal-header">
       <h3 class="quick-modal-title">📦 Add New Product</h3>
       <button type="button" class="quick-modal-close" onclick="closeQuickModal('modal-add-product')">&times;</button>
     </div>
-    <form action="{% url 'inventory:product_create' %}" method="post" onsubmit="submitQuickForm(event, this, 'id_product', 'modal-add-product', handleProductQuickAdded)">
+    <form action="{% url 'inventory:create' %}" method="post" onsubmit="submitQuickForm(event, this, 'id_product', 'modal-add-product', handleProductQuickAdded)">
       {% csrf_token %}
       <div class="quick-modal-body">
         <div class="quick-form-errors"></div>
-        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:12px;">
-          <div class="form-group">
-            <label class="form-label">Product Name *</label>
-            <input type="text" name="name" class="form-control" required placeholder="Product Name">
-          </div>
-          <div class="form-group">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Product Name *</label>
+          <input type="text" name="name" class="form-control" required placeholder="e.g. Basmati Rice 25kg">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="form-group" style="margin-bottom:0;">
             <label class="form-label">SKU / Code</label>
-            <input type="text" name="sku" class="form-control" placeholder="Auto-generated if empty">
+            <input type="text" name="sku" class="form-control" placeholder="Optional SKU">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Unit of Measure</label>
+            <input type="text" name="unit" class="form-control" value="pcs" placeholder="pcs, kg, etc.">
           </div>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
-          <div class="form-group">
-            <label class="form-label">Cost / Buy Price (Rs.) *</label>
-            <input type="number" step="0.01" name="purchase_price" class="form-control" required placeholder="0.00">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Cost / Buy Price (Rs.)</label>
+            <input type="number" step="0.01" name="purchase_price" class="form-control" placeholder="0.00">
           </div>
-          <div class="form-group">
-            <label class="form-label">Selling Price (Rs.)</label>
-            <input type="number" step="0.01" name="selling_price" class="form-control" value="0.00">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Selling Price (Rs.) *</label>
+            <input type="number" step="0.01" name="selling_price" class="form-control" required placeholder="0.00">
           </div>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
-          <div class="form-group">
-            <label class="form-label">Initial Stock</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Opening Stock</label>
             <input type="number" name="current_stock" class="form-control" value="0">
           </div>
-          <div class="form-group">
-            <label class="form-label">Unit of Measure</label>
-            <input type="text" name="unit" class="form-control" value="pcs">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Tax Rate (%)</label>
+            <input type="number" step="0.01" name="tax_rate" class="form-control" value="0.00">
           </div>
         </div>
       </div>
@@ -296,11 +437,25 @@
     initFormStatePersistence('purchaseForm', 'bizflow_purchase_draft');
 
     // 2. Elements for real-time live calculations
+    const supplierSelect = document.getElementById('id_supplier');
+    const supplierLabel = document.getElementById('preview-supplier-label');
     const qtyInput = document.getElementById('id_quantity');
     const priceInput = document.getElementById('id_unit_price');
     const discountInput = document.getElementById('id_discount');
     const paymentMethodSelect = document.getElementById('id_payment_method');
     const chequeGroup = document.getElementById('cheque_details_group');
+
+    // Supplier label sync
+    function updateSupplierLabel() {
+      if (supplierSelect && supplierLabel) {
+        const text = supplierSelect.options[supplierSelect.selectedIndex]?.text;
+        supplierLabel.textContent = text && !text.includes('---------') ? `Supplier: ${text}` : 'Supplier: Not Selected';
+      }
+    }
+    if (supplierSelect) {
+      supplierSelect.addEventListener('change', updateSupplierLabel);
+      updateSupplierLabel();
+    }
 
     // Toggle cheque inputs
     function checkPaymentMethod() {
@@ -324,10 +479,12 @@
       const tax = 0; // Tax is auto computed on backend
       const total = net + tax;
 
-      document.getElementById('preview_subtotal').textContent = `Rs. ${subtotal.toFixed(2)}`;
-      document.getElementById('preview_discount').textContent = `- Rs. ${discount.toFixed(2)}`;
-      document.getElementById('preview_tax').textContent = `+ Rs. ${tax.toFixed(2)}`;
-      document.getElementById('preview_grand_total').textContent = `Rs. ${total.toFixed(2)}`;
+      const formatRs = (num) => num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      document.getElementById('preview_subtotal').textContent = `Rs. ${formatRs(subtotal)}`;
+      document.getElementById('preview_discount').textContent = `- Rs. ${formatRs(discount)}`;
+      document.getElementById('preview_tax').textContent = `+ Rs. ${formatRs(tax)}`;
+      document.getElementById('preview_grand_total').textContent = `Rs. ${formatRs(total)}`;
     }
 
     [qtyInput, priceInput, discountInput].forEach(el => {
@@ -335,6 +492,17 @@
     });
 
     recalculate();
+
+    // Global Ctrl + Enter listener
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const form = document.getElementById('purchaseForm');
+        if (form) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      }
+    });
   });
 
   function handleProductQuickAdded(data) {

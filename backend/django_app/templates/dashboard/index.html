@@ -254,9 +254,9 @@
         <tbody>
           {% for sale in recent_sales %}
             <tr>
-              <td class="font-mono">{{ sale.invoice_number }}</td>
+              <td class="font-mono"><a href="{% url 'sales:detail' sale.id %}" style="font-weight:600; color:var(--primary);">{{ sale.invoice_number }}</a></td>
               <td>{{ sale.sale_date|date:"d M Y" }}</td>
-              <td>Rs. {{ sale.total|floatformat:2 }}</td>
+              <td class="font-mono"><strong>Rs. {{ sale.total|floatformat:2 }}</strong></td>
               <td>
                 <span class="badge {% if sale.payment_status == 'Paid' %}badge-success{% elif sale.payment_status == 'Partial' %}badge-warning{% else %}badge-danger{% endif %}">
                   {{ sale.payment_status }}
@@ -264,7 +264,15 @@
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="4" class="table-empty">No sales yet</td></tr>
+            <tr>
+              <td colspan="4" class="table-empty">
+                <div class="empty-state" style="padding: 24px 12px;">
+                  <div class="empty-state-icon-wrap" style="width:36px; height:36px; font-size:16px; margin-bottom:8px;">🧾</div>
+                  <div class="empty-state-title" style="font-size:13px;">No sales recorded yet</div>
+                  <div class="empty-state-desc" style="font-size:12px; margin-bottom:8px;">Recent counter sales and tax invoices will appear here.</div>
+                </div>
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
@@ -292,17 +300,25 @@
         <tbody>
           {% for purchase in recent_purchases %}
             <tr>
-              <td class="font-mono">{{ purchase.purchase_number }}</td>
+              <td class="font-mono"><a href="{% url 'purchases:detail' purchase.id %}" style="font-weight:600; color:var(--primary);">{{ purchase.purchase_number }}</a></td>
               <td>{{ purchase.purchase_date|date:"d M Y" }}</td>
-              <td>Rs. {{ purchase.total|floatformat:2 }}</td>
+              <td class="font-mono"><strong>Rs. {{ purchase.total|floatformat:2 }}</strong></td>
               <td>
-                <span class="badge {% if purchase.payment_status == 'Paid' %}badge-success{% elif purchase.payment_status == 'Partial' %}badge-warning{% else %}badge-danger{% endif %}">
+                <span class="badge {% if purchase.payment_status == 'Paid' %}badge-success{% elif purchase.payment_status == 'Partially Paid' or purchase.payment_status == 'Partial' %}badge-warning{% else %}badge-danger{% endif %}">
                   {{ purchase.payment_status }}
                 </span>
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="4" class="table-empty">No purchases yet</td></tr>
+            <tr>
+              <td colspan="4" class="table-empty">
+                <div class="empty-state" style="padding: 24px 12px;">
+                  <div class="empty-state-icon-wrap" style="width:36px; height:36px; font-size:16px; margin-bottom:8px;">📦</div>
+                  <div class="empty-state-title" style="font-size:13px;">No purchases recorded yet</div>
+                  <div class="empty-state-desc" style="font-size:12px; margin-bottom:8px;">Supplier purchase orders and vendor bills will appear here.</div>
+                </div>
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>

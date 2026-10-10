@@ -3,19 +3,27 @@
 {% block page_title %}Customers Directory{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
   <div>
     <h1 class="page-title">Customers</h1>
-    <p class="page-subtitle">Customer accounts, receivables, contact directory, and sales ledgers.</p>
+    <p class="page-subtitle">Customer accounts, receivables balance, contact directory, and sales ledgers.</p>
   </div>
-  <a href="{% url 'customers:create' %}" class="btn btn-primary btn-sm">+ New Customer</a>
+  <a href="{% url 'customers:create' %}" class="btn btn-primary btn-sm">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+    New Customer
+  </a>
 </div>
 
-<div class="card" style="margin-bottom: 20px; padding: 16px;">
-  <form method="get" style="display:flex; gap:12px;">
-    <input type="text" name="q" value="{{ search_query }}" placeholder="Search customer name, phone, PAN..." class="form-control" style="max-width:320px;">
+<div class="filter-bar">
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; width:100%;">
+    <div class="search-input-wrap">
+      <svg class="search-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input type="text" name="search" value="{{ search|default:search_query }}" placeholder="Search customer name, phone, PAN..." class="form-control">
+    </div>
     <button type="submit" class="btn btn-secondary">Search</button>
-    {% if search_query %}<a href="{% url 'customers:list' %}" class="btn btn-ghost">Clear</a>{% endif %}
+    {% if search or search_query %}<a href="{% url 'customers:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
   </form>
 </div>
 
@@ -33,9 +41,16 @@
         </tr>
       </thead>
       <tbody>
-        {% for c in customers %}
+        {% for c in page_obj|default:customers %}
         <tr>
-          <td style="font-weight:600;"><a href="{% url 'customers:detail' c.id %}">{{ c.name }}</a></td>
+          <td style="font-weight:600;">
+            <a href="{% url 'customers:detail' c.id %}" style="display:inline-flex; align-items:center; gap:8px; color:var(--primary);">
+              <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:var(--primary-subtle); color:var(--primary); font-size:11px; font-weight:700;">
+                {{ c.name|slice:":2"|upper }}
+              </span>
+              {{ c.name }}
+            </a>
+          </td>
           <td>{{ c.phone|default:"—" }}</td>
           <td>{{ c.email|default:"—" }}</td>
           <td class="font-mono">{{ c.pan_number|default:"—" }}</td>
@@ -52,10 +67,36 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="table-empty">No customers registered</td></tr>
+        <tr>
+          <td colspan="6" class="table-empty">
+            <div class="empty-state" style="padding: 36px 16px;">
+              <div class="empty-state-icon-wrap" style="width:48px; height:48px; font-size:22px; margin-bottom:12px;">👥</div>
+              <div class="empty-state-title">No customers found</div>
+              <div class="empty-state-desc">Register customer profiles to issue invoices, assign credit limits, and maintain individual ledger balance accounts.</div>
+              <a href="{% url 'customers:create' %}" class="btn btn-primary btn-sm">+ New Customer</a>
+            </div>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-top:1px solid var(--border); flex-wrap:wrap; gap:12px;">
+    <span style="font-size:13px; color:var(--text-secondary);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} total records)
+    </span>
+    <div style="display:flex; gap:8px;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&search={{ search|default:search_query }}" class="btn btn-secondary btn-sm">&laquo; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&search={{ search|default:search_query }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

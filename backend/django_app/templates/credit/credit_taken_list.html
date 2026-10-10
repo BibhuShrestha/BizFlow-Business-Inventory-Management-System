@@ -15,16 +15,21 @@
   </div>
 </div>
 
-<div class="card" style="margin-bottom: 20px; padding: 16px;">
-  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-    <input type="text" name="q" value="{{ search }}" placeholder="Search PO #, supplier, phone..." class="form-control" style="max-width:240px;">
+<div class="filter-bar">
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; width:100%;">
+    <div class="search-input-wrap">
+      <svg class="search-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input type="text" name="q" value="{{ search }}" placeholder="Search PO #, supplier, phone..." class="form-control">
+    </div>
     
     <div style="display:flex; align-items:center; gap:6px;">
-      <span style="font-size:13px; color:var(--text-secondary);">From:</span>
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">From:</span>
       <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="width:145px;">
     </div>
     <div style="display:flex; align-items:center; gap:6px;">
-      <span style="font-size:13px; color:var(--text-secondary);">To:</span>
+      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">To:</span>
       <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="width:145px;">
     </div>
 
@@ -117,10 +122,36 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="9" class="table-empty">No payables records found matching criteria.</td></tr>
+        <tr>
+          <td colspan="9" class="table-empty">
+            <div class="empty-state" style="padding: 36px 16px;">
+              <div class="empty-state-icon-wrap" style="width:48px; height:48px; font-size:22px; margin-bottom:12px;">🏭</div>
+              <div class="empty-state-title">No payables records found matching criteria</div>
+              <div class="empty-state-desc">Supplier purchase credit orders and outstanding vendor bills will appear here.</div>
+              <a href="{% url 'credit:create' %}?type=taken" class="btn btn-primary btn-sm">+ Record Payable</a>
+            </div>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-top:1px solid var(--border); flex-wrap:wrap; gap:12px;">
+    <span style="font-size:13px; color:var(--text-secondary);">
+      Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} total records)
+    </span>
+    <div style="display:flex; gap:8px;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ search }}&status={{ status_filter }}&supplier={{ supplier_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-secondary btn-sm">&laquo; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ search }}&status={{ status_filter }}&supplier={{ supplier_filter }}&date_from={{ date_from }}&date_to={{ date_to }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
