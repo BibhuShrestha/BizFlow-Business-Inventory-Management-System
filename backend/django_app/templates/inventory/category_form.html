@@ -1,26 +1,197 @@
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}{{ title }} - BizFlow{% endblock %}
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <h1 class="page-title">{{ title }}</h1>
-</div>
-<div class="card form-narrow-container" style="max-width: 680px; margin: 0 auto 40px;">
-  <form method="post" style="padding: 24px;">
-    {% csrf_token %}
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Category Name *</label>
-      {{ form.name }}
+<div class="form-page-container">
+  <!-- Top Navigation & Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
+        <a href="{% url 'inventory:product_list' %}" style="color:var(--text-secondary); text-decoration:none;">Inventory</a>
+        <span>/</span>
+        <a href="{% url 'inventory:category_list' %}" style="color:var(--text-secondary); text-decoration:none;">Categories</a>
+        <span>/</span>
+        <span style="color:var(--text); font-weight:600;">{{ title }}</span>
+      </div>
+      <h1 class="page-title" style="margin:0; display:flex; align-items:center; gap:10px;">
+        {{ title }}
+        <span class="stat-badge primary" style="font-size:11px; font-weight:600;">Catalog Taxon</span>
+      </h1>
+      <p class="page-subtitle">Group products into organized departments and POS catalog categories.</p>
     </div>
-    <div class="form-group" style="margin-bottom:24px;">
-      <label class="form-label">Description</label>
-      {{ form.description }}
-    </div>
-    <div style="display:flex; gap:12px;">
-      <button type="submit" class="btn btn-primary">Save Category</button>
+
+    <!-- Header Actions -->
+    <div style="display:flex; align-items:center; gap:12px;">
       <a href="{% url 'inventory:category_list' %}" class="btn btn-secondary">Cancel</a>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('categoryForm').requestSubmit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Category
+      </button>
     </div>
-  </form>
+  </div>
+
+  <!-- 2-Column Responsive Layout -->
+  <div class="form-two-col-layout">
+    <!-- Left Column: Form Fields -->
+    <div class="category-form-main">
+      <form method="post" id="categoryForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" style="margin-bottom:20px;">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <!-- Card 1: Category Details -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>🏷️</span> 1. Category Specifications
+              </h2>
+              <p class="form-section-desc">Department name, customer-facing title, and description</p>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary); background:#F1F5F9; padding:2px 8px; border-radius:4px;">Classification</span>
+          </div>
+          <div class="form-section-body">
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label" for="id_name">
+                Category Name <span class="required">*</span>
+              </label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.name.errors }}</div>{% endif %}
+              <span class="form-hint">e.g. Groceries, Electronics, Beverages, Construction Materials.</span>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label" for="id_description">Description / Notes</label>
+              {{ form.description }}
+              {% if form.description.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.description.errors }}</div>{% endif %}
+              <span class="form-hint">Optional catalog department scope or specifications.</span>
+            </div>
+
+            {% if form.is_active %}
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-check">
+                {{ form.is_active }}
+                <span style="font-size:13px; font-weight:600; color:var(--text);">Active Category</span>
+              </label>
+              <span class="form-hint" style="margin-left:24px;">Display category in filter sidebars and quick add dialogs.</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Bottom Form Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; margin-bottom:40px; border-top:1px solid var(--border);">
+          <div style="font-size:12px; color:var(--text-secondary);">
+            Fields marked with <span class="required">*</span> are mandatory.
+          </div>
+          <div style="display:flex; gap:12px;">
+            <a href="{% url 'inventory:category_list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Save Category
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: Sticky Live Category Preview Panel -->
+    <aside class="form-sticky-panel">
+      <!-- 1. Live Category Preview Card -->
+      <div class="preview-card">
+        <div class="preview-card-banner" style="background:linear-gradient(135deg, #0284C7 0%, #38BDF8 100%);">
+          <span class="preview-card-badge" id="preview-status-badge">Catalog Tag</span>
+          <div class="preview-avatar-badge" id="preview-avatar" style="color:#0284C7;">🏷️</div>
+        </div>
+        <div class="preview-card-body" style="padding-top:28px;">
+          <div style="font-size:17px; font-weight:700; color:var(--text); margin-bottom:4px;" id="preview-name">
+            New Category
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;" id="preview-desc-sub">
+            Product Line Classification
+          </div>
+
+          <!-- Quick Metadata List -->
+          <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary);">
+              <span>Badge Style:</span>
+              <span class="stat-badge info" id="preview-tag-pill" style="font-size:11px;">🏷️ New Category</span>
+            </div>
+            <div style="border-top:1px dashed var(--border); padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; font-weight:600;">Status:</span>
+              <span class="preview-tag preview-tag-stock">Active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Fast Save Actions Card -->
+      <div class="preview-actions-card">
+        <button type="button" class="btn btn-primary btn-lg" style="width:100%;" onclick="document.getElementById('categoryForm').requestSubmit()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Save Category
+        </button>
+        <span class="keyboard-shortcut-hint">
+          Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save anytime
+        </span>
+      </div>
+
+      <!-- 3. Category Structure Guidance Card -->
+      <div class="preview-tip-card">
+        <strong>💡 Catalog Organization Best Practices</strong>
+        <ul>
+          <li><strong>Inventory Reporting:</strong> Sales and stock valuation reports can be aggregated by Category.</li>
+          <li><strong>Fast POS Search:</strong> Cashiers can filter items by category on counter checkout screens.</li>
+          <li><strong>Tax Rate Inheritance:</strong> Useful for grouping items under common VAT / Tax exemption rules.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('id_name');
+    const previewName = document.getElementById('preview-name');
+    const previewTagPill = document.getElementById('preview-tag-pill');
+
+    function updateLivePreview() {
+      const nameVal = nameInput ? nameInput.value.trim() : '';
+      if (previewName) {
+        previewName.textContent = nameVal || 'New Category';
+      }
+      if (previewTagPill) {
+        previewTagPill.textContent = nameVal ? `🏷️ ${nameVal}` : '🏷️ New Category';
+      }
+    }
+
+    if (nameInput) {
+      nameInput.addEventListener('input', updateLivePreview);
+      nameInput.addEventListener('change', updateLivePreview);
+    }
+
+    updateLivePreview();
+
+    // Ctrl + Enter shortcut
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const form = document.getElementById('categoryForm');
+        if (form) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      }
+    });
+  });
+</script>
 {% endblock %}

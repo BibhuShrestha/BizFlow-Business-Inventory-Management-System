@@ -1,38 +1,341 @@
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}Stock Adjustment - BizFlow{% endblock %}
 {% block page_title %}Stock Adjustment{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1 class="page-title">Manual Stock Adjustment</h1>
-    <p class="page-subtitle">Reconcile inventory discrepancies, damages, returns, or physical count audits.</p>
+<div class="form-page-container">
+  <!-- Top Navigation & Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
+        <a href="{% url 'inventory:product_list' %}" style="color:var(--text-secondary); text-decoration:none;">Inventory</a>
+        <span>/</span>
+        <a href="{% url 'stock:movements' %}" style="color:var(--text-secondary); text-decoration:none;">Stock Movements</a>
+        <span>/</span>
+        <span style="color:var(--text); font-weight:600;">Manual Adjustment</span>
+      </div>
+      <h1 class="page-title" style="margin:0; display:flex; align-items:center; gap:10px;">
+        Manual Stock Adjustment
+        <span class="stat-badge primary" style="font-size:11px; font-weight:600;">Stock Control</span>
+      </h1>
+      <p class="page-subtitle">Reconcile inventory count audits, damages, returns, or physical count discrepancies with permanent audit logging.</p>
+    </div>
+
+    <!-- Header Actions -->
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="{% url 'stock:movements' %}" class="btn btn-secondary">Cancel</a>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('stockAdjustForm').requestSubmit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Apply Adjustment
+      </button>
+    </div>
+  </div>
+
+  <!-- 2-Column Responsive Layout -->
+  <div class="form-two-col-layout">
+    <!-- Left Column: Form Details -->
+    <div class="stock-adjust-main">
+      <form method="post" id="stockAdjustForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" style="margin-bottom:20px;">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <!-- Card 1: Product & Movement Type -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>🎯</span> 1. Product & Direction
+              </h2>
+              <p class="form-section-desc">Select the catalog item and whether stock is increasing or decreasing</p>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary); background:#F1F5F9; padding:2px 8px; border-radius:4px;">Movement</span>
+          </div>
+          <div class="form-section-body">
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label" for="id_product">
+                Select Product <span class="required">*</span>
+              </label>
+              {{ form.product }}
+              {% if form.product.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.product.errors }}</div>{% endif %}
+              <span class="form-hint">Item to adjust in warehouse inventory.</span>
+            </div>
+
+            <!-- Movement Type Styled Selector -->
+            <div class="form-group" style="margin-bottom:18px;">
+              <label class="form-label">
+                Adjustment Type <span class="required">*</span>
+              </label>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:10px;">
+                <label id="label_adj_in" style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border:2px solid #16A34A; background:#F0FDF4; border-radius:8px; cursor:pointer; transition:all 0.15s ease;">
+                  <input type="radio" name="adj_type_radio" value="IN" id="radio_adj_in" checked style="margin-top:3px;">
+                  <div>
+                    <div style="font-weight:700; color:#15803D; font-size:13.5px;">Add Stock (Increase / Inbound)</div>
+                    <div style="font-size:11.5px; color:#166534; margin-top:2px;">Audit surplus, found items, or unrecorded receipts.</div>
+                  </div>
+                </label>
+
+                <label id="label_adj_out" style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border:1px solid var(--border); background:#FFFFFF; border-radius:8px; cursor:pointer; transition:all 0.15s ease;">
+                  <input type="radio" name="adj_type_radio" value="OUT" id="radio_adj_out" style="margin-top:3px;">
+                  <div>
+                    <div style="font-weight:700; color:#DC2626; font-size:13.5px;">Deduct Stock (Decrease / Outbound)</div>
+                    <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">Damaged, expired, stolen, or count shortage.</div>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Native select hidden & synced -->
+              <div style="display:none;">
+                {{ form.adjustment_type }}
+              </div>
+            </div>
+
+            <!-- Quantity & Quick Buttons -->
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="id_quantity">
+                Adjustment Quantity <span class="required">*</span>
+              </label>
+              <div style="display:flex; gap:12px; align-items:center;">
+                <div style="flex:1;">
+                  {{ form.quantity }}
+                </div>
+                <!-- Quick Pill Adders -->
+                <div style="display:flex; gap:6px;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="setQuantity(1)">1</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="setQuantity(5)">5</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="setQuantity(10)">10</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="setQuantity(25)">25</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="setQuantity(50)">50</button>
+                </div>
+              </div>
+              {% if form.quantity.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.quantity.errors }}</div>{% endif %}
+              <span class="form-hint">Number of units to increment or decrement.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Audit Reason & Notes -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>📝</span> 2. Reason & Audit Documentation
+              </h2>
+              <p class="form-section-desc">Document the physical count verification rationale for compliance</p>
+            </div>
+            <span style="font-size:11px; color:#1E40AF; background:#EFF6FF; padding:2px 8px; border-radius:4px; font-weight:600;">Audit</span>
+          </div>
+          <div class="form-section-body">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" for="id_reason">Reason / Notes <span class="required">*</span></label>
+              {{ form.reason }}
+              {% if form.reason.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.reason.errors }}</div>{% endif %}
+              <span class="form-hint">Specify details for warehouse records.</span>
+            </div>
+
+            <!-- Quick Reason Preset Chips -->
+            <div>
+              <div style="font-size:11.5px; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">Quick Presets:</div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <button type="button" class="btn-inline-add" onclick="setReason('Periodic physical inventory count audit')">📋 Physical Inventory Audit</button>
+                <button type="button" class="btn-inline-add" onclick="setReason('Damaged or broken in storage warehouse')">💥 Damaged in Warehouse</button>
+                <button type="button" class="btn-inline-add" onclick="setReason('Expired item disposed from stock')">⏳ Expired Item Disposal</button>
+                <button type="button" class="btn-inline-add" onclick="setReason('Customer return received back into inventory')">↩️ Customer Return</button>
+                <button type="button" class="btn-inline-add" onclick="setReason('Correction of cashier count discrepancy')">🔍 Count Discrepancy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Form Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; margin-bottom:40px; border-top:1px solid var(--border);">
+          <div style="font-size:12px; color:var(--text-secondary);">
+            Fields marked with <span class="required">*</span> are mandatory.
+          </div>
+          <div style="display:flex; gap:12px;">
+            <a href="{% url 'stock:movements' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Apply Adjustment
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: Sticky Live Stock Intelligence Panel -->
+    <aside class="form-sticky-panel">
+      <!-- 1. Live Impact Preview Card -->
+      <div class="preview-card">
+        <div class="preview-card-banner" id="impact-banner" style="background:linear-gradient(135deg, #15803D 0%, #16A34A 100%);">
+          <span class="preview-card-badge" id="preview-adj-badge">STOCK INCREASE (+)</span>
+          <div class="preview-avatar-badge" id="impact-avatar">📦</div>
+        </div>
+        <div class="preview-card-body" style="padding-top:28px;">
+          <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px;" id="preview-product-name">
+            Select a Product
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;" id="preview-product-sub">
+            Target Item for Warehouse Audit
+          </div>
+
+          <!-- Impact Metrics -->
+          <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary);">
+              <span>Movement Type:</span>
+              <span id="preview-type-text" style="font-weight:700; color:#15803D;">INBOUND (+)</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary);">
+              <span>Units to Adjust:</span>
+              <span id="preview-qty-text" class="font-mono" style="font-weight:700; color:var(--text); font-size:15px;">1 unit</span>
+            </div>
+            <div style="border-top:1px dashed var(--border); padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; font-weight:600;">Status:</span>
+              <span class="preview-tag preview-tag-stock" id="preview-status-pill">Audit Ready</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Fast Save Actions Card -->
+      <div class="preview-actions-card">
+        <button type="button" class="btn btn-primary btn-lg" style="width:100%;" onclick="document.getElementById('stockAdjustForm').requestSubmit()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Apply Adjustment
+        </button>
+        <span class="keyboard-shortcut-hint">
+          Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to apply anytime
+        </span>
+      </div>
+
+      <!-- 3. Audit Compliance Box -->
+      <div class="preview-tip-card">
+        <strong>🛡️ Stock Ledger Integrity</strong>
+        <ul>
+          <li><strong>Audit Trail:</strong> Creates an immutable <code>StockMovement</code> entry with reference <code>ADJUSTMENT</code>.</li>
+          <li><strong>User Attribution:</strong> Automatically logged under your operator session for audit accountability.</li>
+          <li><strong>Financial Impact:</strong> Valuation reports and COGS reflect adjusted quantity upon confirmation.</li>
+        </ul>
+      </div>
+    </aside>
   </div>
 </div>
 
-<div class="card form-narrow-container" style="max-width: 680px; margin: 0 auto 40px;">
-  <form method="post" style="padding: 24px;">
-    {% csrf_token %}
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Select Product *</label>
-      {{ form.product }}
-    </div>
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Adjustment Type *</label>
-      {{ form.adjustment_type }}
-    </div>
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Quantity *</label>
-      {{ form.quantity }}
-    </div>
-    <div class="form-group" style="margin-bottom:24px;">
-      <label class="form-label">Reason / Notes</label>
-      {{ form.reason }}
-    </div>
-    <div style="display:flex; gap:12px;">
-      <button type="submit" class="btn btn-primary">Apply Adjustment</button>
-      <a href="{% url 'stock:movements' %}" class="btn btn-secondary">Cancel</a>
-    </div>
-  </form>
-</div>
+<script>
+  function setQuantity(val) {
+    const input = document.getElementById('id_quantity');
+    if (input) {
+      input.value = val;
+      updatePreview();
+    }
+  }
+
+  function setReason(text) {
+    const input = document.getElementById('id_reason');
+    if (input) {
+      input.value = text;
+      input.focus();
+    }
+  }
+
+  function updatePreview() {
+    const prodSelect = document.getElementById('id_product');
+    const nativeAdjSelect = document.getElementById('id_adjustment_type');
+    const radioIn = document.getElementById('radio_adj_in');
+    const qtyInput = document.getElementById('id_quantity');
+
+    const previewProd = document.getElementById('preview-product-name');
+    const previewBadge = document.getElementById('preview-adj-badge');
+    const impactBanner = document.getElementById('impact-banner');
+    const previewType = document.getElementById('preview-type-text');
+    const previewQty = document.getElementById('preview-qty-text');
+    const labelIn = document.getElementById('label_adj_in');
+    const labelOut = document.getElementById('label_adj_out');
+
+    if (prodSelect && previewProd) {
+      const selectedText = prodSelect.options[prodSelect.selectedIndex]?.text;
+      if (selectedText && !selectedText.includes('---------')) {
+        previewProd.textContent = selectedText;
+      } else {
+        previewProd.textContent = 'Select a Product';
+      }
+    }
+
+    const isIn = radioIn ? radioIn.checked : true;
+    if (nativeAdjSelect) {
+      nativeAdjSelect.value = isIn ? 'IN' : 'OUT';
+    }
+
+    if (isIn) {
+      if (previewBadge) previewBadge.textContent = 'STOCK INCREASE (+)';
+      if (impactBanner) impactBanner.style.background = 'linear-gradient(135deg, #15803D 0%, #16A34A 100%)';
+      if (previewType) {
+        previewType.textContent = 'INBOUND (+)';
+        previewType.style.color = '#15803D';
+      }
+      if (labelIn) {
+        labelIn.style.borderColor = '#16A34A';
+        labelIn.style.background = '#F0FDF4';
+      }
+      if (labelOut) {
+        labelOut.style.borderColor = 'var(--border)';
+        labelOut.style.background = '#FFFFFF';
+      }
+    } else {
+      if (previewBadge) previewBadge.textContent = 'STOCK DEDUCT (-)';
+      if (impactBanner) impactBanner.style.background = 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)';
+      if (previewType) {
+        previewType.textContent = 'OUTBOUND (-)';
+        previewType.style.color = '#DC2626';
+      }
+      if (labelOut) {
+        labelOut.style.borderColor = '#DC2626';
+        labelOut.style.background = '#FEF2F2';
+      }
+      if (labelIn) {
+        labelIn.style.borderColor = 'var(--border)';
+        labelIn.style.background = '#FFFFFF';
+      }
+    }
+
+    if (qtyInput && previewQty) {
+      const q = qtyInput.value || 1;
+      previewQty.textContent = `${q} units`;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const prodSelect = document.getElementById('id_product');
+    const radioIn = document.getElementById('radio_adj_in');
+    const radioOut = document.getElementById('radio_adj_out');
+    const qtyInput = document.getElementById('id_quantity');
+
+    if (prodSelect) prodSelect.addEventListener('change', updatePreview);
+    if (radioIn) radioIn.addEventListener('change', updatePreview);
+    if (radioOut) radioOut.addEventListener('change', updatePreview);
+    if (qtyInput) qtyInput.addEventListener('input', updatePreview);
+
+    updatePreview();
+
+    // Ctrl + Enter shortcut
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const form = document.getElementById('stockAdjustForm');
+        if (form) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      }
+    });
+  });
+</script>
 {% endblock %}

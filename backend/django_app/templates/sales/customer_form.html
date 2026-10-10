@@ -1,38 +1,317 @@
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}{{ title }} - BizFlow{% endblock %}
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="page-header"><h1 class="page-title">{{ title }}</h1></div>
-<div class="card form-narrow-container" style="max-width: 680px; margin: 0 auto 40px;">
-  <form method="post" style="padding: 24px;">
-    {% csrf_token %}
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Customer Name *</label>
-      {{ form.name }}
-    </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-      <div class="form-group">
-        <label class="form-label">Phone</label>
-        {{ form.phone }}
+<div class="form-page-container">
+  <!-- Top Navigation & Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
+        <a href="{% url 'sales:list' %}" style="color:var(--text-secondary); text-decoration:none;">Sales</a>
+        <span>/</span>
+        <a href="{% url 'customers:list' %}" style="color:var(--text-secondary); text-decoration:none;">Customers</a>
+        <span>/</span>
+        <span style="color:var(--text); font-weight:600;">{{ title }}</span>
       </div>
-      <div class="form-group">
-        <label class="form-label">PAN Number</label>
-        {{ form.pan_number }}
-      </div>
+      <h1 class="page-title" style="margin:0; display:flex; align-items:center; gap:10px;">
+        {{ title }}
+        <span class="stat-badge primary" style="font-size:11px; font-weight:600;">Customer Account</span>
+      </h1>
+      <p class="page-subtitle">Register client identity, contact channels, credit terms, and initial ledger balance.</p>
     </div>
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Email</label>
-      {{ form.email }}
-    </div>
-    <div class="form-group" style="margin-bottom:24px;">
-      <label class="form-label">Address</label>
-      {{ form.address }}
-    </div>
-    <div style="display:flex; gap:12px;">
-      <button type="submit" class="btn btn-primary">Save Customer</button>
+
+    <!-- Header Actions -->
+    <div style="display:flex; align-items:center; gap:12px;">
       <a href="{% url 'customers:list' %}" class="btn btn-secondary">Cancel</a>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('customerForm').requestSubmit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Customer
+      </button>
     </div>
-  </form>
+  </div>
+
+  <!-- 2-Column Responsive Layout -->
+  <div class="form-two-col-layout">
+    <!-- Left Column: Primary Form Fields -->
+    <div class="customer-form-main">
+      <form method="post" id="customerForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" style="margin-bottom:20px;">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <!-- Card 1: Identity & Classification -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>👤</span> 1. Customer Identity & Attribution
+              </h2>
+              <p class="form-section-desc">Client full legal name, business ownership, and account status</p>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary); background:#F1F5F9; padding:2px 8px; border-radius:4px;">Identity</span>
+          </div>
+          <div class="form-section-body">
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label" for="id_name">
+                Customer Full Name <span class="required">*</span>
+              </label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.name.errors }}</div>{% endif %}
+              <span class="form-hint">Official trade or personal name for billing and receipts.</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:16px; align-items:flex-end;">
+              {% if form.company %}
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_company">Company Ownership</label>
+                {{ form.company }}
+                <span class="form-hint">Multi-tenant business affiliation.</span>
+              </div>
+              {% endif %}
+
+              {% if form.is_active %}
+              <div class="form-group" style="margin-bottom:8px;">
+                <label class="form-check">
+                  {{ form.is_active }}
+                  <span style="font-size:13px; font-weight:600; color:var(--text);">Active Account</span>
+                </label>
+                <span class="form-hint" style="margin-left:24px;">Enable account for counter POS checkouts.</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Contact & Channels -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>📞</span> 2. Contact Information
+              </h2>
+              <p class="form-section-desc">Phone number for payment reminders and digital receipt dispatch</p>
+            </div>
+            <span style="font-size:11px; color:#1E40AF; background:#EFF6FF; padding:2px 8px; border-radius:4px; font-weight:600;">Contact</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_phone">Phone Number</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.phone.errors }}</div>{% endif %}
+                <span class="form-hint">Primary mobile / WhatsApp number (e.g. 98XXXXXXXX).</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_email">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.email.errors }}</div>{% endif %}
+                <span class="form-hint">For PDF invoice dispatch and notifications.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Financials & Credit Limits -->
+        {% if form.opening_balance or form.credit_limit %}
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>💰</span> 3. Credit Terms & Opening Ledger
+              </h2>
+              <p class="form-section-desc">Configure credit limits and migration opening balances</p>
+            </div>
+            <span style="font-size:11px; color:#15803D; background:#DCFCE7; padding:2px 8px; border-radius:4px; font-weight:600;">Ledger</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+              {% if form.opening_balance %}
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_opening_balance">Opening Balance (Rs.)</label>
+                {{ form.opening_balance }}
+                <span class="form-hint">Previous unpaid credit dues brought forward.</span>
+              </div>
+              {% endif %}
+
+              {% if form.credit_limit %}
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_credit_limit">Credit Limit (Rs.)</label>
+                {{ form.credit_limit }}
+                <span class="form-hint">Max allowed outstanding balance (0 for unlimited).</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Card 4: Location & Address -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>📍</span> 4. Billing & Delivery Address
+              </h2>
+              <p class="form-section-desc">Physical address printed on delivery challans and tax invoices</p>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary); background:#F1F5F9; padding:2px 8px; border-radius:4px;">Location</span>
+          </div>
+          <div class="form-section-body">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="id_address">Street Address / City</label>
+              {{ form.address }}
+              {% if form.address.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.address.errors }}</div>{% endif %}
+              <span class="form-hint">Municipality, Ward number, or street location.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Form Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; margin-bottom:40px; border-top:1px solid var(--border);">
+          <div style="font-size:12px; color:var(--text-secondary);">
+            Fields marked with <span class="required">*</span> are mandatory.
+          </div>
+          <div style="display:flex; gap:12px;">
+            <a href="{% url 'customers:list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Save Customer
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: Sticky Live Customer Profile Preview Panel -->
+    <aside class="form-sticky-panel">
+      <!-- 1. Live Customer Profile Preview Card -->
+      <div class="preview-card">
+        <div class="preview-card-banner" style="background:linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);">
+          <span class="preview-card-badge" id="preview-status-badge">Active Client</span>
+          <div class="preview-avatar-badge" id="preview-avatar">👤</div>
+        </div>
+        <div class="preview-card-body" style="padding-top:28px;">
+          <div style="font-size:17px; font-weight:700; color:var(--text); margin-bottom:4px;" id="preview-name">
+            New Customer Account
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;" id="preview-contact-sub">
+            Phone / Contact details
+          </div>
+
+          <!-- Quick Metadata List -->
+          <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary);">
+              <span>Phone:</span>
+              <span id="preview-phone" style="font-weight:600; color:var(--text);">Not provided</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary);">
+              <span>Email:</span>
+              <span id="preview-email" style="font-weight:600; color:var(--text); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Not provided</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary);">
+              <span>Credit Limit:</span>
+              <span id="preview-credit-limit" class="font-mono" style="font-weight:700; color:#1E40AF;">Rs. 0.00</span>
+            </div>
+            <div style="border-top:1px dashed var(--border); padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; font-weight:600;">Status:</span>
+              <span class="preview-tag preview-tag-stock" id="preview-active-pill">Active Account</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Fast Save Actions Card -->
+      <div class="preview-actions-card">
+        <button type="button" class="btn btn-primary btn-lg" style="width:100%;" onclick="document.getElementById('customerForm').requestSubmit()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Save Customer
+        </button>
+        <span class="keyboard-shortcut-hint">
+          Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save anytime
+        </span>
+      </div>
+
+      <!-- 3. CRM & Invoicing Tips -->
+      <div class="preview-tip-card">
+        <strong>💡 Customer Management Best Practices</strong>
+        <ul>
+          <li><strong>Credit Limits:</strong> Enforcing a credit limit warns cashiers automatically during counter sales if dues exceed limit.</li>
+          <li><strong>Digital Invoices:</strong> Registering an email enables automated one-click PDF invoice dispatch.</li>
+          <li><strong>Party Ledger:</strong> All future credit sales, dues, and payments automatically aggregate in this customer's ledger.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('id_name');
+    const phoneInput = document.getElementById('id_phone');
+    const emailInput = document.getElementById('id_email');
+    const creditInput = document.getElementById('id_credit_limit');
+
+    const previewName = document.getElementById('preview-name');
+    const previewAvatar = document.getElementById('preview-avatar');
+    const previewPhone = document.getElementById('preview-phone');
+    const previewEmail = document.getElementById('preview-email');
+    const previewCredit = document.getElementById('preview-credit-limit');
+
+    function updateLivePreview() {
+      const nameVal = nameInput ? nameInput.value.trim() : '';
+      if (previewName) {
+        previewName.textContent = nameVal || 'New Customer Account';
+      }
+      if (previewAvatar) {
+        if (nameVal.length > 0) {
+          previewAvatar.textContent = nameVal.substring(0, 2).toUpperCase();
+        } else {
+          previewAvatar.textContent = '👤';
+        }
+      }
+
+      if (previewPhone && phoneInput) {
+        previewPhone.textContent = phoneInput.value.trim() || 'Not provided';
+      }
+      if (previewEmail && emailInput) {
+        previewEmail.textContent = emailInput.value.trim() || 'Not provided';
+      }
+      if (previewCredit && creditInput) {
+        const val = parseFloat(creditInput.value) || 0;
+        previewCredit.textContent = 'Rs. ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+    }
+
+    [nameInput, phoneInput, emailInput, creditInput].forEach(el => {
+      if (el) {
+        el.addEventListener('input', updateLivePreview);
+        el.addEventListener('change', updateLivePreview);
+      }
+    });
+
+    updateLivePreview();
+
+    // Ctrl + Enter shortcut
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const form = document.getElementById('customerForm');
+        if (form) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      }
+    });
+  });
+</script>
 {% endblock %}

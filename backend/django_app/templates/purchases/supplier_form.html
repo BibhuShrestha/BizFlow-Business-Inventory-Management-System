@@ -1,44 +1,305 @@
 {% extends "base/base.html" %}
+{% load static %}
 {% block title %}{{ title }} - BizFlow{% endblock %}
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="page-header"><h1 class="page-title">{{ title }}</h1></div>
-<div class="card form-narrow-container" style="max-width: 680px; margin: 0 auto 40px;">
-  <form method="post" style="padding: 24px;">
-    {% csrf_token %}
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Supplier / Vendor Name *</label>
-      {{ form.name }}
-    </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-      <div class="form-group">
-        <label class="form-label">Contact Person</label>
-        {{ form.contact_person }}
+<div class="form-page-container">
+  <!-- Top Navigation & Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
+        <a href="{% url 'purchases:list' %}" style="color:var(--text-secondary); text-decoration:none;">Purchases</a>
+        <span>/</span>
+        <a href="{% url 'suppliers:list' %}" style="color:var(--text-secondary); text-decoration:none;">Vendors</a>
+        <span>/</span>
+        <span style="color:var(--text); font-weight:600;">{{ title }}</span>
       </div>
-      <div class="form-group">
-        <label class="form-label">Phone</label>
-        {{ form.phone }}
-      </div>
+      <h1 class="page-title" style="margin:0; display:flex; align-items:center; gap:10px;">
+        {{ title }}
+        <span class="stat-badge warning" style="font-size:11px; font-weight:600;">Vendor Account</span>
+      </h1>
+      <p class="page-subtitle">Register vendor trade credentials, procurement contacts, and opening payables ledger balance.</p>
     </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-      <div class="form-group">
-        <label class="form-label">PAN Number</label>
-        {{ form.pan_number }}
-      </div>
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        {{ form.email }}
-      </div>
-    </div>
-    <div class="form-group" style="margin-bottom:24px;">
-      <label class="form-label">Address</label>
-      {{ form.address }}
-    </div>
-    <div style="display:flex; gap:12px;">
-      <button type="submit" class="btn btn-primary">Save Supplier</button>
+
+    <!-- Header Actions -->
+    <div style="display:flex; align-items:center; gap:12px;">
       <a href="{% url 'suppliers:list' %}" class="btn btn-secondary">Cancel</a>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('supplierForm').requestSubmit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Supplier
+      </button>
     </div>
-  </form>
+  </div>
+
+  <!-- 2-Column Responsive Layout -->
+  <div class="form-two-col-layout">
+    <!-- Left Column: Primary Form Fields -->
+    <div class="supplier-form-main">
+      <form method="post" id="supplierForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" style="margin-bottom:20px;">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <!-- Card 1: Business Identity & Attribution -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>🏢</span> 1. Vendor Identity & Organization
+              </h2>
+              <p class="form-section-desc">Official supplier / distributor trading name and active status</p>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary); background:#F1F5F9; padding:2px 8px; border-radius:4px;">Identity</span>
+          </div>
+          <div class="form-section-body">
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label" for="id_name">
+                Supplier / Vendor Name <span class="required">*</span>
+              </label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.name.errors }}</div>{% endif %}
+              <span class="form-hint">Official trade name as shown on procurement bills and delivery slips.</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:16px; align-items:flex-end;">
+              {% if form.company %}
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_company">Company Ownership</label>
+                {{ form.company }}
+                <span class="form-hint">Multi-tenant business affiliation.</span>
+              </div>
+              {% endif %}
+
+              {% if form.is_active %}
+              <div class="form-group" style="margin-bottom:8px;">
+                <label class="form-check">
+                  {{ form.is_active }}
+                  <span style="font-size:13px; font-weight:600; color:var(--text);">Active Vendor</span>
+                </label>
+                <span class="form-hint" style="margin-left:24px;">Enable for purchase orders and PO receipt entries.</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Contact & Procurement Channels -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>📞</span> 2. Procurement Contact Channels
+              </h2>
+              <p class="form-section-desc">Vendor telephone and email for purchase order confirmation</p>
+            </div>
+            <span style="font-size:11px; color:#6D28D9; background:#F5F3FF; padding:2px 8px; border-radius:4px; font-weight:600;">Contact</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_phone">Phone Number</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.phone.errors }}</div>{% endif %}
+                <span class="form-hint">Primary telephone or WhatsApp procurement contact.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="id_email">Email Address</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.email.errors }}</div>{% endif %}
+                <span class="form-hint">For transmitting Purchase Orders (PO) and payment vouchers.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Opening Payables Ledger -->
+        {% if form.opening_balance %}
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>💰</span> 3. Opening Payables Ledger
+              </h2>
+              <p class="form-section-desc">Record initial outstanding credit dues owed to this vendor</p>
+            </div>
+            <span style="font-size:11px; color:#D97706; background:#FEF3C7; padding:2px 8px; border-radius:4px; font-weight:600;">Payables</span>
+          </div>
+          <div class="form-section-body">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="id_opening_balance">Opening Balance Owed (Rs.)</label>
+              {{ form.opening_balance }}
+              <span class="form-hint">Previous unpaid balance brought forward from legacy accounts.</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Card 4: Location & Warehouse Address -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>📍</span> 4. Vendor Warehouse & Physical Address
+              </h2>
+              <p class="form-section-desc">Dispatch depot, warehouse, or factory location</p>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary); background:#F1F5F9; padding:2px 8px; border-radius:4px;">Location</span>
+          </div>
+          <div class="form-section-body">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="id_address">Street Address / City</label>
+              {{ form.address }}
+              {% if form.address.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.address.errors }}</div>{% endif %}
+              <span class="form-hint">Industrial area, distribution warehouse, or office address.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Form Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; margin-bottom:40px; border-top:1px solid var(--border);">
+          <div style="font-size:12px; color:var(--text-secondary);">
+            Fields marked with <span class="required">*</span> are mandatory.
+          </div>
+          <div style="display:flex; gap:12px;">
+            <a href="{% url 'suppliers:list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Save Supplier
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: Sticky Live Vendor Profile Preview Panel -->
+    <aside class="form-sticky-panel">
+      <!-- 1. Live Vendor Profile Preview Card -->
+      <div class="preview-card">
+        <div class="preview-card-banner" style="background:linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%);">
+          <span class="preview-card-badge" id="preview-status-badge">Active Vendor</span>
+          <div class="preview-avatar-badge" id="preview-avatar" style="color:#6D28D9;">🏢</div>
+        </div>
+        <div class="preview-card-body" style="padding-top:28px;">
+          <div style="font-size:17px; font-weight:700; color:var(--text); margin-bottom:4px;" id="preview-name">
+            New Vendor / Supplier
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;" id="preview-contact-sub">
+            Procurement Partner
+          </div>
+
+          <!-- Quick Metadata List -->
+          <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary);">
+              <span>Phone:</span>
+              <span id="preview-phone" style="font-weight:600; color:var(--text);">Not provided</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary);">
+              <span>Email:</span>
+              <span id="preview-email" style="font-weight:600; color:var(--text); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Not provided</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary);">
+              <span>Payables Ledger:</span>
+              <span id="preview-opening-balance" class="font-mono" style="font-weight:700; color:#6D28D9;">Rs. 0.00</span>
+            </div>
+            <div style="border-top:1px dashed var(--border); padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; font-weight:600;">Status:</span>
+              <span class="preview-tag preview-tag-stock" id="preview-active-pill">Verified Vendor</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Fast Save Actions Card -->
+      <div class="preview-actions-card">
+        <button type="button" class="btn btn-primary btn-lg" style="width:100%;" onclick="document.getElementById('supplierForm').requestSubmit()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Save Supplier
+        </button>
+        <span class="keyboard-shortcut-hint">
+          Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save anytime
+        </span>
+      </div>
+
+      <!-- 3. Procurement Guidance Card -->
+      <div class="preview-tip-card">
+        <strong>💡 Procurement & Payables Best Practices</strong>
+        <ul>
+          <li><strong>Purchase Orders:</strong> Linking purchases to verified vendors automatically recalculates weighted-average unit cost.</li>
+          <li><strong>Payables Ledger:</strong> Track vendor credit aging and record cash or cheque payments against pending bills.</li>
+          <li><strong>Tax Reconciliation:</strong> Match vendor tax invoices directly with VAT return summaries.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('id_name');
+    const phoneInput = document.getElementById('id_phone');
+    const emailInput = document.getElementById('id_email');
+    const balanceInput = document.getElementById('id_opening_balance');
+
+    const previewName = document.getElementById('preview-name');
+    const previewAvatar = document.getElementById('preview-avatar');
+    const previewPhone = document.getElementById('preview-phone');
+    const previewEmail = document.getElementById('preview-email');
+    const previewBalance = document.getElementById('preview-opening-balance');
+
+    function updateLivePreview() {
+      const nameVal = nameInput ? nameInput.value.trim() : '';
+      if (previewName) {
+        previewName.textContent = nameVal || 'New Vendor / Supplier';
+      }
+      if (previewAvatar) {
+        if (nameVal.length > 0) {
+          previewAvatar.textContent = nameVal.substring(0, 2).toUpperCase();
+        } else {
+          previewAvatar.textContent = '🏢';
+        }
+      }
+
+      if (previewPhone && phoneInput) {
+        previewPhone.textContent = phoneInput.value.trim() || 'Not provided';
+      }
+      if (previewEmail && emailInput) {
+        previewEmail.textContent = emailInput.value.trim() || 'Not provided';
+      }
+      if (previewBalance && balanceInput) {
+        const val = parseFloat(balanceInput.value) || 0;
+        previewBalance.textContent = 'Rs. ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+    }
+
+    [nameInput, phoneInput, emailInput, balanceInput].forEach(el => {
+      if (el) {
+        el.addEventListener('input', updateLivePreview);
+        el.addEventListener('change', updateLivePreview);
+      }
+    });
+
+    updateLivePreview();
+
+    // Ctrl + Enter shortcut
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const form = document.getElementById('supplierForm');
+        if (form) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      }
+    });
+  });
+</script>
 {% endblock %}
