@@ -5,6 +5,26 @@ All notable changes to the **BizFlow** project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-10-10
+
+### Added
+- **Google OAuth 2.0 OpenID Connect Authentication**:
+  - Implemented `GoogleOAuthClient` in `backend/integrations/google_oauth.py` handling OpenID Connect URL generation, state validation, authorization code exchange, and profile userinfo retrieval.
+  - Added pure Python business logic `AuthService.login_or_register_via_google` in `backend/domain/services/auth_service.py` supporting auto-provisioning of new accounts and linking of existing verified email users.
+  - Implemented Django web endpoints `/auth/google/` and `/auth/google/callback/` with CSRF state token storage in user sessions and audit attempt logging.
+  - Added accessible, branded "Sign in with Google" and "Sign up with Google" action buttons with SVG icons to `login.html` and `register.html`.
+  - Added FastAPI REST API endpoints `GET /api/v1/auth/google` and `POST /api/v1/auth/google/callback` returning JWT access & refresh tokens with Pydantic schema validation.
+- **Centralized Granular RBAC Permission Engine**:
+  - Created canonical `Permission` enum in `backend/domain/permissions.py` with 25+ permissions across dashboard, users, companies, inventory, sales, purchases, expenses, credit dues, reports, and analytics.
+  - Configured `ROLE_PERMISSION_MAP` defining explicit operational permission sets for Cashier, Staff, Manager, and Customer, with unrestricted access for Admin/Owner.
+  - Implemented framework-agnostic utilities `has_permission`, `has_any_permission`, and `get_all_user_permissions`.
+  - Added Django view decorator `permission_required_custom`, `any_permission_required_custom`, and CBV mixin `PermissionRequiredMixin`.
+  - Added FastAPI dependencies `require_permission` and `require_any_permission` in `backend/api/deps.py`.
+  - Injected `user_permissions` into all templates via `active_company` Django context processor.
+- **Verification & Test Suite**:
+  - Added comprehensive test suite `tests/test_google_oauth_and_rbac.py` with 22 tests.
+  - Expanded repository test suite to **216 passing tests (100% green)**.
+
 ---
 
 ## [2.1.0] - 2026-10-09

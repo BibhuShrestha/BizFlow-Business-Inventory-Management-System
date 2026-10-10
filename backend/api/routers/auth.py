@@ -41,6 +41,8 @@ from api.schemas.auth import (
     ResetPasswordRequest,
     TokenResponse,
     UserOut,
+    GoogleAuthUrlResponse,
+    GoogleCallbackRequest,
 )
 from apps.core_app.security_utils import (
     is_rate_limited,
@@ -283,3 +285,57 @@ def change_password(req: ChangePasswordRequest, user=Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except ValidationError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
+
+@router.get("/google", response_model=GoogleAuthUrlResponse)
+def get_google_auth_url(redirect_uri: str = "http://localhost:8000/auth/google/callback"):
+    """
+    Generate Google OAuth 2.0 authorization URL and CSRF state token for API and mobile clients.
+    """
+    import secrets
+    from integrations.google_oauth import GoogleOAuthClient
+
+    state = secrets.token_urlsafe(32)
+    auth_url = GoogleOAuthClient.get_auth_url(redirect_uri=redirect_uri, state=state)
+    return GoogleAuthUrlResponse(auth_url=auth_url, state=state)
+
+
+@router.post("/google/callback", response_model=TokenResponse)
+def google_callback(req: GoogleCallbackRequest, request: Request):
+    """
+    Exchange Google authorization code for JWT access & refresh tokens.
+    Authenticates existing accounts or provisions new users.
+    """
+    from integrations.google_oauth import GoogleOAuthClient, GoogleOAuthError
+
+    redirect_uri = req.redirect_uri or "http://localhost:8000/auth/google/callback"
+    try:
+        token_data = GoogleOAuthClient.exchange_code(code=req.code, redirect_uri=redirect_uri)
+        user_info = GoogleOAuthClient.get_user_info(token_data=token_data)
+        user, _ = AuthService.login_or_register_via_google(user_info)
+        record_login_attempt(user=user, request=None, success=True, method="google_api", message="Google API login success")
+    except (GoogleOAuthError, AuthenticationError) as exc:
+        record_login_attempt(email="", request=None, success=False, method="google_api", message=str(exc))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Unexpected error during Google API callback: %s", exc)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Google authentication failed.")
+
+    token_data = {
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role_name,
+        "company_id": user.active_company_id,
+    }
+
+    access_token = create_access_token(token_data)
+    refresh_token = create_refresh_token(token_data)
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        user=_user_to_out(user),
+    )
+

@@ -5,6 +5,7 @@ This service does NOT import from Django views or FastAPI routers.
 It only uses Django models and the ORM.
 """
 import logging
+from typing import Any
 
 from django.db import transaction
 from django.contrib.auth.hashers import make_password, check_password
@@ -240,3 +241,83 @@ class AuthService:
         user.save(update_fields=["password"])
         logger.info("Password changed for user %s (id=%s)", user.email, user.id)
         return user
+
+    @staticmethod
+    @transaction.atomic
+    def login_or_register_via_google(user_info: dict[str, Any]):
+        """
+        Authenticate or provision a user from verified Google OAuth2 userinfo.
+
+        Args:
+            user_info: Dictionary containing 'sub', 'email', 'email_verified', 'name', 'picture'.
+
+        Returns:
+            Tuple of (User, created: bool)
+
+        Raises:
+            AuthenticationError: If email is missing, unverified by Google, or account is disabled.
+        """
+        from apps.accounts.models import User, Role
+        from apps.companies.models import Company
+
+        email = str(user_info.get("email", "")).lower().strip()
+        if not email:
+            raise AuthenticationError("Google profile did not provide a valid email address.")
+
+        email_verified = bool(user_info.get("email_verified", False))
+        if not email_verified:
+            raise AuthenticationError("Google account email is not verified.")
+
+        sub = str(user_info.get("sub", "")).strip() or None
+        name = str(user_info.get("name", "")).strip() or email.split("@")[0].title()
+
+        user = None
+        if sub:
+            user = User.objects.select_related("role", "active_company").filter(google_id=sub).first()
+
+        if user is None:
+            user = User.objects.select_related("role", "active_company").filter(email=email).first()
+
+        created = False
+        if user is None:
+            staff_role, _ = Role.objects.get_or_create(
+                name="staff", defaults={"description": "Default staff role"}
+            )
+            user = User(
+                name=name,
+                email=email,
+                role=staff_role,
+                is_active=True,
+                email_verified=True,
+                google_id=sub,
+            )
+            user.set_unusable_password()
+            default_company = Company.objects.first()
+            if default_company:
+                user.active_company = default_company
+            user.save()
+            created = True
+            logger.info("New user provisioned via Google OAuth: %s (id=%s)", email, user.id)
+        else:
+            if not user.is_active:
+                logger.info("Google OAuth login rejected for inactive account: %s", email)
+                raise AuthenticationError("Your account is inactive. Please contact an administrator.")
+
+            dirty_fields = []
+            if sub and not user.google_id:
+                user.google_id = sub
+                dirty_fields.append("google_id")
+            if not user.email_verified:
+                user.email_verified = True
+                dirty_fields.append("email_verified")
+            if not user.name and name:
+                user.name = name
+                dirty_fields.append("name")
+
+            if dirty_fields:
+                user.save(update_fields=dirty_fields)
+
+            logger.info("User authenticated via Google OAuth: %s (id=%s)", email, user.id)
+
+        return user, created
+

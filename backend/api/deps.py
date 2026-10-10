@@ -118,4 +118,33 @@ def require_role(*allowed_roles: str) -> Callable:
 # Convenient role dependencies
 require_admin = require_role("admin", "owner")
 require_manager = require_role("admin", "owner", "manager")
-require_staff = require_role("admin", "owner", "manager", "staff")
+require_staff = require_role("admin", "owner", "manager", "staff", "cashier")
+
+
+def require_permission(permission: str) -> Callable:
+    """Dependency factory verifying user possesses a specific granular permission."""
+    def permission_checker(user=Depends(get_current_user)):
+        from domain.permissions import has_permission
+        if not has_permission(user, permission):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access restricted: missing '{permission}' permission.",
+            )
+        return user
+
+    return permission_checker
+
+
+def require_any_permission(*permissions: str) -> Callable:
+    """Dependency factory verifying user possesses at least one of the specified permissions."""
+    def permission_checker(user=Depends(get_current_user)):
+        from domain.permissions import has_any_permission
+        if not has_any_permission(user, *permissions):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access restricted: insufficient permissions.",
+            )
+        return user
+
+    return permission_checker
+

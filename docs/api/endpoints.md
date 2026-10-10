@@ -58,7 +58,18 @@ Revoke active token and add to `accounts.RevokedToken`.
 - **Headers**: `Authorization: Bearer <access_token>`
 - **Response `200 OK`**: `{"message": "Logged out successfully"}`
 
+### `GET /api/v1/auth/google`
+Generate Google OAuth 2.0 OpenID Connect authorization URL and CSRF state token.
+- **Query Params**: `redirect_uri` (optional)
+- **Response `200 OK`**: `{"auth_url": "https://accounts.google.com/...", "state": "..."}`
+
+### `POST /api/v1/auth/google/callback`
+Exchange Google authorization code for JWT access & refresh tokens. Auto-provisions or links verified user account.
+- **Request Body**: `{"code": "4/0A...", "redirect_uri": "http://..."}`
+- **Response `200 OK`**: `TokenResponse` (access_token, refresh_token, token_type, expires_in, user)
+
 ---
+
 
 ## 3. Receivables & Payables (Credit) (`/api/v1/credit/`)
 

@@ -57,3 +57,13 @@ class ChangePasswordRequest(BaseModel):
 
 class MessageResponse(BaseModel):
     detail: str
+
+
+class GoogleAuthUrlResponse(BaseModel):
+    auth_url: str
+    state: str
+
+
+class GoogleCallbackRequest(BaseModel):
+    code: str
+    redirect_uri: Optional[str] = None

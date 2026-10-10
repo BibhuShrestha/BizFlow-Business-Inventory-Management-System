@@ -12,4 +12,6 @@ urlpatterns = [
     path("forgot-password/", views.forgot_password_view, name="forgot_password"),
     path("reset-password/<str:token>/", views.reset_password_view, name="reset_password"),
     path("change-password/", views.change_password_view, name="change_password"),
+    path("google/", views.google_login_view, name="google_login"),
+    path("google/callback/", views.google_callback_view, name="google_callback"),
 ]

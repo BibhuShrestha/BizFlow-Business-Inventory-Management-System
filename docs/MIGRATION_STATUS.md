@@ -51,6 +51,7 @@
 | Part 21 | Transaction Date Controls, Universal Date Filtering & Hardening | `[x]` Complete (170 passing tests) |
 | Part 22 | AI Business Analytics & Decision Support Suite | `[x]` Complete (182 passing tests) |
 | Part 23 | Admin User Visibility, Activity Tracking & Advanced Analytics Suite | `[x]` Complete (194 passing tests) |
+| Part 24 | Google OAuth2 Social Authentication & Granular RBAC Permissions | `[x]` Complete (216 passing tests) |
 
 ---
 
@@ -312,3 +313,43 @@
 ### 4. Test Suite Verification
 - Added comprehensive test suite `tests/test_user_management_and_analytics.py` with 12 tests.
 - Entire repository test suite passes with **194 tests green (100% pass rate)**.
+
+---
+
+## Part 24 — Google OAuth2 Social Authentication & Granular RBAC Permissions Summary
+
+### 1. Google OAuth 2.0 OpenID Connect Integration
+- **Framework-Agnostic OAuth Client (`integrations/google_oauth.py`)**:
+  - Implemented `GoogleOAuthClient` with PKCE authorization URL generation, state token CSRF validation, authorization code token exchange, and UserInfo profile retrieval.
+  - Built-in graceful development & testing mock mode with explicit credentials guard.
+- **Shared Business Logic (`AuthService.login_or_register_via_google`)**:
+  - Automatically reconciles Google accounts by `google_id` or verified email address.
+  - Provisions new user accounts with default `staff` role, active company assignment, `is_active=True`, `email_verified=True`, and unusable password hashing.
+  - Strictly rejects unverified Google email addresses and inactive accounts with clear `AuthenticationError` exceptions.
+- **Django Web UI Views & Templates**:
+  - Added `/auth/google/` (`google_login_view`) generating cryptographically secure random `state` tokens stored in user session.
+  - Added `/auth/google/callback/` (`google_callback_view`) with strict CSRF state validation, audit attempt logging, user session login, and flash notifications.
+  - Integrated branded "Sign in with Google" and "Sign up with Google" action buttons with SVG icons in `login.html` and `register.html`.
+- **FastAPI REST API Layer**:
+  - Added `GET /api/v1/auth/google` generating OpenID Connect authorization URLs and state tokens.
+  - Added `POST /api/v1/auth/google/callback` exchanging code for JWT access & refresh tokens with Pydantic request/response validation.
+
+### 2. Centralized Granular RBAC Permission Engine (`domain/permissions.py`)
+- **Canonical Permission Identifiers (`Permission` Enum)**:
+  - Defined 25+ granular permissions spanning Dashboard, User Management, Companies, Sellers, Inventory Master, Sales POS, Procurement Purchases, Expenses, Receivables & Payables (Credit Dues, Cheques, Payments), Reports, Analytics, and Import/Export.
+- **Role Permission Mapping (`ROLE_PERMISSION_MAP`)**:
+  - Mapped specific permission boundaries for `cashier`, `staff`, `manager`, and `customer`.
+  - Admin/Owner possesses unrestricted permissions across all system domains.
+- **Framework-Agnostic Utilities**:
+  - `has_permission(user, permission)`: Validates individual permission for user.
+  - `has_any_permission(user, *permissions)`: Validates possession of at least one permission.
+  - `get_all_user_permissions(user)`: Retrieves complete set of permission keys.
+- **Integration with Django & FastAPI**:
+  - `permission_required_custom` decorator and `PermissionRequiredMixin` CBV mixin in `apps.accounts.permissions`.
+  - `require_permission` and `require_any_permission` FastAPI dependencies in `backend/api/deps.py`.
+  - `active_company` Django context processor injecting `user_permissions` into all templates.
+
+### 3. Test Suite Verification
+- Added comprehensive test suite `tests/test_google_oauth_and_rbac.py` with 22 tests.
+- Entire repository test suite passes with **216 tests green (100% pass rate)**.
+

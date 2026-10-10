@@ -257,3 +257,77 @@ def change_password_view(request: HttpRequest) -> HttpResponse:
             messages.error(request, str(exc))
 
     return render(request, "accounts/change_password.html", {"form": form})
+
+
+def google_login_view(request: HttpRequest) -> HttpResponse:
+    """Initiate Google OAuth 2.0 OpenID Connect authorization flow."""
+    if request.user.is_authenticated:
+        return redirect(_get_dashboard_url())
+
+    from integrations.google_oauth import GoogleOAuthClient
+    from django.urls import reverse
+    import secrets
+
+    state = secrets.token_urlsafe(32)
+    request.session["google_oauth_state"] = state
+
+    raw_next = request.GET.get("next") or _get_dashboard_url()
+    safe_next = get_safe_redirect_url(raw_next, request, default=_get_dashboard_url())
+    request.session["google_oauth_next"] = safe_next
+
+    redirect_uri = request.build_absolute_uri(reverse("accounts:google_callback"))
+    auth_url = GoogleOAuthClient.get_auth_url(redirect_uri=redirect_uri, state=state)
+    return redirect(auth_url)
+
+
+def google_callback_view(request: HttpRequest) -> HttpResponse:
+    """Handle Google OAuth 2.0 authorization callback and sign in user."""
+    from integrations.google_oauth import GoogleOAuthClient, GoogleOAuthError
+    from django.urls import reverse
+
+    if request.user.is_authenticated:
+        return redirect(_get_dashboard_url())
+
+    error_param = request.GET.get("error")
+    if error_param:
+        logger.warning("Google OAuth error response: %s", error_param)
+        messages.error(request, f"Google login was cancelled or denied: {error_param}")
+        return redirect("accounts:login")
+
+    expected_state = request.session.pop("google_oauth_state", None)
+    received_state = request.GET.get("state")
+
+    if not expected_state or not received_state or expected_state != received_state:
+        logger.warning("Google OAuth state validation mismatch.")
+        messages.error(request, "Google sign-in session expired or invalid. Please try again.")
+        return redirect("accounts:login")
+
+    code = request.GET.get("code")
+    if not code:
+        messages.error(request, "Authorization code not provided by Google.")
+        return redirect("accounts:login")
+
+    redirect_uri = request.build_absolute_uri(reverse("accounts:google_callback"))
+
+    try:
+        token_data = GoogleOAuthClient.exchange_code(code=code, redirect_uri=redirect_uri)
+        user_info = GoogleOAuthClient.get_user_info(token_data=token_data)
+        user, created = AuthService.login_or_register_via_google(user_info)
+        login(request, user)
+        record_login_attempt(user=user, request=request, success=True, method="google_oauth", message="Google login success")
+
+        safe_next = request.session.pop("google_oauth_next", _get_dashboard_url())
+        if created:
+            messages.success(request, f"Welcome to BizFlow, {user.name}! Your account has been created via Google.")
+        else:
+            messages.success(request, f"Welcome back, {user.name}!")
+        return redirect(safe_next)
+    except (GoogleOAuthError, AuthenticationError) as exc:
+        record_login_attempt(email=request.GET.get("email", ""), request=request, success=False, method="google_oauth", message=str(exc))
+        messages.error(request, str(exc))
+        return redirect("accounts:login")
+    except Exception as exc:
+        logger.exception("Unexpected error during Google OAuth callback: %s", exc)
+        messages.error(request, "An unexpected error occurred during Google sign-in. Please try again.")
+        return redirect("accounts:login")
+
