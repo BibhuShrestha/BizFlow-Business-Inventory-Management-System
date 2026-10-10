@@ -4,171 +4,309 @@
 {% block page_title %}New Receivables & Payables Entry{% endblock %}
 
 {% block content %}
-<div class="page-header">
-  <div>
-    <h1 class="page-title">Record Receivable / Payable Transaction</h1>
-    <p class="page-subtitle">Record customer receivables (credit sales) or vendor payables (credit purchases) with automatic stock and ledger adjustments.</p>
+<div class="form-page-container">
+  <!-- Top Navigation & Header -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">
+        <a href="{% url 'credit:dashboard' %}" style="color:var(--text-secondary); text-decoration:none;">Credit & Ledger</a>
+        <span>/</span>
+        <a href="{% url 'credit:given_list' %}" style="color:var(--text-secondary); text-decoration:none;">Receivables & Payables</a>
+        <span>/</span>
+        <span style="color:var(--text); font-weight:600;">Record Transaction</span>
+      </div>
+      <h1 class="page-title" style="margin:0; display:flex; align-items:center; gap:10px;">
+        Record Receivable / Payable Transaction
+        <span class="stat-badge primary" id="header-type-pill" style="font-size:11px; font-weight:600;">Customer Credit (Dr)</span>
+      </h1>
+      <p class="page-subtitle">Record customer credit sales or vendor credit purchases with automatic stock and double-entry ledger adjustments.</p>
+    </div>
+
+    <!-- Header Action Buttons -->
+    <div style="display:flex; align-items:center; gap:12px;">
+      <a href="{% url 'credit:dashboard' %}" class="btn btn-secondary">
+        Cancel
+      </a>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('creditForm').requestSubmit()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Transaction Voucher
+      </button>
+    </div>
   </div>
-</div>
 
-<div class="card" style="max-width: 1050px; margin-bottom:40px;">
-  <form method="post" id="creditForm" style="padding: 24px;">
-    {% csrf_token %}
+  <!-- 2-Column Responsive Layout -->
+  <div class="form-two-col-layout">
+    <!-- Left Column: Primary Transaction Workspace -->
+    <div class="credit-form-main">
+      <form method="post" id="creditForm">
+        {% csrf_token %}
 
-    {% if form.non_field_errors %}
-      <div class="alert alert-danger" style="margin-bottom:16px;">{{ form.non_field_errors }}</div>
-    {% endif %}
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" style="margin-bottom:20px;">{{ form.non_field_errors }}</div>
+        {% endif %}
 
-    <!-- Credit Type Switcher -->
-    <div style="background-color: var(--bg-primary, #F8FAFC); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 24px;">
-      <label class="form-label" style="font-weight:700; font-size:15px; margin-bottom:8px;">1. Select Transaction Direction (Receivable / Payable) *</label>
-      <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; color:#2563EB;">
-          <input type="radio" name="credit_type_radio" value="given" id="type_given" {% if form.credit_type.value != 'taken' %}checked{% endif %}>
-          Debit (Dr) &mdash; Receivable (Customer Credit Given / Customer Owes)
-        </label>
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; color:#7C3AED;">
-          <input type="radio" name="credit_type_radio" value="taken" id="type_taken" {% if form.credit_type.value == 'taken' %}checked{% endif %}>
-          Credit (Cr) &mdash; Payable (Supplier Credit Taken / You Owe Supplier)
-        </label>
-      </div>
-      <!-- Hidden actual form field synced by JS -->
-      <input type="hidden" name="credit_type" id="credit_type_hidden" value="{{ form.credit_type.value|default:'given' }}">
-    </div>
-
-    <!-- General Info Row -->
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:20px;">
-      <!-- Customer Box (visible when Given) -->
-      <div class="form-group" id="customer_group">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label class="form-label" style="margin-bottom:0;" for="customer_select">Customer *</label>
-          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-customer')">+ New Customer</button>
-        </div>
-        {{ form.customer }}
-        {% if form.customer.errors %}<div class="text-danger" style="font-size:12px;">{{ form.customer.errors }}</div>{% endif %}
-      </div>
-
-      <!-- Supplier Box (visible when Taken) -->
-      <div class="form-group" id="supplier_group" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label class="form-label" style="margin-bottom:0;" for="supplier_select">Supplier *</label>
-          <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-supplier')">+ New Supplier</button>
-        </div>
-        {{ form.supplier }}
-        {% if form.supplier.errors %}<div class="text-danger" style="font-size:12px;">{{ form.supplier.errors }}</div>{% endif %}
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Transaction Date *</label>
-        {{ form.transaction_date }}
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Credit Due Date (Due By)</label>
-        {{ form.due_date }}
-        <small style="color:var(--text-secondary); font-size:11px;">Track overdue if unpaid after this date</small>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Invoice / Bill Reference</label>
-        {{ form.bill_number }}
-      </div>
-    </div>
-
-    <!-- Products Section -->
-    <div style="margin-top:24px; margin-bottom:20px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0; font-size:16px; font-weight:700;">2. Products / Items *</h3>
-        <button type="button" class="btn btn-secondary btn-sm" id="addRowBtn">+ Add Product Row</button>
-      </div>
-
-      <div class="table-container" style="border: 1px solid var(--border-color); border-radius: 6px; overflow-x:auto;">
-        <table id="itemsTable">
-          <thead>
-            <tr style="background-color: var(--bg-primary, #F8FAFC);">
-              <th style="min-width:240px;">Product</th>
-              <th style="width:110px;">Quantity</th>
-              <th style="width:130px;">Unit Price (Rs.)</th>
-              <th style="width:100px;">Tax (%)</th>
-              <th style="width:110px;">Discount (Rs.)</th>
-              <th style="width:130px; text-align:right;">Line Total</th>
-              <th style="width:60px; text-align:center;">Action</th>
-            </tr>
-          </thead>
-          <tbody id="itemsBody">
-            <!-- Row template inserted dynamically -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Financial Calculation & Payments -->
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-top:24px; padding-top:20px; border-top:1px solid var(--border-color);">
-      <!-- Left: Settlement & Notes -->
-      <div>
-        <h4 style="font-size:14px; font-weight:600; margin-bottom:12px; color:var(--text-secondary);">Down Payment / Notes</h4>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
-          <div class="form-group">
-            <label class="form-label">Initial Paid Amount (Rs.)</label>
-            {{ form.initial_paid_amount }}
-            <small style="color:var(--text-secondary); font-size:11px;">Leave 0 for full credit</small>
+        <!-- Card 1: Transaction Direction & Parties -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>⚖️</span> 1. Transaction Direction & Attribution
+              </h2>
+              <p class="form-section-desc">Choose between customer receivable (sale) or supplier payable (purchase)</p>
+            </div>
+            <span style="font-size:11px; color:var(--text-secondary); background:#F1F5F9; padding:2px 8px; border-radius:4px;">Direction</span>
           </div>
-          <div class="form-group">
-            <label class="form-label">Payment Method</label>
-            {{ form.payment_method }}
+          <div class="form-section-body">
+            <!-- Direction Toggle Cards -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:20px;">
+              <label id="label_type_given" style="display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border:2px solid #2563EB; background:#EFF6FF; border-radius:8px; cursor:pointer; transition:all 0.15s ease;">
+                <input type="radio" name="credit_type_radio" value="given" id="type_given" {% if form.credit_type.value != 'taken' %}checked{% endif %} style="margin-top:3px;">
+                <div>
+                  <div style="font-weight:700; color:#1E40AF; font-size:14px;">Debit (Dr) &mdash; Customer Receivable</div>
+                  <div style="font-size:12px; color:#3B82F6; margin-top:2px;">Credit given to customer (Customer owes you). Stock decrements automatically.</div>
+                </div>
+              </label>
+
+              <label id="label_type_taken" style="display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border:1px solid var(--border); background:#FFFFFF; border-radius:8px; cursor:pointer; transition:all 0.15s ease;">
+                <input type="radio" name="credit_type_radio" value="taken" id="type_taken" {% if form.credit_type.value == 'taken' %}checked{% endif %} style="margin-top:3px;">
+                <div>
+                  <div style="font-weight:700; color:#6D28D9; font-size:14px;">Credit (Cr) &mdash; Supplier Payable</div>
+                  <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Credit taken from vendor (You owe supplier). Stock increments automatically.</div>
+                </div>
+              </label>
+            </div>
+            <!-- Hidden synced field -->
+            <input type="hidden" name="credit_type" id="credit_type_hidden" value="{{ form.credit_type.value|default:'given' }}">
+
+            <!-- General Info Grid -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:16px;">
+              <!-- Customer Group -->
+              <div class="form-group" id="customer_group" style="margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label class="form-label" style="margin-bottom:0;" for="customer_select">Customer <span class="required">*</span></label>
+                  <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-customer')">+ New Customer</button>
+                </div>
+                {{ form.customer }}
+                {% if form.customer.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.customer.errors }}</div>{% endif %}
+                <span class="form-hint">Client owing receivable balance.</span>
+              </div>
+
+              <!-- Supplier Group -->
+              <div class="form-group" id="supplier_group" style="display:none; margin-bottom:0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <label class="form-label" style="margin-bottom:0;" for="supplier_select">Supplier <span class="required">*</span></label>
+                  <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-supplier')">+ New Supplier</button>
+                </div>
+                {{ form.supplier }}
+                {% if form.supplier.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.supplier.errors }}</div>{% endif %}
+                <span class="form-hint">Vendor to whom payable balance is owed.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Transaction Date <span class="required">*</span></label>
+                {{ form.transaction_date }}
+                <span class="form-hint">Recording date (English / Nepali).</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Credit Due Date (Due By)</label>
+                {{ form.due_date }}
+                <span class="form-hint">Track overdue if unpaid after this date.</span>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Invoice / Bill Reference</label>
+                {{ form.bill_number }}
+                <span class="form-hint">Optional vendor bill or slip #.</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Overall Discount (Rs.)</label>
-          {{ form.discount }}
+
+        <!-- Card 2: Products & Line Items -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>📦</span> 2. Itemized Products & Goods <span class="required">*</span>
+              </h2>
+              <p class="form-section-desc">Select inventory items to adjust quantity and calculate line totals</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="addRowBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Product Row
+            </button>
+          </div>
+          <div class="form-section-body" style="padding:0;">
+            <div class="table-container" style="border:none; margin:0; border-radius:0; overflow-x:auto;">
+              <table id="itemsTable" style="margin:0;">
+                <thead>
+                  <tr style="background:#F8FAFC;">
+                    <th style="min-width:240px; padding:12px 16px;">Product / Item</th>
+                    <th style="width:110px;">Quantity</th>
+                    <th style="width:130px;">Unit Price (Rs.)</th>
+                    <th style="width:100px;">Tax (%)</th>
+                    <th style="width:110px;">Discount (Rs.)</th>
+                    <th style="width:130px; text-align:right;">Line Total</th>
+                    <th style="width:50px; text-align:center;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="itemsBody">
+                  <!-- Row template inserted dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Notes & Remarks</label>
-          {{ form.notes }}
+
+        <!-- Card 3: Down Payment & Settlement -->
+        <div class="form-section-card">
+          <div class="form-section-header">
+            <div>
+              <h2 class="form-section-title">
+                <span>💳</span> 3. Down Payment & Settlement Details
+              </h2>
+              <p class="form-section-desc">Record immediate cash advance / down payments and voucher remarks</p>
+            </div>
+            <span style="font-size:11px; color:#15803D; background:#DCFCE7; padding:2px 8px; border-radius:4px; font-weight:600;">Settlement</span>
+          </div>
+          <div class="form-section-body">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Initial Paid Amount (Rs.)</label>
+                {{ form.initial_paid_amount }}
+                <span class="form-hint">Enter 0 if this transaction is 100% on credit.</span>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Payment Method</label>
+                {{ form.payment_method }}
+                <span class="form-hint">Instrument for initial advance payment.</span>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label">Overall Voucher Discount (Rs.)</label>
+              {{ form.discount }}
+              <span class="form-hint">Lump-sum discount subtracted from the final bill.</span>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Notes & Remarks</label>
+              {{ form.notes }}
+              <span class="form-hint">Internal ledger remarks, terms of agreement, or warranty notes.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Form Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; margin-bottom:40px; border-top:1px solid var(--border);">
+          <div style="font-size:12px; color:var(--text-secondary);">
+            Fields marked with <span class="required">*</span> are mandatory.
+          </div>
+          <div style="display:flex; gap:12px;">
+            <a href="{% url 'credit:dashboard' %}" class="btn btn-secondary">
+              Cancel
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Save Transaction Voucher
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: Sticky Voucher Summary & Intelligence Panel -->
+    <aside class="form-sticky-panel">
+      <!-- 1. Real-Time Financial Voucher Summary Card -->
+      <div class="preview-card">
+        <div class="preview-card-banner" id="voucher-banner" style="background:linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);">
+          <span class="preview-card-badge" id="preview-voucher-badge">RECEIVABLE (Dr)</span>
+          <div class="preview-avatar-badge" id="voucher-avatar">📋</div>
+        </div>
+        <div class="preview-card-body" style="padding-top:28px;">
+          <div style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:4px;">
+            Financial Summary
+          </div>
+          <div style="font-size:12px; color:var(--text-secondary); margin-bottom:16px;" id="summary-party-name">
+            Party: Not Selected
+          </div>
+
+          <!-- Breakdown list -->
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+            <div style="display:flex; justify-content:space-between; color:var(--text-secondary);">
+              <span>Subtotal:</span>
+              <span class="font-mono" id="sumSubtotal" style="font-weight:600; color:var(--text);">Rs. 0.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:var(--text-secondary);">
+              <span>Tax Amount:</span>
+              <span class="font-mono" id="sumTax" style="font-weight:600; color:var(--text);">Rs. 0.00</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; color:var(--text-secondary);">
+              <span>Overall Discount:</span>
+              <span class="font-mono" id="sumDiscount" style="font-weight:600; color:#DC2626;">- Rs. 0.00</span>
+            </div>
+
+            <!-- Grand Total -->
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border); padding-top:10px; margin-top:4px;">
+              <span style="font-weight:700; font-size:14px;">Grand Total:</span>
+              <span class="font-mono" id="sumTotal" style="font-size:20px; font-weight:800; color:#1E40AF;">Rs. 0.00</span>
+            </div>
+
+            <!-- Initial Paid -->
+            <div style="display:flex; justify-content:space-between; color:#16A34A; font-weight:600;">
+              <span>Initial Advance Paid:</span>
+              <span class="font-mono" id="sumPaid">Rs. 0.00</span>
+            </div>
+
+            <!-- Net Due Highlight -->
+            <div style="background:#FFF7ED; border:1px solid #FFEDD5; border-radius:6px; padding:12px; margin-top:8px;">
+              <div style="font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:#C2410C;" id="dueLabel">
+                Customer Owes Me:
+              </div>
+              <div class="font-mono" id="sumRemaining" style="font-size:24px; font-weight:800; color:#EA580C; margin-top:2px;">
+                Rs. 0.00
+              </div>
+            </div>
+          </div>
+
+          <!-- Stock Impact Box -->
+          <div style="margin-top:14px; padding:10px 12px; background:#F8FAFC; border-radius:6px; border:1px solid var(--border); font-size:12px; color:var(--text-secondary);" id="stockImpactNote">
+            &bull; <strong>Inventory Impact:</strong> Stock will decrease automatically upon saving Receivable voucher.
+          </div>
         </div>
       </div>
 
-      <!-- Right: Summary Card -->
-      <div style="background-color: var(--bg-primary, #F8FAFC); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display:flex; flex-direction:column; justify-content:space-between;">
-        <h4 style="font-size:15px; font-weight:700; margin-bottom:14px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">Financial Summary</h4>
-        
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-          <span style="color:var(--text-secondary);">Subtotal:</span>
-          <span class="font-mono" id="sumSubtotal">Rs. 0.00</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-          <span style="color:var(--text-secondary);">Tax Amount:</span>
-          <span class="font-mono" id="sumTax">Rs. 0.00</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-          <span style="color:var(--text-secondary);">Overall Discount:</span>
-          <span class="font-mono" id="sumDiscount" style="color:#DC2626;">- Rs. 0.00</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:14px; font-size:17px; font-weight:700; border-top:1px dashed var(--border-color); padding-top:10px;">
-          <span>Grand Total:</span>
-          <span class="font-mono" id="sumTotal" style="color:var(--primary);">Rs. 0.00</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:#16A34A;">
-          <span>Initial Paid:</span>
-          <span class="font-mono" id="sumPaid">Rs. 0.00</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:16px; font-weight:700; border-top:2px solid var(--border-color); padding-top:10px;">
-          <span id="dueLabel">Net Remaining Due:</span>
-          <span class="font-mono" id="sumRemaining" style="color:#EA580C;">Rs. 0.00</span>
-        </div>
-
-        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;" id="stockImpactNote">
-          &bull; <strong>Inventory Impact:</strong> Stock will be automatically deducted upon submitting Receivable transaction.
-        </div>
+      <!-- 2. Fast Save Action Card -->
+      <div class="preview-actions-card">
+        <button type="button" class="btn btn-primary btn-lg" style="width:100%;" onclick="document.getElementById('creditForm').requestSubmit()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Save Transaction Voucher
+        </button>
+        <span class="keyboard-shortcut-hint">
+          Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save anytime
+        </span>
       </div>
-    </div>
 
-    <!-- Actions -->
-    <div style="display:flex; gap:12px; margin-top:24px;">
-      <button type="submit" class="btn btn-primary" id="submitBtn">Save Transaction Voucher</button>
-      <a href="{% url 'credit:dashboard' %}" class="btn btn-secondary">Cancel</a>
-    </div>
-  </form>
+      <!-- 3. Smart Accounting Tips -->
+      <div class="preview-tip-card">
+        <strong>💡 Ledger & Audit Best Practices</strong>
+        <ul>
+          <li><strong>Double-Entry Ledger:</strong> Saving this voucher immediately records debits and credits in the party account book.</li>
+          <li><strong>Inventory Synchronization:</strong> Line item stock moves without requiring separate warehouse adjustments.</li>
+          <li><strong>Bikram Sambat (BS):</strong> Due dates automatically compute interest and overdue thresholds according to Nepal calendar standards.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <!-- Raw Product Data for dynamic row population -->
@@ -195,11 +333,19 @@ document.addEventListener("DOMContentLoaded", function () {
   const addRowBtn = document.getElementById("addRowBtn");
   const radioGiven = document.getElementById("type_given");
   const radioTaken = document.getElementById("type_taken");
+  const labelGiven = document.getElementById("label_type_given");
+  const labelTaken = document.getElementById("label_type_taken");
   const hiddenType = document.getElementById("credit_type_hidden");
   const customerGroup = document.getElementById("customer_group");
   const supplierGroup = document.getElementById("supplier_group");
+  const customerSelect = document.getElementById("customer_select");
+  const supplierSelect = document.getElementById("supplier_select");
   const dueLabel = document.getElementById("dueLabel");
   const stockImpactNote = document.getElementById("stockImpactNote");
+  const voucherBanner = document.getElementById("voucher-banner");
+  const previewVoucherBadge = document.getElementById("preview-voucher-badge");
+  const headerTypePill = document.getElementById("header-type-pill");
+  const summaryPartyName = document.getElementById("summary-party-name");
   const overallDiscountInput = document.querySelector('[name="discount"]');
   const initialPaidInput = document.querySelector('[name="initial_paid_amount"]');
 
@@ -216,12 +362,38 @@ document.addEventListener("DOMContentLoaded", function () {
       supplierGroup.style.display = "none";
       dueLabel.textContent = "Customer Owes Me:";
       stockImpactNote.innerHTML = "&bull; <strong>Inventory Impact:</strong> Stock will decrease automatically upon saving Receivable voucher.";
+      headerTypePill.textContent = "Customer Credit (Dr)";
+      headerTypePill.className = "stat-badge primary";
+      previewVoucherBadge.textContent = "RECEIVABLE (Dr)";
+      if (voucherBanner) voucherBanner.style.background = "linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)";
+      if (labelGiven) {
+        labelGiven.style.borderColor = "#2563EB";
+        labelGiven.style.background = "#EFF6FF";
+      }
+      if (labelTaken) {
+        labelTaken.style.borderColor = "var(--border)";
+        labelTaken.style.background = "#FFFFFF";
+      }
     } else {
       customerGroup.style.display = "none";
       supplierGroup.style.display = "block";
       dueLabel.textContent = "I Owe Supplier:";
       stockImpactNote.innerHTML = "&bull; <strong>Inventory Impact:</strong> Stock will increase automatically upon saving Payable voucher.";
+      headerTypePill.textContent = "Supplier Credit (Cr)";
+      headerTypePill.className = "stat-badge warning";
+      previewVoucherBadge.textContent = "PAYABLE (Cr)";
+      if (voucherBanner) voucherBanner.style.background = "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 100%)";
+      if (labelTaken) {
+        labelTaken.style.borderColor = "#7C3AED";
+        labelTaken.style.background = "#F5F3FF";
+      }
+      if (labelGiven) {
+        labelGiven.style.borderColor = "var(--border)";
+        labelGiven.style.background = "#FFFFFF";
+      }
     }
+
+    updatePartyLabel();
 
     // Refresh row price defaults based on type
     const rows = itemsBody.querySelectorAll("tr");
@@ -239,6 +411,20 @@ document.addEventListener("DOMContentLoaded", function () {
     calculateTotals();
   }
 
+  function updatePartyLabel() {
+    if (!summaryPartyName) return;
+    if (radioGiven.checked && customerSelect) {
+      const text = customerSelect.options[customerSelect.selectedIndex]?.text;
+      summaryPartyName.textContent = text && !text.includes('---------') ? `Customer: ${text}` : 'Party: Not Selected';
+    } else if (radioTaken.checked && supplierSelect) {
+      const text = supplierSelect.options[supplierSelect.selectedIndex]?.text;
+      summaryPartyName.textContent = text && !text.includes('---------') ? `Supplier: ${text}` : 'Party: Not Selected';
+    }
+  }
+
+  if (customerSelect) customerSelect.addEventListener("change", updatePartyLabel);
+  if (supplierSelect) supplierSelect.addEventListener("change", updatePartyLabel);
+
   radioGiven.addEventListener("change", updateTypeView);
   radioTaken.addEventListener("change", updateTypeView);
 
@@ -253,7 +439,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function addRow() {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>
+      <td style="padding:10px 14px;">
         <select name="product_id[]" class="form-control product-select" required>
           ${createProductOptions()}
         </select>
@@ -270,11 +456,11 @@ document.addEventListener("DOMContentLoaded", function () {
       <td>
         <input type="number" name="item_discount[]" step="0.01" value="0" class="form-control item-disc-input">
       </td>
-      <td style="text-align:right; font-weight:600;" class="font-mono line-total-cell">
+      <td style="text-align:right; font-weight:700; color:var(--text);" class="font-mono line-total-cell">
         Rs. 0.00
       </td>
       <td style="text-align:center;">
-        <button type="button" class="btn btn-ghost btn-sm remove-row-btn" style="color:#DC2626; padding:2px 6px;">&times;</button>
+        <button type="button" class="btn btn-ghost btn-sm remove-row-btn" style="color:#DC2626; padding:4px 8px; font-size:16px;" title="Remove Item">&times;</button>
       </td>
     `;
 
@@ -333,7 +519,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const cell = row.querySelector(".line-total-cell");
       if (cell) {
-        cell.textContent = "Rs. " + lineTotal.toFixed(2);
+        cell.textContent = "Rs. " + lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       }
 
       subtotalSum += lineSub;
@@ -346,17 +532,30 @@ document.addEventListener("DOMContentLoaded", function () {
     const grandTotal = Math.max(0, subtotalSum + taxSum - overallDiscount);
     const remaining = Math.max(0, grandTotal - initialPaid);
 
-    document.getElementById("sumSubtotal").textContent = "Rs. " + subtotalSum.toFixed(2);
-    document.getElementById("sumTax").textContent = "Rs. " + taxSum.toFixed(2);
-    document.getElementById("sumDiscount").textContent = "- Rs. " + overallDiscount.toFixed(2);
-    document.getElementById("sumTotal").textContent = "Rs. " + grandTotal.toFixed(2);
-    document.getElementById("sumPaid").textContent = "Rs. " + initialPaid.toFixed(2);
-    document.getElementById("sumRemaining").textContent = "Rs. " + remaining.toFixed(2);
+    const formatRs = (num) => num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    document.getElementById("sumSubtotal").textContent = "Rs. " + formatRs(subtotalSum);
+    document.getElementById("sumTax").textContent = "Rs. " + formatRs(taxSum);
+    document.getElementById("sumDiscount").textContent = "- Rs. " + formatRs(overallDiscount);
+    document.getElementById("sumTotal").textContent = "Rs. " + formatRs(grandTotal);
+    document.getElementById("sumPaid").textContent = "Rs. " + formatRs(initialPaid);
+    document.getElementById("sumRemaining").textContent = "Rs. " + formatRs(remaining);
   }
 
   addRowBtn.addEventListener("click", addRow);
   if (overallDiscountInput) overallDiscountInput.addEventListener("input", calculateTotals);
   if (initialPaidInput) initialPaidInput.addEventListener("input", calculateTotals);
+
+  // Global Ctrl + Enter listener
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      const form = document.getElementById('creditForm');
+      if (form) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    }
+  });
 
   // Initialize with 1 empty row
   addRow();
