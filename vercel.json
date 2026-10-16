@@ -18,12 +18,12 @@
   ],
   "routes": [
     {
-      "src": "/static/(.*)",
-      "dest": "/backend/django_app/static/$1"
+      "src": "/api/(.*)",
+      "dest": "api/fastapi_entrypoint.py"
     },
     {
-      "src": "/api/v1/(.*)",
-      "dest": "api/fastapi_entrypoint.py"
+      "src": "/static/(.*)",
+      "dest": "api/index.py"
     },
     {
       "src": "/(.*)",
