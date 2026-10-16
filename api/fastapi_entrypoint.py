@@ -5,8 +5,9 @@ import os
 import sys
 from pathlib import Path
 
-# Add backend and backend/django_app to sys.path
+# Add root, backend and backend/django_app to sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
 sys.path.insert(0, str(BASE_DIR / "backend"))
 sys.path.insert(0, str(BASE_DIR / "backend" / "django_app"))
 
