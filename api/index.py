@@ -5,17 +5,18 @@ import os
 import sys
 from pathlib import Path
 
-# Add root, backend and backend/django_app to sys.path so settings and apps are resolved
+# Add backend/django_app, backend, and project root to sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE_DIR))
-sys.path.insert(0, str(BASE_DIR / "backend"))
 sys.path.insert(0, str(BASE_DIR / "backend" / "django_app"))
+sys.path.insert(0, str(BASE_DIR / "backend"))
+sys.path.append(str(BASE_DIR))
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
 
 try:
     import django
-    if not django.apps.apps.ready:
+    from django.apps import apps
+    if not apps.ready:
         django.setup()
 
     from django.core.wsgi import get_wsgi_application
@@ -23,6 +24,8 @@ try:
 
     def app(environ, start_response):
         return _wsgi_app(environ, start_response)
+
+    application = app
 except Exception:
     import traceback
     _error_trace = traceback.format_exc()

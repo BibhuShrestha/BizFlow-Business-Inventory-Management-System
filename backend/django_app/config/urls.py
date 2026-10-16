@@ -65,6 +65,10 @@ urlpatterns = [
     # Health check
     path("health/", health_check, name="health_check"),
 
+    # Fast favicon handler
+    path("favicon.ico", lambda r: HttpResponse(status=204)),
+    path("favicon.png", lambda r: HttpResponse(status=204)),
+
     # SEO: robots.txt and sitemap.xml (public)
     path("robots.txt", robots_txt, name="robots_txt"),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="django.contrib.sitemaps.views.sitemap"),

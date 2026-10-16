@@ -34,10 +34,10 @@ import django  # noqa: E402
 
 django.setup()
 
-# ---------------------------------------------------------------------------
-# Import routers (added incrementally in Parts 13-16)
-# ---------------------------------------------------------------------------
-from api.routers import health, auth, credit, cheques, notifications, analytics  # noqa: E402
+try:
+    from backend.api.routers import health, auth, credit, cheques, notifications, analytics  # noqa: E402
+except ImportError:
+    from api.routers import health, auth, credit, cheques, notifications, analytics  # noqa: E402
 
 # from api.routers import auth, users, companies, sellers
 # from api.routers import products, inventory, customers, suppliers
