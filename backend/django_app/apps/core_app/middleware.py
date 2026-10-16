@@ -69,3 +69,22 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
 
         return response
 
+
+import traceback
+
+class ExceptionCaptureMiddleware(MiddlewareMixin):
+    """Captures unhandled exceptions and attaches tracebacks to request for diagnostic 500 handler."""
+
+    def process_exception(self, request, exception):
+        request._last_exception = exception
+        request._last_traceback = traceback.format_exc()
+        logger.error(
+            "Unhandled exception at %s %s: %s\n%s",
+            getattr(request, "method", "GET"),
+            getattr(request, "path", "/"),
+            exception,
+            request._last_traceback,
+        )
+        return None
+
+

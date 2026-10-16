@@ -25,9 +25,17 @@ logger = logging.getLogger("django.request")
 
 def error_500(request: HttpRequest) -> HttpResponse:
     """Render 500 page and log diagnostic stack traces."""
-    exc_type, exc_value, exc_traceback = sys.exc_info()
-    error_msg = str(exc_value) if exc_value is not None else ""
-    error_trace = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback)) if exc_type else ""
+    exc = getattr(request, "_last_exception", None)
+    trace = getattr(request, "_last_traceback", None)
+
+    if not exc:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        if exc_value:
+            exc = exc_value
+            trace = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+
+    error_msg = str(exc) if exc else "An unexpected exception occurred during request execution."
+    error_trace = trace or ""
 
     if error_trace:
         logger.error("Unhandled 500 error at %s:\n%s", getattr(request, "path", "/"), error_trace)
@@ -35,8 +43,10 @@ def error_500(request: HttpRequest) -> HttpResponse:
     context = {
         "error_message": error_msg,
         "error_trace": error_trace,
+        "request_path": getattr(request, "path", "/"),
     }
     return render(request, "errors/500.html", context, status=500)
+
 
 
 

@@ -108,6 +108,7 @@ AUTH_USER_MODEL = "accounts.User"
 # Middleware
 # ---------------------------------------------------------------------------
 MIDDLEWARE = [
+    "apps.core_app.middleware.ExceptionCaptureMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "apps.core_app.middleware.SecurityHeadersMiddleware",
     "apps.core_app.middleware.PerformanceTimingMiddleware",
