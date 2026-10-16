@@ -33,6 +33,9 @@ def get_current_token_payload(
         )
 
     token = credentials.credentials
+    payload = None
+
+    # 1. Attempt standard internal JWT decode
     try:
         payload = decode_token(token)
     except ExpiredSignatureError:
@@ -41,22 +44,28 @@ def get_current_token_payload(
             detail="Token has expired.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    except Exception:
+        # 2. Attempt Supabase Auth JWT decode
+        from integrations.supabase_client import SupabaseAuthClient
+        try:
+            payload = SupabaseAuthClient.verify_jwt(token)
+            payload["_source"] = "supabase"
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
-    # Check token type
-    if payload.get("type") != "access":
+    # Check token type (for internal tokens)
+    if payload.get("_source") != "supabase" and payload.get("type") != "access":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token type: access token required.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Check revocation
+    # Check revocation for internal tokens
     jti = payload.get("jti")
     if jti and is_token_revoked(jti):
         raise HTTPException(
@@ -71,7 +80,7 @@ def get_current_token_payload(
 def get_current_user(
     payload: Annotated[dict, Depends(get_current_token_payload)],
 ):
-    """Fetch user instance matching authenticated token."""
+    """Fetch user instance matching authenticated token (supports internal ID and Supabase UID)."""
     from apps.accounts.models import User
 
     user_id = payload.get("sub")
@@ -81,9 +90,36 @@ def get_current_user(
             detail="Malformed token payload.",
         )
 
-    try:
-        user = User.objects.select_related("role", "active_company").get(id=int(user_id))
-    except (User.DoesNotExist, ValueError):
+    user = None
+
+    # 1. Check by integer ID (standard internal token)
+    if str(user_id).isdigit():
+        user = User.objects.select_related("role", "active_company").filter(id=int(user_id)).first()
+
+    # 2. Check by supabase_uid
+    if not user:
+        user = User.objects.select_related("role", "active_company").filter(supabase_uid=str(user_id)).first()
+
+    # 3. Check by email
+    if not user and payload.get("email"):
+        user = User.objects.select_related("role", "active_company").filter(email=payload.get("email").lower().strip()).first()
+        if user and not user.supabase_uid:
+            user.supabase_uid = str(user_id)
+            user.save(update_fields=["supabase_uid"])
+
+    # 4. If Supabase token is valid but user doesn't exist locally, provision automatically
+    if not user and payload.get("_source") == "supabase" and payload.get("email"):
+        from integrations.supabase_client import SupabaseAuthClient
+        try:
+            user = SupabaseAuthClient.sync_to_django_user({
+                "id": str(user_id),
+                "email": payload.get("email"),
+                "user_metadata": payload.get("user_metadata", {}),
+            })
+        except Exception:
+            pass
+
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found.",

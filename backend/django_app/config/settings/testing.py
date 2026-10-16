@@ -24,3 +24,11 @@ PASSWORD_HASHERS = [
 WTF_CSRF_ENABLED = False
 
 ALLOWED_HOSTS = ["*"]
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}

@@ -3,15 +3,17 @@
 > **Project:** Business Inventory Management System (BizFlow)  
 > **Source:** `e:/project/business` (Flask 2.3.3 — Untouched, Read-Only)  
 > **Target:** `e:/project/business_new/` (Django 6.0 + FastAPI REST API)  
-> **Last Updated:** Part 22 — Business Analytics & AI Decision Support Suite Completed
+> **Last Updated:** Part 29 — Supabase Database + Supabase Auth + Vercel Deployment Integration Completed (2026-10-16)
 
 ---
 
-## Analytics Explorer Enhancement (2026-10-09)
+## Supabase Cloud Database, Supabase Auth & Vercel Deployment Update (2026-10-16)
 
-- Added selectable sales, purchases, expenses, profitability, inventory, receivables, and payables views to the analytics dashboard.
-- Added numeric summaries alongside charts, with period-aware transaction series and current-state inventory and balance snapshots.
-- Extended the analytics API response with transaction counts and daily, weekly, or monthly trend points.
+- **Supabase Cloud Identity Provider**: Integrated GoTrue auth client for password login, cloud user provisioning, and FastAPI JWT token verification.
+- **Supabase PostgreSQL & Pooler**: Production settings configured for port 5432 session connections and port 6543 Supavisor transaction pooler with `DISABLE_SERVER_SIDE_CURSORS = True`.
+- **Database Backup, Migration & Audit Toolkit**: Model-agnostic MySQL to Supabase PostgreSQL migration (`scripts/migrate_mysql_to_supabase.py`), backup generator, and 4-tier verification suite (`scripts/verify_database_migration.py`).
+- **Vercel Serverless Deployment**: Serverless specifications (`vercel.json`) with dual entrypoints (`api/index.py` WSGI, `api/fastapi_entrypoint.py` ASGI) and static asset routing.
+- **Automated Verification**: Full test suite passes with **248 passing tests (100% green)**.
 
 ## Status Key
 
@@ -53,6 +55,9 @@
 | Part 23 | Admin User Visibility, Activity Tracking & Advanced Analytics Suite | `[x]` Complete (194 passing tests) |
 | Part 24 | Google OAuth2 Social Authentication & Granular RBAC Permissions | `[x]` Complete (221 passing tests) |
 | Part 25 | UI/UX Component Standardization, Ergonomics & Design Consistency | `[x]` Complete (221 passing tests) |
+| Part 27 | Multi-Tenant Hardening, Company Switching, Scoped User Mgmt & Keyboard Ergonomics | `[x]` Complete (231 passing tests) |
+| Part 28 | Supabase PostgreSQL Migration, Production Hardening & Deployment | `[x]` Complete (231 passing tests) |
+| Part 29 | Supabase Database + Supabase Auth + Vercel Deployment Integration | `[x]` Complete (248 passing tests) |
 
 ---
 
@@ -379,4 +384,116 @@
 
 ### 3. Test Suite Verification
 - Verified all 221 tests across backend, API, domain services, security, RBAC, and UI passing with 100% green status.
+
+---
+
+## Part 26 — 5-Star UI/UX Design System Implementation (Figma Make Specification)
+
+### 1. Extracted & Standardized Specifications (`Create Business Inventory Website.make`)
+- Extracted design archive containing canvas assets, Figma specifications, UI components, and design system tokens.
+- Standardized UI/UX architecture to eliminate generic looks and elevate BizFlow into an executive-grade 5-star inventory platform.
+
+### 2. Core Visual & Layout Enhancements
+- **Illuminated Brand Identity**: Added `.brand-mark` with illuminated 3-bar logo badge (`#3B82F6` with glowing blue elevation) and "Business, in motion" subtext.
+- **Active Company Switcher**: Added `.company-switcher` elevated card in sidebar displaying 2-letter monogram logo, active company name, and fast switching dropdown.
+- **Omnipresent Topbar Controls**: Added keyboard-accelerated global search (`Ctrl+K` / `⌘K`), dual Bikram Sambat (BS) & Gregorian (AD) date pill (`.date-chip`), and interactive notification dropdown center (`.notification-panel`) with priority category badges.
+- **Sidebar Ergonomics & Debit/Credit Standardization**: Standardized navigation groups into Workspace, Debit & Credit, Manage, and Admin; updated terminology from colloquial "Udhaar & Credit" to professional "Debit & Credit" as specified; added persistent user account footer (`.sidebar-user`).
+- **4 Key Executive KPI Cards**: Added `.metric-card` grid displaying Today's Sales, Customer Receivables (Dr), Vendor Purchases / Payables (Cr), and Net Profit / Inventory Stock Value with dynamic trend badges (`↑` / `↓`).
+- **7-Day Sales Overview Bar Chart**: Added responsive, pure CSS bar chart with day labels, revenue summary, and highlighted peak day tooltip.
+- **Operational Cash Flow Donut**: Added circular conic-gradient donut chart showing cash inflow vs outflow proportion with net cash flow health indicator.
+- **Recent Invoices & Stock Alerts Panels**: Added instant text filtering on recent invoices with customer avatar badges; added low stock alert cards with visual threshold progress tracks.
+
+### 3. Backend View & Context Enrichment
+- Enhanced `dashboard.views.index` to compute daily sales trends vs yesterday, 7-day normalized bar chart series, cash inflow/outflow proportions, itemized low-stock thresholds, and dual BS/AD date strings.
+- Preserved 100% of RBAC permission guards for Customer, Cashier, Staff, Manager, and Admin roles.
+- Design system token compliance verified across all required palette colors, focus outlines, and responsive breakpoints.
+
+---
+
+## Part 27 — Multi-Tenant Hardening, Company Switching, Scoped User Mgmt & Keyboard Ergonomics
+
+### 1. Multi-Tenant Data Isolation Enforcement
+- **Strict Queryset Scoping**: Audited and removed administrative bypasses (`and not request.user.is_admin`) in `apps/sales/views.py`, `apps/purchases/views.py`, `apps/inventory/views.py`, and `apps/accounting/views.py`.
+- **Zero Cross-Tenant Leakage**: All operational querysets (`Sale.objects.filter(company=company)`, `Purchase.objects.filter(company=company)`, `Product.objects.filter(company=company)`, etc.) are bound strictly to `request.user.active_company`, regardless of user role.
+- **Tenant Authorization Guards**: Accessing resources from another company returns an immediate HTTP 404 response.
+
+### 2. Company Directory & Workspace Switching
+- **Company Directory Fix**: Resolved empty state ("No companies registered") in `apps/companies/views.py` by providing `companies: page_obj` in the template context and preserving search query state.
+- **Route Aliasing**: Added `path("<int:pk>/switch/", views.set_active_company, name="switch")` in `apps/companies/urls.py` ensuring compatibility with both `companies:switch` and `companies:set_active`.
+- **Interactive Sidebar Workspace Switcher**: Upgraded `.company-switcher` in `templates/base/base.html` into a click-to-open dropdown powered by the `user_companies` context processor (`apps.core_app.context_processors.active_company`), enabling instant multi-tenant switching with active checkmarks and "Manage All Companies" link.
+
+### 3. Company-Scoped User Management (`/users/`)
+- **Active Company Scoping**: Filtered the primary user directory list and executive user KPI cards (`Total Users`, `Active Now`, `Administrators`, `Staff Members`) strictly to `request.user.active_company`.
+- **Company Switcher Filter**: Added multi-tenant `<select>` dropdown in `/users/` filter bar with auto-submit (`onchange="this.form.submit()"`) allowing administrators to view users across different company workspaces.
+- **User Detail Inspection Modal**: Implemented dynamic modal inspection dialog displaying detailed user profile attributes: Full Name, Email, Active Status, Role Badge, Primary Company, Created Timestamp, and Last Login Timestamp.
+- **User Provisioning Context**: Pre-selects active company during user creation.
+
+### 4. Cashier & Global Keyboard Shortcut Ergonomics
+- **Central Keyboard Shortcut Manager**: Implemented unobtrusive global shortcut listener in `templates/base/base.html` with intelligent input-field isolation (ignoring keystrokes when editing inputs, textareas, or selects):
+  - <kbd>Ctrl</kbd> + <kbd>K</kbd>: Focus global search bar.
+  - <kbd>N</kbd>: Jump to New Sale Invoice checkout.
+  - <kbd>P</kbd>: Jump to New Purchase Order intake.
+  - <kbd>I</kbd>: Jump to Add Product to inventory.
+  - <kbd>C</kbd>: Jump to Add Customer modal/page.
+  - <kbd>W</kbd>: Toggle interactive Workspace / Company Switcher dropdown.
+  - <kbd>D</kbd>: Jump to Main Financial Dashboard.
+  - <kbd>?</kbd>: Open Keyboard Shortcuts Cheatsheet Modal.
+  - <kbd>Ctrl</kbd> + <kbd>Enter</kbd>: Accelerated form submission across all forms.
+  - <kbd>Esc</kbd>: Dismiss active modals, dropdowns, and overlays.
+- **Visual Shortcut Badges**: Standardized `<kbd>` design tokens in `backend/django_app/static/css/main.css` and embedded visual badge cues on primary action buttons across views.
+- **Keyboard Shortcuts Cheatsheet Modal**: Added accessible `#shortcuts-modal` dialog displaying organized groups (Navigation, Quick Actions, General).
+
+### 5. Automated Test Suite Verification
+- Added dedicated test suite `tests/test_multi_tenant_isolation.py` (10 tests) validating:
+  - Strict multi-company sale, purchase, product, customer, and supplier isolation.
+  - Proper HTTP 404 responses when attempting cross-company detail access.
+  - Workspace switching endpoint behavior and session persistence.
+- Full test suite passes with **231 tests green, 5 skipped, 0 failures (100% pass rate)**.
+
+---
+
+## Part 28 — Supabase PostgreSQL Migration, Production Hardening & Deployment
+
+### 1. Supabase PostgreSQL & Native Driver Architecture
+- **PostgreSQL 14+ / Supabase Database Adapter**: Configured in `backend/django_app/config/settings/base.py` and `production.py` with automatic SSL detection (`sslmode=require`).
+- **Direct & Pooler Connection Modes**: Added support for both Direct Session connections (port 5432) and Supavisor/PgBouncer Transaction Poolers (port 6543) with `DISABLE_SERVER_SIDE_CURSORS = True` and tuned `CONN_MAX_AGE`.
+- **Database Driver**: Added native `psycopg2-binary>=2.9.10` database driver in `requirements.txt`.
+
+### 2. Database Backup, Migration & Verification Toolkit
+- **MySQL Backup Generator (`scripts/backup_mysql.py`)**: Non-destructive, model-agnostic JSON fixture and raw SQL backup generator preserving tenant foreign keys.
+- **Migration Pipeline (`scripts/migrate_mysql_to_supabase.py`)**: Automated schema construction, data loading, and automated PostgreSQL primary key sequence alignment (`setval`).
+- **4-Tier Verification Suite (`scripts/verify_database_migration.py`)**: Automated audit checking table presence, row counts, PBKDF2/Argon2 password hash compatibility, multi-tenant scoping, and analytics aggregations.
+
+### 3. Production Hardening & Security Audit
+- **Deployment Settings**: Configured `production.py` with `DEBUG = False`, `SESSION_COOKIE_SECURE = True`, `CSRF_COOKIE_SECURE = True`, `SECURE_PROXY_SSL_HEADER`, `SECURE_HSTS_SECONDS = 31536000`, `SECURE_SSL_REDIRECT = True`, and structured console logging. Passed `manage.py check --deploy` with 0 issues.
+- **WhiteNoise Static File Serving**: Configured WhiteNoise with compressed manifest caching; separated `STATIC_ROOT` (`backend/django_app/staticfiles/`) from `STATICFILES_DIRS`.
+- **Container / Cloud Deployment**: Authored standardized `Procfile` and `scripts/run_production.py` for cloud platforms (Render, Railway, Fly.io, VPS).
+- **Client-Side XSS Protection**: Hardened `showToast()` and modal error displays in `static/js/quick_add.js` using safe DOM `textContent`.
+- **Automated Verification**: Added `tests/test_audit_and_production_readiness.py` covering production settings, pooler URL parsing, and migration toolkit importability.
+
+---
+
+## Part 29 — Supabase Database + Supabase Auth + Vercel Deployment Integration
+
+### 1. Supabase Cloud Auth Integration
+- **Lightweight Supabase Auth Client (`backend/integrations/supabase_client.py`)**: Implemented REST client utilizing Supabase GoTrue API for `sign_in_with_password`, `sign_up`, `sign_out`, `verify_jwt`, and `sync_to_django_user`.
+- **Database Identity Sync**: Added indexed `supabase_uid` column (`VARCHAR(64)`) to `apps.accounts.models.User` with non-destructive migration `0004_user_supabase_uid.py`.
+- **Unified Domain Service**: Upgraded `AuthService.authenticate()` and `AuthService.register()` in `backend/domain/services/auth_service.py` to authenticate against Supabase when configured, sync cloud identity to Django `accounts.User`, and seamlessly fall back to local Django auth when unconfigured.
+- **Web Session Integration**: Linked session login and logout in `apps/accounts/views.py` with Supabase session tokens (`supabase_access_token`).
+
+### 2. FastAPI Supabase JWT Verification (`/api/v1/`)
+- Enhanced `backend/api/deps.py` (`get_current_token_payload` and `get_current_user`) to support both internal tokens and Supabase JWTs.
+- Resolves users by UUID `sub` or `email`, auto-provisions or links accounts, and enforces RBAC permission checks.
+
+### 3. Vercel Serverless Deployment Architecture
+- **Deployment Manifest (`vercel.json`)**: Configured routing mapping Django SSR to `api/index.py` (WSGI) and FastAPI REST API to `api/fastapi_entrypoint.py` (ASGI), with `/static/(.*)` routed to edge-cached static assets.
+- **Root Serverless Entrypoints (`api/index.py`, `api/fastapi_entrypoint.py`)**: Sys.path isolation ensuring clean imports in AWS Lambda / Vercel runtime.
+- **Documentation**: Authored `docs/AUTHENTICATION.md` and expanded `docs/DEPLOYMENT.md` and `.env.example`.
+
+### 4. Comprehensive Test Suite Verification
+- Added `tests/test_supabase_auth_and_vercel.py` validating client configuration, credentials exchange, user syncing, Vercel manifest syntax, and WSGI/ASGI entrypoint importability.
+- Repository test suite passes with **248 passing tests, 5 skipped, 0 failures (100% pass rate)**.
+
+
+
 

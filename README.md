@@ -361,6 +361,29 @@ The **Receivables & Payables** module provides complete credit and debt lifecycl
 - Select the party and date range to view the chronological statement of debits, credits, and running balance.
 - Print statements directly via the **Print Statement** action.
 
+### 5. Multi-Company Workspace Quick-Switching
+- Click the **Current Company** card in the top of the sidebar (or press `W`).
+- Select any company from the dropdown menu to immediately switch your active business workspace.
+- All subsequent transactions, inventories, customer records, supplier accounts, and user directories are strictly scoped to the selected company.
+
+### 6. Cashier & Operational Keyboard Shortcuts
+BizFlow includes global keyboard shortcuts designed for rapid cashier point-of-sale and accounting entry:
+
+| Shortcut | Action | Scope / Context |
+|---|---|---|
+| `Ctrl + K` / `⌘K` | Focus Global Search | Ubiquitous across all pages |
+| `N` | Create Sale Invoice | Cashier checkout |
+| `P` | Record Purchase Bill | Vendor intake |
+| `I` | Add Inventory Product | Stock catalog |
+| `C` | Add Customer | Customer directory |
+| `W` | Toggle Company Switcher | Multi-tenant workspace switcher |
+| `D` | Go to Dashboard | Financial overview |
+| `?` | Show Shortcuts Cheatsheet | Modal reference guide |
+| `Ctrl + Enter` | Save / Submit Form | Active form across all create/edit views |
+| `Esc` | Close Modal / Dropdown | Any open popup or overlay |
+
+*Note: Single-key shortcuts automatically disable while typing inside input fields, textareas, and select menus.*
+
 ---
 
 ## Admin Setup
@@ -473,7 +496,7 @@ BizFlow maintains a **centralized, living, synchronized documentation system** u
 | Document | Purpose |
 |----------|---------|
 | [docs/README.md](docs/README.md) | **Central Documentation Portal & Sitemap** |
-| [CHANGELOG.md](CHANGELOG.md) | **Chronological releases & semantic versioning (v1.5.0)** |
+| [CHANGELOG.md](CHANGELOG.md) | **Chronological releases & semantic versioning (v2.4.0)** |
 | [docs/CHANGE_MANAGEMENT.md](docs/CHANGE_MANAGEMENT.md) | **Change Request protocol, impact analysis & Definition of Done** |
 | [docs/TRACEABILITY_MATRIX.md](docs/TRACEABILITY_MATRIX.md) | **End-to-end requirement to code, API, UI & test mapping** |
 | [docs/PRD.md](docs/PRD.md) | Product requirements and user stories |
@@ -484,6 +507,6 @@ BizFlow maintains a **centralized, living, synchronized documentation system** u
 | [docs/api/](docs/api/) | REST API endpoint specifications and JWT authentication |
 | [docs/ui/design-system.md](docs/ui/design-system.md) | UI/UX design tokens, components, and accessibility |
 | [docs/security/security.md](docs/security/security.md) | Security architecture, Argon2/PBKDF2, and threat defense |
-| [docs/testing/](docs/testing/) | Testing strategy and 138+ automated test cases |
+| [docs/TESTING.md](docs/TESTING.md) | Testing strategy and 231 automated test cases (100% green) |
 | [docs/MIGRATION_STATUS.md](docs/MIGRATION_STATUS.md) | Migration progress tracker |
 | [AGENTS.md](AGENTS.md) | AI coding agent operating manual |

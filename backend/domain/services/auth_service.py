@@ -39,9 +39,23 @@ class AuthService:
             AuthenticationError: If credentials are invalid or account is inactive.
         """
         from apps.accounts.models import User
+        from integrations.supabase_client import SupabaseAuthClient
 
+        # 1. Attempt Supabase Auth if configured
+        if SupabaseAuthClient.is_configured():
+            try:
+                session_data = SupabaseAuthClient.sign_in_with_password(email, password)
+                supabase_user = session_data.get("user") or {}
+                user = SupabaseAuthClient.sync_to_django_user(supabase_user)
+                user._supabase_session = session_data
+                logger.info("Supabase authentication successful for %s (id=%s)", email, user.id)
+                return user
+            except AuthenticationError as exc:
+                logger.info("Supabase Auth rejected %s (%s). Checking local database fallback...", email, exc)
+
+        # 2. Local database authentication fallback
         try:
-            user = User.objects.select_related("role").get(email=email.lower().strip())
+            user = User.objects.select_related("role", "active_company").get(email=email.lower().strip())
         except User.DoesNotExist:
             logger.info("Login failed: email %s not found", email)
             raise AuthenticationError("Invalid email or password.")
@@ -101,9 +115,19 @@ class AuthService:
             name="staff", defaults={"description": "Default staff role"}
         )
 
+        from integrations.supabase_client import SupabaseAuthClient
+        supabase_uid = None
+        if SupabaseAuthClient.is_configured():
+            try:
+                supa_res = SupabaseAuthClient.sign_up(email=email, password=password, name=name)
+                supabase_uid = (supa_res.get("user") or {}).get("id")
+            except Exception as exc:
+                logger.warning("Supabase Auth sign-up error for %s: %s", email, exc)
+
         user = User(
             name=name.strip(),
             email=email,
+            supabase_uid=supabase_uid,
             role=staff_role,
             is_active=False,
             email_verified=False,

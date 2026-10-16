@@ -76,6 +76,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
     google_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    supabase_uid = models.CharField(max_length=64, unique=True, null=True, blank=True, db_index=True)
     role = models.ForeignKey(
         Role,
         null=True,

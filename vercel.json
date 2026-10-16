@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxDuration": 60
+      }
+    },
+    {
+      "src": "api/fastapi_entrypoint.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxDuration": 60
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/backend/django_app/staticfiles/$1"
+    },
+    {
+      "src": "/api/v1/(.*)",
+      "dest": "api/fastapi_entrypoint.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "api/index.py"
+    }
+  ],
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "config.settings.production",
+    "DB_IS_POOLER": "True",
+    "DB_SSL_REQUIRE": "True"
+  }
+}

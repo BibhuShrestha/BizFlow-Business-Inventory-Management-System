@@ -5,6 +5,91 @@ All notable changes to the **BizFlow** project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-10-16
+
+### Added & Production-Ready
+- **Supabase Auth (Cloud Identity Provider) Integration**:
+  - Implemented lightweight `SupabaseAuthClient` (`backend/integrations/supabase_client.py`) using standard `requests` and `python-jose`/`PyJWT` supporting GoTrue REST API (`sign_in_with_password`, `sign_up`, `sign_out`, `verify_jwt`, `sync_to_django_user`).
+  - Added indexed `supabase_uid` column (`VARCHAR(64)`) to `apps.accounts.models.User` with migration `0004_user_supabase_uid.py`.
+  - Upgraded `AuthService.authenticate()` and `AuthService.register()` in `backend/domain/services/auth_service.py` to transparently authenticate against Supabase when configured, sync cloud identity to Django `accounts.User`, and seamlessly fall back to local Django auth when unconfigured.
+  - Linked session login and logout in `apps/accounts/views.py` with Supabase session tokens (`supabase_access_token`).
+- **FastAPI Supabase JWT Verification (`/api/v1/`)**:
+  - Enhanced `backend/api/deps.py` (`get_current_token_payload` and `get_current_user`) to support both internal tokens and Supabase JWTs.
+  - Resolves users by UUID `sub` or `email`, auto-provisions or links accounts, and enforces RBAC permission checks.
+- **Vercel Serverless Deployment Support**:
+  - Implemented `vercel.json` deployment specification mapping Django SSR to `api/index.py` (WSGI) and FastAPI REST API to `api/fastapi_entrypoint.py` (ASGI).
+  - Routed `/static/(.*)` directly to `backend/django_app/staticfiles/$1` for edge caching.
+  - Created root serverless entrypoints (`api/index.py` and `api/fastapi_entrypoint.py`) with sys.path isolation avoiding package namespace conflicts.
+  - Authored honest evaluation of Vercel serverless trade-offs (connection pooling, read-only filesystem, 10s/60s execution timeout).
+- **Comprehensive Test Suite & Documentation**:
+  - Added `tests/test_supabase_auth_and_vercel.py` covering user syncing, token resolution, Vercel configuration, and WSGI/ASGI entrypoint importability.
+  - Test suite passes with **248 passing tests (100% green)**.
+  - Authored `docs/AUTHENTICATION.md` and expanded `docs/DEPLOYMENT.md` and `.env.example`.
+
+---
+
+## [2.5.0] - 2026-10-16
+
+### Added & Production-Ready
+- **Supabase PostgreSQL & Native Driver Architecture**:
+  - Configured PostgreSQL 14+ / Supabase database adapter in `base.py` with automatic SSL detection (`sslmode=require`).
+  - Added support for both Direct Session connections (port 5432) and Supavisor/PgBouncer Transaction Poolers (port 6543) with `DISABLE_SERVER_SIDE_CURSORS = True` and tuned `CONN_MAX_AGE`.
+  - Added native `psycopg2-binary>=2.9.10` database driver in `requirements.txt`.
+- **Database Backup, Migration & Verification Toolkit**:
+  - Implemented `scripts/backup_mysql.py`: Non-destructive, model-agnostic JSON fixture and raw SQL backup generator.
+  - Implemented `scripts/migrate_mysql_to_supabase.py`: Schema construction, data loading, and automated PostgreSQL primary key sequence alignment (`setval`).
+  - Implemented `scripts/verify_database_migration.py`: 4-tier audit tool checking tables, record counts, auth hash algorithms, multi-tenant scoping, and database-side analytics aggregations.
+- **Production Security & Deployment Hardening**:
+  - Configured `production.py` with `DEBUG = False`, `SESSION_COOKIE_SECURE = True`, `CSRF_COOKIE_SECURE = True`, `SECURE_PROXY_SSL_HEADER`, `SECURE_HSTS_SECONDS = 31536000`, `SECURE_SSL_REDIRECT = True`, and structured stdout console logging.
+  - Passed Django `manage.py check --deploy` with **0 issues**.
+  - Configured `CSRF_TRUSTED_ORIGINS` and `ALLOWED_HOSTS` dynamically via environment variables.
+  - Configured WhiteNoise static file serving with compressed manifest caching; separated `STATIC_ROOT` (`backend/django_app/staticfiles/`) from `STATICFILES_DIRS`.
+  - Created standardized `Procfile` and `scripts/run_production.py` for cloud platforms (Render, Railway, Fly.io, VPS).
+  - Authored comprehensive `docs/DEPLOYMENT.md` and `docs/CONTRIBUTING.md`.
+
+### Fixed & Hardened
+- **Client-Side XSS Protection**:
+  - Hardened `showToast()` and modal error displays in `static/js/quick_add.js` using safe DOM `textContent` instead of string interpolation into `innerHTML`.
+- **Multi-Tenant Import Scoping**:
+  - Scoped bulk product imports in `apps/inventory/views.py` to default to `request.user.active_company` preventing cross-tenant leakage.
+
+---
+
+## [2.4.0] - 2026-10-15
+
+### Fixed & Hardened
+- **Multi-Tenant Data Isolation Enforcement**:
+  - Removed admin bypass `and not request.user.is_admin` across sales, purchases, inventory, and accounting views to ensure strict company scoping for all operational queries.
+  - Added dedicated integration test suite `tests/test_multi_tenant_isolation.py` (10 tests) validating cross-tenant 404 access restrictions and scoped query results.
+- **Company Directory & Workspace Switching**:
+  - Resolved `No companies registered` bug in `apps/companies/views.py` by providing `companies: page_obj` in template context and binding search parameters.
+  - Added `companies:switch` URL route alias (`/companies/<id>/switch/`) resolving `NoReverseMatch`.
+  - Re-architected sidebar company switcher (`base.html`) into an interactive dropdown workspace switcher powered by `user_companies` context processor.
+- **Company-Scoped User Accounts & Access Management (`/users/`)**:
+  - Scoped user list and KPI counter cards to `request.user.active_company`.
+  - Added Company dropdown selector to filter bar with auto-submit (`onchange="this.form.submit()"`).
+  - Added user details inspection modal showing full account profile, role permissions, company affiliation, presence, and login activity.
+  - Pre-populated active company context when provisioning new users.
+
+### Added
+- **Global Keyboard Shortcut Ergonomics**:
+  - Central keyboard shortcut manager for cashier and accountant workflows:
+    - <kbd>Ctrl</kbd> + <kbd>K</kbd>: Focus global search.
+    - <kbd>N</kbd>: Create sale invoice.
+    - <kbd>P</kbd>: Record purchase bill.
+    - <kbd>I</kbd>: Add inventory item.
+    - <kbd>C</kbd>: Add customer.
+    - <kbd>W</kbd>: Toggle workspace / company switcher dropdown.
+    - <kbd>D</kbd>: Jump to dashboard.
+    - <kbd>?</kbd>: Open keyboard shortcuts cheat-sheet modal.
+    - <kbd>Ctrl</kbd> + <kbd>Enter</kbd>: Submit active form across all creation/edit views.
+    - <kbd>Esc</kbd>: Dismiss modals, dropdowns, and overlays.
+  - Added `<kbd>` design tokens in `main.css` and embedded badges on action buttons across Dashboard, Sales, Purchases, Inventory, and Customers.
+- **Verification & Test Suite**:
+  - Expanded repository test suite to **231 passing tests (100% green)**.
+
+---
+
 ## [2.3.0] - 2026-10-10
 
 ### Added & Enhanced

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Tests are written at three levels: unit, integration, and API. The goal is high confidence in business-critical workflows without redundant test coverage.
+Tests are written at three levels: unit, integration, and API. The goal is high confidence in business-critical workflows, strict multi-tenant isolation, and zero regression. The test suite comprises **248 automated tests passing with 100% green status** (5 skipped, 0 failures).
 
 ---
 
@@ -11,7 +11,7 @@ Tests are written at three levels: unit, integration, and API. The goal is high 
 | Tool | Purpose |
 |------|---------|
 | pytest | Test runner |
-| pytest-django | Django integration |
+| pytest-django | Django integration & database isolation |
 | factory_boy | Test data factories |
 | httpx | API client for FastAPI tests |
 | coverage | Coverage reporting |
@@ -22,25 +22,43 @@ Tests are written at three levels: unit, integration, and API. The goal is high 
 
 ```
 tests/
-├── conftest.py           # Shared fixtures
-├── factories.py          # Test data factories
-├── unit/
+├── conftest.py                             # Shared fixtures & test database setup
+├── django/                                 # Django model and ORM tests
+│   └── test_models.py
+├── seo/                                    # SEO tags, headers, robots, sitemap tests
+│   └── test_seo.py
+├── unit/                                   # Domain service tests
 │   ├── test_auth_service.py
 │   ├── test_sale_service.py
 │   ├── test_stock_service.py
 │   ├── test_purchase_service.py
 │   ├── test_report_service.py
 │   └── test_nepali_date.py
-├── integration/
+├── integration/                            # End-to-end multi-step flows
 │   ├── test_auth_flow.py
 │   ├── test_sale_flow.py
 │   ├── test_purchase_flow.py
 │   └── test_inventory_flow.py
-└── api/
-    ├── test_auth_api.py
-    ├── test_products_api.py
-    ├── test_sales_api.py
-    └── test_permissions_api.py
+├── api/                                    # FastAPI REST API contract tests
+│   ├── test_auth_api.py
+│   ├── test_products_api.py
+│   ├── test_sales_api.py
+│   └── test_permissions_api.py
+├── test_multi_tenant_isolation.py         # Multi-tenant data isolation & cross-tenant guards
+├── test_audit_and_production_readiness.py  # Production settings, Supabase connection, migration scripts
+├── test_supabase_auth_and_vercel.py       # Supabase GoTrue auth client & Vercel serverless entrypoints
+├── test_analytics_and_ai.py               # AI Business analytics & trend computation
+├── test_auth_and_permissions.py           # Authentication, PBKDF2/Argon2, permissions
+├── test_business_alerts_and_reminders.py  # Stock alerts, overdue notifications, cheques
+├── test_credit_management.py              # Udhaar debit/credit, party ledgers, payments
+├── test_design_system.py                  # Design tokens, color contrast, typography
+├── test_django_web_application.py         # Django SSR views, forms, and templates
+├── test_google_oauth_and_rbac.py          # Google OAuth2 login & RBAC role matrix
+├── test_performance_and_security.py       # Rate limits, query optimization, security headers
+├── test_project_setup.py                  # Project scaffolding & settings verification
+├── test_quick_add_and_forms.py            # Quick-add modal endpoints & form validations
+├── test_shared_business_logic.py          # Domain services pure business logic
+└── test_user_management_and_analytics.py  # User directory, company scoping, and metrics
 ```
 
 ---
@@ -229,6 +247,22 @@ A comprehensive suite of 19 automated tests validates the entire Udhaar / Credit
 17. `test_fastapi_credit_given_and_taken`: Tests `/api/v1/credit/given` and `/credit/taken` endpoints.
 18. `test_fastapi_payment_settlement`: Tests `/api/v1/credit/payments` settlement endpoint.
 19. `test_fastapi_ledgers`: Tests `/api/v1/credit/ledger/customer/{id}` and `/credit/ledger/supplier/{id}` endpoints.
+
+---
+
+## Multi-Tenant Isolation Automated Test Suite (`tests/test_multi_tenant_isolation.py`)
+
+A specialized suite of 10 integration tests strictly verifies tenant separation across all operational models and endpoints:
+1. `test_sales_list_isolation`: Verifies Sales list only renders invoices belonging to `request.user.active_company` and excludes other tenants' invoices.
+2. `test_sale_detail_cross_tenant_forbidden`: Verifies cross-tenant sale detail access returns HTTP 404 Not Found.
+3. `test_sale_delete_cross_tenant_forbidden`: Verifies cross-tenant sale deletion returns HTTP 404 and preserves the record.
+4. `test_purchases_list_isolation`: Verifies Purchase orders list strictly filters to the authenticated tenant.
+5. `test_purchase_detail_cross_tenant_forbidden`: Verifies cross-tenant purchase bill detail access returns HTTP 404.
+6. `test_product_list_isolation`: Verifies Product inventory catalog strictly separates items between companies.
+7. `test_product_edit_cross_tenant_forbidden`: Verifies cross-tenant product edit returns HTTP 404.
+8. `test_expense_list_isolation`: Verifies Expense register strictly separates operating expense records.
+9. `test_expense_delete_cross_tenant_forbidden`: Verifies cross-tenant expense deletion returns HTTP 404.
+10. `test_user_list_company_isolation`: Verifies `/users/` list and KPIs are scoped exclusively to the active company for both tenant accounts.
 
 ---
 

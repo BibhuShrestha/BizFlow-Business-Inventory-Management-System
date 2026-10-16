@@ -57,7 +57,7 @@ docs/
 │
 ├── testing/                       # Quality assurance & verification
 │   ├── testing-strategy.md        # Test pyramid, in-memory SQLite isolation, guidelines
-│   └── test-cases.md              # Catalog of 138+ automated test cases & matrix
+│   └── test-cases.md              # Catalog of 231+ automated test cases & matrix
 │
 ├── ui/                            # Design system & frontend architecture
 │   └── design-system.md           # Design tokens, Royal Blue palette, accessibility
@@ -79,13 +79,13 @@ To prevent discrepancies and maintain architectural integrity, BizFlow designate
 
 | Concern | Authoritative Source of Truth | Synchronized Secondary Artifacts |
 |---|---|---|
-| **Database Schema** | Django ORM Models (`backend/django_app/apps/*/models.py`) | [`docs/database/schema.md`](file:///e:/project/Business%20Management%20System/docs/database/schema.md), [`docs/diagrams/er-diagram.md`](file:///e:/project/Business%20Management%20System/docs/diagrams/er-diagram.md) |
-| **API Contracts** | FastAPI Route Handlers & Pydantic Schemas (`backend/api/`) | [`docs/api/endpoints.md`](file:///e:/project/Business%20Management%20System/docs/api/endpoints.md), OpenAPI `/api/docs` |
-| **Business Logic** | Pure Domain Services (`backend/domain/services/`) | [`docs/features/*.md`](file:///e:/project/Business%20Management%20System/docs/features/), Unit Tests in `tests/` |
-| **User Interface** | Django Templates & Static CSS (`backend/django_app/`) | [`docs/ui/design-system.md`](file:///e:/project/Business%20Management%20System/docs/ui/design-system.md) |
-| **Requirements** | Product Requirements Document | [`docs/PRD.md`](file:///e:/project/Business%20Management%20System/docs/PRD.md), [`docs/TRACEABILITY_MATRIX.md`](file:///e:/project/Business%20Management%20System/docs/TRACEABILITY_MATRIX.md) |
-| **Notification Rules** | Notification Service & Feature Spec | [`docs/features/notifications.md`](file:///e:/project/Business%20Management%20System/docs/features/notifications.md) |
-| **System Evolution** | Change Management System & Changelog | [`docs/CHANGE_MANAGEMENT.md`](file:///e:/project/Business%20Management%20System/docs/CHANGE_MANAGEMENT.md), [`CHANGELOG.md`](file:///e:/project/Business%20Management%20System/CHANGELOG.md) |
+| **Database Schema** | Django ORM Models (`backend/django_app/apps/*/models.py`) | [`docs/database/schema.md`](docs/database/schema.md), [`docs/diagrams/er-diagram.md`](docs/diagrams/er-diagram.md) |
+| **API Contracts** | FastAPI Route Handlers & Pydantic Schemas (`backend/api/`) | [`docs/api/endpoints.md`](docs/api/endpoints.md), OpenAPI `/api/docs` |
+| **Business Logic** | Pure Domain Services (`backend/domain/services/`) | [`docs/features/*.md`](docs/features/), Unit Tests in `tests/` |
+| **User Interface** | Django Templates & Static CSS (`backend/django_app/`) | [`docs/ui/design-system.md`](docs/ui/design-system.md), [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) |
+| **Requirements** | Product Requirements Document | [`docs/PRD.md`](docs/PRD.md), [`docs/TRACEABILITY_MATRIX.md`](docs/TRACEABILITY_MATRIX.md) |
+| **Notification Rules** | Notification Service & Feature Spec | [`docs/features/notifications.md`](docs/features/notifications.md) |
+| **System Evolution** | Change Management System & Changelog | [`docs/CHANGE_MANAGEMENT.md`](docs/CHANGE_MANAGEMENT.md), [`CHANGELOG.md`](CHANGELOG.md) |
 
 ---
 
@@ -145,4 +145,4 @@ A feature or modification is considered **DONE** only when:
 - [x] Relevant feature documents in `docs/features/` are updated.
 - [x] API, Database, and UI documentation reflect current state.
 - [x] Diagrams (ER, Sequence, Activity) match modified flows.
-- [x] [`CHANGELOG.md`](file:///e:/project/Business%20Management%20System/CHANGELOG.md) and [`docs/CHANGE_MANAGEMENT.md`](file:///e:/project/Business%20Management%20System/docs/CHANGE_MANAGEMENT.md) record the change entry.
+- [x] [`CHANGELOG.md`](CHANGELOG.md) and [`docs/CHANGE_MANAGEMENT.md`](docs/CHANGE_MANAGEMENT.md) record the change entry.

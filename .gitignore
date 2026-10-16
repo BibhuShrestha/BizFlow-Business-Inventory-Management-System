@@ -21,6 +21,9 @@ ENV/
 inventory.db
 backend/django_app/media/
 backend/django_app/static/collected/
+backend/django_app/staticfiles/
+staticfiles/
+backups/
 
 # Environment secrets
 .env

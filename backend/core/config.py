@@ -40,11 +40,14 @@ except ImportError:
             super().__init__(**init_kwargs)
 
 
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_ENV_FILE = str(_REPO_ROOT / ".env") if (_REPO_ROOT / ".env").exists() else ".env"
+
 class Settings(BaseSettings):
     """Centralised settings model. Values are loaded from .env automatically."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_ENV_FILE,
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
