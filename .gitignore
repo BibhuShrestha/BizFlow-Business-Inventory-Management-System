@@ -58,6 +58,7 @@ Thumbs.db
 desktop.ini
 
 # pytest / coverage
+tests/
 .pytest_cache/
 .coverage
 htmlcov/
