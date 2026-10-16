@@ -6,7 +6,14 @@ to Django. When a user with a legacy Werkzeug hash logs in, Django will verify t
 and automatically upgrade it to Django's default hasher (PBKDF2/Argon2).
 """
 from django.contrib.auth.hashers import BasePasswordHasher
-from werkzeug.security import check_password_hash, generate_password_hash
+try:
+    from werkzeug.security import check_password_hash, generate_password_hash
+except ImportError:
+    def check_password_hash(pwhash, password):
+        return False
+    def generate_password_hash(password, method="pbkdf2:sha256"):
+        from django.contrib.auth.hashers import make_password
+        return make_password(password)
 
 
 class WerkzeugPasswordHasher(BasePasswordHasher):
