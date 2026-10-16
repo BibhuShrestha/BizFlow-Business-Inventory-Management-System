@@ -51,11 +51,16 @@ def seed():
         print(f"Created default company: {company.company_name}")
 
     # Create default admin user if none exists
-    admin_email = "admin@bizflow.com"
-    admin_pass = "Admin@12345"
+    admin_email = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@bizflow.com")
+    admin_pass = os.getenv("DEFAULT_ADMIN_PASSWORD")
     admin_role = Role.objects.get(name=Role.ROLE_ADMIN)
 
     if not User.objects.filter(email=admin_email).exists():
+        if not admin_pass:
+            import secrets
+            admin_pass = secrets.token_urlsafe(16)
+            print(f"Notice: DEFAULT_ADMIN_PASSWORD not set. Generated secure password: {admin_pass}")
+
         admin = User.objects.create_superuser(
             email=admin_email,
             name="BizFlow Admin",
@@ -63,7 +68,7 @@ def seed():
             role=admin_role,
             active_company=company,
         )
-        print(f"Created default superuser: {admin.email} (Password: {admin_pass})")
+        print(f"Created default superuser: {admin.email}")
     else:
         print(f"Superuser '{admin_email}' already exists.")
 
