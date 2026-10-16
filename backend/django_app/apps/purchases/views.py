@@ -30,7 +30,7 @@ def purchase_list(request: HttpRequest) -> HttpResponse:
     date_to = request.GET.get("date_to", "").strip()
 
     query = Purchase.objects.select_related("supplier", "company").filter(is_active=True)
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         query = query.filter(company=request.user.active_company)
 
     if search:
@@ -64,7 +64,7 @@ def purchase_list(request: HttpRequest) -> HttpResponse:
 def export_csv(request: HttpRequest) -> HttpResponse:
     """Export all purchase bills to CSV."""
     query = Purchase.objects.select_related("supplier", "company").filter(is_active=True)
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         query = query.filter(company=request.user.active_company)
     purchases = query.order_by("-purchase_date")
     headers = ["PO Number", "Bill #", "Date", "Supplier", "Subtotal", "Discount", "Tax", "Total", "Payment Status", "Payment Method"]
@@ -91,7 +91,7 @@ def export_csv(request: HttpRequest) -> HttpResponse:
 def export_excel(request: HttpRequest) -> HttpResponse:
     """Export all purchase bills to Excel (.xlsx)."""
     query = Purchase.objects.select_related("supplier", "company").filter(is_active=True)
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         query = query.filter(company=request.user.active_company)
     purchases = query.order_by("-purchase_date")
     headers = ["PO Number", "Bill #", "Date", "Supplier", "Subtotal", "Discount", "Tax", "Total", "Payment Status", "Payment Method"]
@@ -216,7 +216,7 @@ def purchase_create(request: HttpRequest) -> HttpResponse:
 def purchase_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """View purchase bill details."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     purchase = get_object_or_404(Purchase.objects.select_related("supplier", "company").prefetch_related("items__product"), **kwargs)
     return render(request, "purchases/purchase_detail.html", {"purchase": purchase})
@@ -228,7 +228,7 @@ def purchase_detail(request: HttpRequest, pk: int) -> HttpResponse:
 def purchase_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Cancel purchase bill and revert product stock atomically."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     purchase = get_object_or_404(Purchase.objects.prefetch_related("items__product"), **kwargs)
     purch_num = purchase.bill_number or purchase.purchase_number

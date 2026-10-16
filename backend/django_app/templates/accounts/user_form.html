@@ -89,9 +89,12 @@
       {% endif %}
     </div>
 
-    <div style="display:flex; justify-content:flex-end; gap:12px; padding-top:12px; border-top:1px solid #e2e8f0;">
-      <a href="{% url 'users:list' %}" class="btn btn-secondary">Cancel</a>
-      <button type="submit" class="btn btn-primary">Save User Account</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:16px; border-top:1px solid #e2e8f0;">
+      <small style="color:#64748b;">Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save anytime</small>
+      <div style="display:flex; gap:12px;">
+        <a href="{% url 'users:list' %}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save User Account</button>
+      </div>
     </div>
   </form>
 </div>

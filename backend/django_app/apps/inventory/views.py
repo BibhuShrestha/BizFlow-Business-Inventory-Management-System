@@ -28,7 +28,7 @@ def product_list(request: HttpRequest) -> HttpResponse:
     sort = request.GET.get("sort", "name")
 
     query = Product.objects.select_related("category", "company", "seller").filter(is_active=True)
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         query = query.filter(company=request.user.active_company)
 
     if search:
@@ -137,7 +137,7 @@ def product_create(request: HttpRequest) -> HttpResponse:
 def product_edit(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit existing product."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     product = get_object_or_404(Product, **kwargs)
 
@@ -155,7 +155,7 @@ def product_edit(request: HttpRequest, pk: int) -> HttpResponse:
 def product_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Soft-delete product."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     product = get_object_or_404(Product, **kwargs)
 
@@ -170,7 +170,7 @@ def product_delete(request: HttpRequest, pk: int) -> HttpResponse:
 def export_csv(request: HttpRequest) -> HttpResponse:
     """Export all items to CSV file."""
     query = Product.objects.select_related("category", "company", "seller").filter(is_active=True)
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         query = query.filter(company=request.user.active_company)
     products = query.order_by("name")
     headers = ["SKU", "Item Name", "Company", "Seller / Owner", "Seller Phone", "Category", "Unit", "Purchase Price", "Selling Price", "Current Stock", "Min Stock", "Active"]
@@ -263,7 +263,11 @@ def import_products(request: HttpRequest) -> HttpResponse:
             s_phone = (row.get("Seller Phone") or row.get("seller_phone") or "").strip()
             cat_name = (row.get("Category") or row.get("category") or "").strip()
 
-            company = Company.objects.filter(company_name=c_name).first() if c_name else None
+            active_comp = getattr(request.user, "active_company", None)
+            if request.user.is_superuser:
+                company = Company.objects.filter(company_name=c_name).first() if c_name else active_comp
+            else:
+                company = active_comp or (Company.objects.filter(company_name=c_name).first() if c_name else None)
             seller = Seller.objects.filter(seller_name=s_name).first() if s_name else None
             if cat_name:
                 category, _ = Category.objects.get_or_create(name=cat_name)

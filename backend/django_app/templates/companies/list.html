@@ -3,10 +3,10 @@
 {% block page_title %}Company Workspaces{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
   <div>
     <h1 class="page-title">Companies</h1>
-    <p class="page-subtitle">Manage company profiles, VAT/PAN credentials, and active workspace.</p>
+    <p class="page-subtitle">Manage registered company entities, VAT/PAN credentials, and active workspaces.</p>
   </div>
   <div style="display:flex; gap:8px;">
     <a href="{% url 'companies:export_csv' %}" class="btn btn-secondary btn-sm">Export CSV</a>
@@ -16,8 +16,8 @@
 </div>
 
 <div class="card" style="margin-bottom: 20px; padding: 16px;">
-  <form method="get" style="display:flex; gap:12px;">
-    <input type="text" name="q" value="{{ search_query }}" placeholder="Search company name, PAN, phone..." class="form-control" style="max-width:320px;">
+  <form method="get" action="{% url 'companies:list' %}" style="display:flex; gap:12px; align-items:center;">
+    <input type="text" name="q" value="{{ search_query }}" placeholder="Search company name, PAN, phone..." class="form-control" style="max-width:340px;">
     <button type="submit" class="btn btn-secondary">Search</button>
     {% if search_query %}
       <a href="{% url 'companies:list' %}" class="btn btn-ghost">Clear</a>
@@ -31,52 +31,78 @@
       <thead>
         <tr>
           <th>Company Name</th>
-          <th>PAN / VAT</th>
+          <th>VAT / PAN</th>
           <th>Phone</th>
-          <th>Email</th>
           <th>Address</th>
-          <th>Status</th>
+          <th>Workspace Context</th>
           <th style="text-align:right;">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for c in companies %}
         <tr>
-          <td style="font-weight:600;">
-            {{ c.company_name }}
-            {% if request.user.active_company_id == c.id %}
-              <span class="badge badge-success" style="margin-left:6px;">Active</span>
-            {% endif %}
+          <td>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg, #2563eb, #1d4ed8); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;">
+                {{ c.company_name|slice:":2"|upper }}
+              </div>
+              <div>
+                <strong style="color:#0f172a; font-size:14px;">{{ c.company_name }}</strong>
+                {% if request.user.active_company_id == c.id %}
+                  <span class="badge badge-success" style="margin-left:6px; font-size:11px;">Active</span>
+                {% endif %}
+              </div>
+            </div>
           </td>
           <td class="font-mono">{{ c.vat_pan_number|default:"—" }}</td>
           <td>{{ c.company_phone|default:"—" }}</td>
           <td>{{ c.address|default:"—" }}</td>
-          <td>{{ c.address|default:"—" }}</td>
           <td>
-            {% if c.is_active %}
-              <span class="badge badge-success">Active</span>
+            {% if request.user.active_company_id == c.id %}
+              <span class="badge badge-success" style="padding:4px 10px; font-weight:600;">● Current Workspace</span>
             {% else %}
-              <span class="badge badge-danger">Inactive</span>
+              <span class="badge" style="background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; padding:4px 8px;">Available Workspace</span>
             {% endif %}
           </td>
           <td style="text-align:right;">
-            <div style="display:inline-flex; gap:6px;">
+            <div style="display:inline-flex; gap:6px; align-items:center;">
               {% if request.user.active_company_id != c.id %}
-                <a href="{% url 'companies:switch' c.id %}" class="btn btn-ghost btn-sm">Switch</a>
+                <a href="{% url 'companies:switch' c.id %}" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:4px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
+                  Switch
+                </a>
+              {% else %}
+                <span class="badge badge-success" style="padding:6px 10px;">In Use</span>
               {% endif %}
-              <a href="{% url 'companies:edit' c.id %}" class="btn btn-ghost btn-sm">Edit</a>
-              <form method="post" action="{% url 'companies:delete' c.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to deactivate this company?');">
+              <a href="{% url 'companies:edit' c.id %}" class="btn btn-secondary btn-sm">Edit</a>
+              <form method="post" action="{% url 'companies:delete' c.id %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete {{ c.company_name }}?');">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+                <button type="submit" class="btn btn-ghost btn-sm text-danger" style="color:#dc2626;">Delete</button>
               </form>
             </div>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="table-empty">No companies registered</td></tr>
+        <tr><td colspan="6" class="table-empty" style="text-align:center; padding:32px; color:#64748b;">No companies registered</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; flex-wrap:wrap; gap:12px;">
+    <div style="font-size:13px; color:#64748b;">
+      Showing page <strong style="color:#0f172a;">{{ page_obj.number }}</strong> of <strong style="color:#0f172a;">{{ page_obj.paginator.num_pages }}</strong> ({{ page_obj.paginator.count }} companies)
+    </div>
+    <div style="display:flex; gap:8px;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}" class="btn btn-secondary btn-sm">← Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ search_query }}" class="btn btn-secondary btn-sm">Next →</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

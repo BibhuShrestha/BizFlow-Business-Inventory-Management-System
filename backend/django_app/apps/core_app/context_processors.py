@@ -19,7 +19,8 @@ def active_company(request):
 
     if user and user.is_authenticated:
         try:
-            user_comps = list(user.companies.filter(is_active=True))
+            from apps.companies.models import Company
+            user_comps = list(Company.objects.all().order_by("company_name"))
         except Exception:
             user_comps = []
         try:

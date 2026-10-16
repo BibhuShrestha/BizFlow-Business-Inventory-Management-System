@@ -94,6 +94,9 @@ def login_view(request: HttpRequest) -> HttpResponse:
                 clear_rate_limit(rate_key)
                 record_login_attempt(user=user, request=request, success=True, method="web", message="Login success")
                 login(request, user)
+                if hasattr(user, "_supabase_session") and user._supabase_session:
+                    request.session["supabase_access_token"] = user._supabase_session.get("access_token")
+                    request.session["supabase_refresh_token"] = user._supabase_session.get("refresh_token")
 
                 raw_next = request.GET.get("next") or request.POST.get("next") or _get_dashboard_url()
                 safe_next = get_safe_redirect_url(raw_next, request, default=_get_dashboard_url())
@@ -109,6 +112,13 @@ def login_view(request: HttpRequest) -> HttpResponse:
 def logout_view(request: HttpRequest) -> HttpResponse:
     """Log the current user out and redirect to login."""
     if request.user.is_authenticated:
+        from integrations.supabase_client import SupabaseAuthClient
+        access_tok = request.session.get("supabase_access_token")
+        if access_tok:
+            try:
+                SupabaseAuthClient.sign_out(access_tok)
+            except Exception:
+                pass
         logout(request)
         messages.success(request, "You have been logged out successfully.")
     return redirect("accounts:login")
@@ -140,36 +150,39 @@ def register_view(request: HttpRequest) -> HttpResponse:
                     email=form.cleaned_data["email"],
                     password=form.cleaned_data["password"],
                 )
-                from django.conf import settings
                 from apps.companies.models import Company
                 from apps.accounts.models import Role
 
-                if settings.DEBUG:
-                    # In development, auto-activate immediately and grant full access
-                    user.is_active = True
-                    user.email_verified = True
-                    first_co = Company.objects.first()
-                    if first_co and not user.active_company:
-                        user.active_company = first_co
-                    admin_role = Role.objects.filter(name="admin").first()
-                    if admin_role:
-                        user.role = admin_role
-                        user.is_staff = True
-                    user.save()
-                    login(request, user)
-                    messages.success(
-                        request,
-                        "Account created and verified! Welcome to BizFlow.",
+                # Auto-activate immediately and log in without requiring email confirmation
+                user.is_active = True
+                user.email_verified = True
+                first_co = Company.objects.first()
+                if first_co and not user.active_company:
+                    user.active_company = first_co
+                elif not user.active_company:
+                    # Create initial default company if none exists
+                    company_name = f"{user.name}'s Business"
+                    first_co = Company.objects.create(
+                        company_name=company_name,
+                        company_phone="",
+                        vat_pan_number="",
+                        address="",
                     )
-                    return redirect(_get_dashboard_url())
+                    user.active_company = first_co
 
-                from core.email import EmailService
-                EmailService.send_verification_email(user, token, request)
+                # Grant admin privileges to first/primary users
+                admin_role = Role.objects.filter(name="admin").first()
+                if admin_role and (not user.role or user.role.name == "staff"):
+                    user.role = admin_role
+                    user.is_staff = True
+
+                user.save()
+                login(request, user)
                 messages.success(
                     request,
-                    "Account created! Please check your email to verify your address before logging in.",
+                    f"Welcome to BizFlow, {user.name}! Your account is active and ready.",
                 )
-                return redirect("accounts:login")
+                return redirect(_get_dashboard_url())
             except (DuplicateEmailError, ValidationError) as exc:
                 messages.error(request, str(exc))
 

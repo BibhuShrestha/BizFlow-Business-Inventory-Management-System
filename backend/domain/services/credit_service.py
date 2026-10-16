@@ -102,6 +102,12 @@ class CreditService:
 
         inv_num = SaleService.generate_invoice_number()
         target_date = sale_date or timezone.now()
+        if target_date:
+            import datetime as dt_mod
+            if isinstance(target_date, dt_mod.date) and not isinstance(target_date, dt_mod.datetime):
+                target_date = timezone.make_aware(dt_mod.datetime.combine(target_date, timezone.now().time()))
+            elif isinstance(target_date, dt_mod.datetime) and timezone.is_naive(target_date):
+                target_date = timezone.make_aware(target_date)
 
         sale = Sale.objects.create(
             invoice_number=inv_num,
@@ -227,6 +233,12 @@ class CreditService:
 
         po_num = PurchaseService.generate_purchase_number()
         target_date = purchase_date or timezone.now()
+        if target_date:
+            import datetime as dt_mod
+            if isinstance(target_date, dt_mod.date) and not isinstance(target_date, dt_mod.datetime):
+                target_date = timezone.make_aware(dt_mod.datetime.combine(target_date, timezone.now().time()))
+            elif isinstance(target_date, dt_mod.datetime) and timezone.is_naive(target_date):
+                target_date = timezone.make_aware(target_date)
 
         purchase = Purchase.objects.create(
             purchase_number=po_num,
@@ -345,6 +357,12 @@ class CreditService:
             raise ValidationError("Payment amount must be greater than zero.")
 
         target_date = payment_date or timezone.now()
+        if target_date:
+            import datetime as dt_mod
+            if isinstance(target_date, dt_mod.date) and not isinstance(target_date, dt_mod.datetime):
+                target_date = timezone.make_aware(dt_mod.datetime.combine(target_date, timezone.now().time()))
+            elif isinstance(target_date, dt_mod.datetime) and timezone.is_naive(target_date):
+                target_date = timezone.make_aware(target_date)
 
         if credit_type.lower() in ("given", "sale", "receivable"):
             try:

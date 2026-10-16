@@ -60,6 +60,21 @@ def index(request: HttpRequest) -> HttpResponse:
 
     # Metrics
     todays_sales = sales_qs.filter(sale_date__date=today).count()
+    todays_sales_amount = sales_qs.filter(sale_date__date=today).aggregate(t=Sum("total"))["t"] or Decimal("0.00")
+    yesterday = today - timezone.timedelta(days=1)
+    yesterday_sales_amount = sales_qs.filter(sale_date__date=yesterday).aggregate(t=Sum("total"))["t"] or Decimal("0.00")
+
+    if yesterday_sales_amount > Decimal("0.00"):
+        diff = ((todays_sales_amount - yesterday_sales_amount) / yesterday_sales_amount) * 100
+        sales_change_pct = round(abs(diff), 1)
+        sales_trend = "up" if diff >= 0 else "down"
+    elif todays_sales_amount > Decimal("0.00"):
+        sales_change_pct = Decimal("100.0")
+        sales_trend = "up"
+    else:
+        sales_change_pct = Decimal("0.0")
+        sales_trend = "up"
+
     todays_purchases = purchases_qs.filter(purchase_date__date=today).count()
     total_products = products_qs.count()
     low_stock = StockService.low_stock_products(company_id=company_id).count()
@@ -73,6 +88,82 @@ def index(request: HttpRequest) -> HttpResponse:
     total_purchases_amount = purchases_qs.aggregate(t=Sum("total"))["t"] or Decimal("0.00")
     total_expenses_amount = expenses_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0.00")
     net_profit = total_sales_amount - total_purchases_amount - total_expenses_amount
+
+    # Stock valuation
+    from django.db.models import F
+    stock_val_agg = products_qs.annotate(item_val=F("purchase_price") * F("current_stock")).aggregate(t=Sum("item_val"))
+    total_stock_value = stock_val_agg.get("t") or Decimal("0.00")
+
+    # 7-day Sales Overview chart series
+    sales_chart_days = []
+    max_chart_val = Decimal("1.00")
+    for i in range(6, -1, -1):
+        d = today - timezone.timedelta(days=i)
+        day_amt = sales_qs.filter(sale_date__date=d).aggregate(t=Sum("total"))["t"] or Decimal("0.00")
+        if day_amt > max_chart_val:
+            max_chart_val = day_amt
+        sales_chart_days.append({
+            "day": d.strftime("%a"),
+            "date": d.strftime("%d %b"),
+            "amount": float(day_amt),
+            "is_today": (d == today),
+            "is_peak": False,
+            "height_pct": 18,
+        })
+
+    # Identify peak day
+    peak_idx = -1
+    highest_amt = -1.0
+    for idx, item in enumerate(sales_chart_days):
+        if item["amount"] > highest_amt:
+            highest_amt = item["amount"]
+            peak_idx = idx
+    if peak_idx >= 0 and highest_amt > 0:
+        sales_chart_days[peak_idx]["is_peak"] = True
+
+    for item in sales_chart_days:
+        amt_dec = Decimal(str(item["amount"]))
+        if max_chart_val > Decimal("0.00") and amt_dec > Decimal("0.00"):
+            item["height_pct"] = max(18, min(95, int((amt_dec / max_chart_val) * 100)))
+        else:
+            item["height_pct"] = 18
+
+    # Cash flow calculations
+    cash_in = total_sales_amount
+    cash_out = total_purchases_amount + total_expenses_amount
+    net_cash_flow = cash_in - cash_out
+    total_cash_vol = cash_in + cash_out
+    inflow_pct = int((cash_in / total_cash_vol) * 100) if total_cash_vol > Decimal("0.00") else 58
+    outflow_pct = 100 - inflow_pct
+
+    # Low stock items list with progress bar tracks
+    low_stock_products_qs = StockService.low_stock_products(company_id=company_id)[:4]
+    low_stock_items = []
+    for p in low_stock_products_qs:
+        min_qty = getattr(p, "minimum_stock", 10) or 10
+        qty = getattr(p, "current_stock", 0)
+        pct = max(8, min(100, int((qty / min_qty) * 100))) if min_qty > 0 else 8
+        low_stock_items.append({
+            "id": p.id,
+            "name": p.name,
+            "sku": getattr(p, "sku", "") or f"SKU-{p.id}",
+            "stock": qty,
+            "minimum": min_qty,
+            "percent": pct,
+            "critical": qty <= (min_qty / 2),
+        })
+
+    # Greeting & Calendar
+    now_local = timezone.localtime()
+    hour = now_local.hour
+    greeting = "Good morning" if hour < 12 else ("Good afternoon" if hour < 17 else "Good evening")
+    today_long_str = now_local.strftime("%A, %d %B")
+
+    try:
+        bs_today = NepaliDateService.today_bs()
+        nepali_date_str = f"{bs_today.day} {bs_today.strftime('%B')} {bs_today.year}"
+    except Exception:
+        nepali_date_str = "Bikram Sambat"
 
     # Receivables & Payables summary
     credit_summary = CreditService.get_credit_summary(company_id=company_id)
@@ -93,11 +184,16 @@ def index(request: HttpRequest) -> HttpResponse:
 
     context = {
         "todays_sales": todays_sales,
+        "todays_sales_amount": todays_sales_amount,
+        "yesterday_sales_amount": yesterday_sales_amount,
+        "sales_change_pct": sales_change_pct,
+        "sales_trend": sales_trend,
         "todays_purchases": todays_purchases,
         "total_products": total_products,
         "product_count": total_products,
         "low_stock": low_stock,
         "low_stock_count": low_stock,
+        "low_stock_items": low_stock_items,
         "out_of_stock": out_of_stock,
         "out_of_stock_count": out_of_stock,
         "customers": customers_count,
@@ -109,7 +205,17 @@ def index(request: HttpRequest) -> HttpResponse:
         "total_purchases_amount": total_purchases_amount,
         "total_expenses": total_expenses_amount,
         "total_expenses_amount": total_expenses_amount,
+        "total_stock_value": total_stock_value,
         "net_profit": net_profit,
+        "sales_chart_days": sales_chart_days,
+        "cash_in": cash_in,
+        "cash_out": cash_out,
+        "net_cash_flow": net_cash_flow,
+        "inflow_pct": inflow_pct,
+        "outflow_pct": outflow_pct,
+        "greeting": greeting,
+        "today_long_str": today_long_str,
+        "nepali_date_str": nepali_date_str,
         "credit_summary": credit_summary,
         "business_alerts": business_alerts,
         "popups": popups,

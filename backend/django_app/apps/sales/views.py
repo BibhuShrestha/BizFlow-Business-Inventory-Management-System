@@ -31,7 +31,7 @@ def sale_list(request: HttpRequest) -> HttpResponse:
     date_to = request.GET.get("date_to", "").strip()
 
     query = Sale.objects.select_related("customer", "company").filter(is_active=True)
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         query = query.filter(company=request.user.active_company)
 
     if search:
@@ -65,7 +65,7 @@ def sale_list(request: HttpRequest) -> HttpResponse:
 def export_csv(request: HttpRequest) -> HttpResponse:
     """Export all sales invoices to CSV."""
     query = Sale.objects.select_related("customer", "company").filter(is_active=True)
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         query = query.filter(company=request.user.active_company)
     sales = query.order_by("-sale_date")
     headers = ["Invoice #", "Bill #", "Date", "Customer", "Subtotal", "Discount", "Tax", "Total", "Payment Status", "Payment Method"]
@@ -92,7 +92,7 @@ def export_csv(request: HttpRequest) -> HttpResponse:
 def export_excel(request: HttpRequest) -> HttpResponse:
     """Export all sales invoices to Excel (.xlsx)."""
     query = Sale.objects.select_related("customer", "company").filter(is_active=True)
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         query = query.filter(company=request.user.active_company)
     sales = query.order_by("-sale_date")
     headers = ["Invoice #", "Bill #", "Date", "Customer", "Subtotal", "Discount", "Tax", "Total", "Payment Status", "Payment Method"]
@@ -221,7 +221,7 @@ def sale_create(request: HttpRequest) -> HttpResponse:
 def sale_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """View sale invoice details with print-ready formatting."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     sale = get_object_or_404(Sale.objects.select_related("customer", "company").prefetch_related("items__product"), **kwargs)
     return render(request, "sales/sale_detail.html", {"sale": sale})
@@ -233,7 +233,7 @@ def sale_detail(request: HttpRequest, pk: int) -> HttpResponse:
 def sale_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Cancel/delete a sale invoice and restore stock atomically."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     sale = get_object_or_404(Sale.objects.prefetch_related("items__product"), **kwargs)
     inv_num = sale.bill_number or sale.invoice_number

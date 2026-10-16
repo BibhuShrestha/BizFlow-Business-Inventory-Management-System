@@ -69,8 +69,8 @@
           <div class="form-section-body">
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:16px;">
               <div class="form-group" style="margin-bottom:0;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <label class="form-label" style="margin-bottom:0;" for="id_customer">Customer <span class="required">*</span></label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_customer">Customer <span class="required">*</span></label>
                   <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-customer')">+ New Customer</button>
                 </div>
                 {{ form.customer }}
@@ -79,8 +79,8 @@
               </div>
 
               <div class="form-group" style="margin-bottom:0;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <label class="form-label" style="margin-bottom:0;" for="id_company">Company</label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_company">Company</label>
                   <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-company')">+ New Company</button>
                 </div>
                 {{ form.company }}
@@ -89,14 +89,19 @@
               </div>
 
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" for="id_bill_number">Bill / Slip Number (Optional)</label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_bill_number">Bill / Slip Number (Optional)</label>
+                </div>
                 {{ form.bill_number }}
                 {% if form.bill_number.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.bill_number.errors }}</div>{% endif %}
                 <span class="form-hint">Paper slip or POS receipt ref.</span>
               </div>
 
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" for="id_sale_date">Invoice Date <span class="required">*</span></label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_sale_date">Invoice Date <span class="required">*</span></label>
+                  <div class="date-header-slot"></div>
+                </div>
                 {{ form.sale_date }}
                 {% if form.sale_date.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.sale_date.errors }}</div>{% endif %}
                 <span class="form-hint">Transaction recording date.</span>
@@ -119,8 +124,8 @@
           <div class="form-section-body">
             <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:16px; align-items:flex-start;">
               <div class="form-group" style="margin-bottom:0;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                  <label class="form-label" style="margin-bottom:0;" for="id_product">Product / Item <span class="required">*</span></label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_product">Product / Item <span class="required">*</span></label>
                   <button type="button" class="btn-inline-add" onclick="openQuickModal('modal-add-product')">+ New Product</button>
                 </div>
                 {{ form.product }}
@@ -129,21 +134,27 @@
               </div>
 
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" for="id_quantity">Quantity <span class="required">*</span></label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_quantity">Quantity <span class="required">*</span></label>
+                </div>
                 {{ form.quantity }}
                 {% if form.quantity.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.quantity.errors }}</div>{% endif %}
                 <span class="form-hint">Units sold.</span>
               </div>
 
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" for="id_unit_price">Unit Price (Rs.)</label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_unit_price">Unit Price (Rs.)</label>
+                </div>
                 {{ form.unit_price }}
                 {% if form.unit_price.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.unit_price.errors }}</div>{% endif %}
                 <span class="form-hint">Leave blank to auto-fill.</span>
               </div>
 
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" for="id_discount">Discount (Rs.)</label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_discount">Discount (Rs.)</label>
+                </div>
                 {{ form.discount }}
                 {% if form.discount.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.discount.errors }}</div>{% endif %}
                 <span class="form-hint">Item discount.</span>
@@ -166,17 +177,24 @@
           <div class="form-section-body">
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-bottom:18px;">
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" for="id_payment_method">Payment Method</label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_payment_method">Payment Method</label>
+                </div>
                 {{ form.payment_method }}
                 <span class="form-hint">e.g. Cash, Card, QR, Cheque, Credit.</span>
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" for="id_payment_status">Payment Status</label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_payment_status">Payment Status</label>
+                </div>
                 {{ form.payment_status }}
                 <span class="form-hint">Paid in full, Partial, or Due on credit.</span>
               </div>
               <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label" for="id_due_date">Payment Due Date</label>
+                <div class="form-label-row">
+                  <label class="form-label" for="id_due_date">Payment Due Date</label>
+                  <div class="date-header-slot"></div>
+                </div>
                 {{ form.due_date }}
                 {% if form.due_date.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.due_date.errors }}</div>{% endif %}
                 <span class="form-hint">Required for credit sales.</span>

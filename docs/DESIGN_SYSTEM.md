@@ -171,3 +171,65 @@ Inline flash messages with colored left border accent:
 - **Search & Filters**: Search fields have clear submit buttons and a "Clear / Reset" anchor whenever query parameters are active.
 - **Empty States**: If a table has zero records, an empty state clearly communicates the situation and provides an immediate CTA button (e.g. "+ Add Product").
 - **Printing**: Print layout (`@media print`) hides navigation sidebars, headers, and buttons, rendering a clean, professional, computer-generated invoice document.
+
+---
+
+## 7. 5-Star UI/UX Component Specifications (Part 26)
+
+Extracted and standardized from the Figma Make design specifications (`Create Business Inventory Website.make`):
+
+### 7.1 Illuminated Brand Mark & Identity
+- `.brand-mark`: 34×34px rounded badge (`#3B82F6`) with glowing shadow (`0 7px 18px rgba(37, 99, 235, 0.35)`) and 3 vertical white bar indicators (heights 9px, 16px, 12px) symbolizing dynamic inventory motion.
+- Tagline: "Business, in motion".
+
+### 7.2 Active Company Switcher Card
+- `.company-switcher`: Elevated drawer card (`rgba(255, 255, 255, 0.06)`) displaying:
+  - 32×32px company monogram logo (`.company-logo`) with 2-letter uppercase initials.
+  - "CURRENT COMPANY" tracking label with active enterprise name.
+  - Chevron dropdown indicator for instant tenant switching.
+
+### 7.3 Omnipresent Topbar Ergonomics
+- `.global-search`: Keyboard-accelerated global input (`Ctrl+K` / `⌘K`) for searching invoices, products, and parties.
+- `.date-chip`: Dual Bikram Sambat (BS) and Gregorian (AD) calendar pill (e.g., `27 Ashwin 2083 | 13 Oct 2026`).
+- `.notification-wrap` & `.notification-panel`: Interactive dropdown center with categorized priority alerts (`danger`, `warning`, `info`) and "Mark all read" action.
+
+### 7.4 4-Metric Executive KPI Cards
+- `.metrics-grid` & `.metric-card`: 4 cards displaying Today's Sales, Receivables (Dr), Total Purchases / Payables (Cr), and Net Profit / Inventory Stock Value with:
+  - Tinted icon badges (`.metric-icon.blue`, `.metric-icon.amber`, `.metric-icon.violet`, `.metric-icon.green`).
+  - Trend percentages vs yesterday/month (`.trend.up`, `.trend.down`).
+  - Secondary operational context tags.
+
+### 7.5 Sales Overview & Dynamic Revenue Chart
+- `.revenue-panel`: 7-day revenue overview with:
+  - Segmented period filter (`7 days`, `30 days`, `3 months`).
+  - Total revenue callout and percentage comparison.
+  - Responsive pure CSS bar chart (`.bar-chart`, `.bar-column`, `.bar`) with peak day highlight and tooltip badge.
+
+### 7.6 Cash Flow Visualization
+- `.cashflow-panel`: Conic donut gauge (`.donut`) rendering real-time cash inflow vs outflow proportion with center net cashflow figure and operational health advisory note (`.cashflow-note`).
+
+### 7.7 Invoices Toolbar & Stock Alerts
+- Recent Invoices table with real-time text filter and party initials badge (`.party span`).
+- Stock Alerts panel with visual progress tracks (`.stock-track i`) indicating remaining stock relative to safety reorder thresholds.
+
+### 7.8 Keyboard Shortcut Tokens (`<kbd>`) & Cashier Rapid-Entry Ergonomics
+- **Visual Key Badges (`kbd`)**: Standardized `<kbd>` typography tags featuring high-contrast rounded badges:
+  - Font: Monospace (`'JetBrains Mono', 'Courier New', monospace`), 10px–11px, bold.
+  - Border: Subtle 1px elevation border (`#cbd5e1` or `rgba(255,255,255,0.2)` on dark surfaces).
+  - Background: Crisp neutral background (`#f1f5f9` on light, translucent on dark headers).
+  - Placement: Inline on action CTA buttons (`Create Invoice <kbd>N</kbd>`) and form helper tips (`Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save anytime`).
+- **Global Event Manager**: Built-in keydown interceptor in `base.html` that handles:
+  - Accelerators: <kbd>Ctrl</kbd> + <kbd>K</kbd> (Search), <kbd>N</kbd> (Sale), <kbd>P</kbd> (Purchase), <kbd>I</kbd> (Product), <kbd>C</kbd> (Customer), <kbd>W</kbd> (Workspace), <kbd>D</kbd> (Dashboard), <kbd>?</kbd> (Cheatsheet), <kbd>Ctrl+Enter</kbd> (Save), <kbd>Esc</kbd> (Dismiss).
+  - Input field isolation: Automatically disables single-key triggers when focus is within `input`, `textarea`, `select`, or `contenteditable` elements.
+
+### 7.9 Interactive Workspace Switcher & Help Modal
+- **Workspace Switcher Dropdown (`#company-dropdown-menu`)**:
+  - Attached to the sidebar company card (`.company-switcher`).
+  - Renders user companies dynamically via `user_companies` context processor.
+  - Highlights active company with blue indicator (`#60a5fa`) and provides direct navigation link to switch active tenant.
+- **Shortcuts Cheatsheet Modal (`#bizflow-shortcuts-modal`)**:
+  - Backdrop blur modal (`rgba(15,23,42,0.65)` with `backdrop-filter: blur(4px)`).
+  - Two-column grid grouping shortcuts into Quick Transactions, Navigation & Search, and Forms & Dialogs.
+  - Accessible via <kbd>?</kbd> or topbar help trigger, dismissible via <kbd>Esc</kbd> or backdrop click.
+
+

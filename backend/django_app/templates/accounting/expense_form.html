@@ -3,46 +3,233 @@
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="page-header"><h1 class="page-title">{{ title }}</h1></div>
-<div class="card" style="max-width: 600px;">
-  <form method="post" style="padding: 24px;">
-    {% csrf_token %}
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Expense Title *</label>
-      {{ form.title }}
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+  <div>
+    <div style="font-size:12px; color:#64748B; margin-bottom:4px;">
+      <a href="{% url 'expenses:list' %}" style="color:#2563EB; text-decoration:none;">Expenses</a> / {{ title }}
     </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-      <div class="form-group">
-        <label class="form-label">Category *</label>
-        {{ form.category }}
-      </div>
-      <div class="form-group">
-        <label class="form-label">Amount *</label>
-        {{ form.amount }}
-      </div>
-    </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-      <div class="form-group">
-        <label class="form-label">Expense Date *</label>
-        {{ form.expense_date }}
-      </div>
-      <div class="form-group">
-        <label class="form-label">Payment Method</label>
-        {{ form.payment_method }}
-      </div>
-    </div>
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Payee / Vendor</label>
-      {{ form.payee }}
-    </div>
-    <div class="form-group" style="margin-bottom:24px;">
-      <label class="form-label">Notes / Description</label>
-      {{ form.notes }}
-    </div>
-    <div style="display:flex; gap:12px;">
-      <button type="submit" class="btn btn-primary">Save Expense</button>
-      <a href="{% url 'expenses:list' %}" class="btn btn-secondary">Cancel</a>
-    </div>
-  </form>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Log business overhead, utility bills, salary disbursements, and operational payments.</p>
+  </div>
+  <div style="display:flex; gap:10px;">
+    <a href="{% url 'expenses:list' %}" class="btn btn-secondary">Cancel</a>
+    <button type="button" class="btn btn-primary" onclick="document.getElementById('expenseForm').submit();">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+      Save Expense
+    </button>
+  </div>
 </div>
+
+<!-- 2-Column Responsive Layout -->
+<div class="form-two-col-layout" style="display:grid; grid-template-columns: minmax(0, 1fr) 340px; gap:24px; align-items:start;">
+  <!-- Left Column: Form Card -->
+  <div>
+    <form method="post" id="expenseForm">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger" style="margin-bottom:20px;">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="card" style="padding:24px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; padding-bottom:14px; margin-bottom:20px;">
+          <div>
+            <h2 style="font-size:16px; font-weight:700; color:#0F172A; margin:0; display:flex; align-items:center; gap:8px;">
+              <span>💸</span> Expense Classification & Amount
+            </h2>
+            <p style="font-size:12px; color:#64748B; margin:2px 0 0;">Specify category, disbursement sum, transaction date, and payment mode.</p>
+          </div>
+          <span style="font-size:11px; background:#EFF6FF; color:#1D4ED8; font-weight:600; padding:2px 8px; border-radius:4px;">Accounting</span>
+        </div>
+
+        <!-- Quick Category Select Pills -->
+        <div style="margin-bottom:20px;">
+          <span style="font-size:11.5px; font-weight:600; color:#475569; text-transform:uppercase; letter-spacing:0.04em;">Quick Category Select:</span>
+          <div class="category-quick-pills">
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Rent')">🏢 Rent</button>
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Electricity & Utilities')">💡 Utilities</button>
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Staff Salary & Wages')">👥 Salaries</button>
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Office Supplies')">📦 Supplies</button>
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Travel & Transport')">🚗 Travel</button>
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Repairs & Maintenance')">🛠️ Maintenance</button>
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Marketing & Advertising')">📢 Marketing</button>
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Food & Refreshments')">☕ Refreshments</button>
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Internet & Telecom')">🌐 Internet</button>
+            <button type="button" class="cat-pill-btn" onclick="selectQuickCategory('Government & Taxes')">🏛️ Taxes / Fees</button>
+          </div>
+        </div>
+
+        <!-- Row 1: Category & Amount -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:18px; margin-bottom:18px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <div class="form-label-row">
+              <label class="form-label" for="id_category">Category <span class="required" style="color:#DC2626;">*</span></label>
+            </div>
+            {{ form.category }}
+            {% if form.category.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.category.errors }}</div>{% endif %}
+            <span class="form-hint" style="font-size:11.5px; color:#64748B; margin-top:4px; display:block;">Select or type expense category.</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <div class="form-label-row">
+              <label class="form-label" for="id_amount">Amount (Rs.) <span class="required" style="color:#DC2626;">*</span></label>
+            </div>
+            {{ form.amount }}
+            {% if form.amount.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.amount.errors }}</div>{% endif %}
+            <span class="form-hint" style="font-size:11.5px; color:#64748B; margin-top:4px; display:block;">Gross amount paid in Nepali Rupees.</span>
+          </div>
+        </div>
+
+        <!-- Row 2: Expense Date & Payment Method (Aligned horizontally!) -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:18px; margin-bottom:18px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <div class="form-label-row">
+              <label class="form-label" for="id_expense_date">Expense Date <span class="required" style="color:#DC2626;">*</span></label>
+              <div class="date-header-slot"></div>
+            </div>
+            {{ form.expense_date }}
+            {% if form.expense_date.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.expense_date.errors }}</div>{% endif %}
+            <span class="form-hint" style="font-size:11.5px; color:#64748B; margin-top:4px; display:block;">Date transaction occurred.</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <div class="form-label-row">
+              <label class="form-label" for="id_payment_method">Payment Method</label>
+            </div>
+            {{ form.payment_method }}
+            {% if form.payment_method.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.payment_method.errors }}</div>{% endif %}
+            <span class="form-hint" style="font-size:11.5px; color:#64748B; margin-top:4px; display:block;">Disbursement channel used.</span>
+          </div>
+        </div>
+
+        <!-- Row 3: Reference & Description -->
+        <div style="display:grid; grid-template-columns: 1fr; gap:18px; margin-bottom:20px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <div class="form-label-row">
+              <label class="form-label" for="id_reference">Payee / Voucher Reference (Optional)</label>
+            </div>
+            {{ form.reference }}
+            {% if form.reference.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.reference.errors }}</div>{% endif %}
+            <span class="form-hint" style="font-size:11.5px; color:#64748B; margin-top:4px; display:block;">Person paid, bill receipt number, or cheque ref.</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <div class="form-label-row">
+              <label class="form-label" for="id_description">Notes / Purpose Description</label>
+            </div>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="text-danger" style="font-size:12px; margin-top:4px;">{{ form.description.errors }}</div>{% endif %}
+            <span class="form-hint" style="font-size:11.5px; color:#64748B; margin-top:4px; display:block;">Detailed remarks for internal bookkeeping and audit trail.</span>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #E2E8F0; padding-top:16px;">
+          <small style="color:#64748B;">Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save anytime</small>
+          <div style="display:flex; gap:10px;">
+            <a href="{% url 'expenses:list' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Expense</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Right Column: Live Sticky Summary -->
+  <div style="position:sticky; top:24px;">
+    <div class="card" style="padding:22px; border:1px solid #BFDBFE; background:#F8FAFC; box-shadow:0 4px 12px rgba(37,99,235,0.06); margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #E2E8F0; padding-bottom:10px;">
+        <span style="font-size:11.5px; font-weight:700; text-transform:uppercase; color:#2563EB; letter-spacing:0.04em;">Expense Preview</span>
+        <span class="badge" id="preview-category-badge" style="background:#EFF6FF; color:#1D4ED8; font-size:11px; padding:2px 7px;">General</span>
+      </div>
+
+      <div style="text-align:center; padding:12px 0 16px;">
+        <span style="font-size:12px; color:#64748B; display:block; margin-bottom:4px;">Total Expenditure</span>
+        <div class="font-mono" id="preview-amount" style="font-size:28px; font-weight:800; color:#0F172A; letter-spacing:-0.03em;">
+          Rs. 0.00
+        </div>
+        <span id="preview-method-badge" style="font-size:11.5px; color:#475569; margin-top:4px; display:inline-block;">Method: Cash</span>
+      </div>
+
+      <div style="background:#FFFFFF; border-radius:8px; border:1px solid #E2E8F0; padding:12px; margin-bottom:16px; font-size:12px; color:#475569;">
+        <div style="display:flex; align-items:center; gap:6px; font-weight:600; color:#0F172A; margin-bottom:4px;">
+          <span>📊</span> Financial Impact
+        </div>
+        Recorded immediately under operating expenses, deducted from gross profit in P&L, and logged as cash/bank outflow.
+      </div>
+
+      <button type="button" class="btn btn-primary btn-block" style="width:100%; padding:10px;" onclick="document.getElementById('expenseForm').submit();">
+        Save Expense Record
+      </button>
+      <div style="text-align:center; margin-top:8px;">
+        <small style="font-size:11px; color:#64748B;">Keyboard: <kbd>Ctrl</kbd> + <kbd>Enter</kbd></small>
+      </div>
+    </div>
+
+    <!-- Helpful Tips -->
+    <div class="card" style="padding:16px 18px; font-size:12px; color:#64748B;">
+      <strong style="color:#0F172A; display:block; margin-bottom:6px;">💡 Expense Best Practices</strong>
+      <ul style="margin:0; padding-left:18px; line-height:1.6;">
+        <li>Keep receipts and attach voucher reference numbers for tax auditing.</li>
+        <li>Categorize accurately to keep monthly Profit & Loss statements meaningful.</li>
+        <li>Payments by Bank or Cheque can be matched during bank reconciliations.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  function selectQuickCategory(catName) {
+    var catInput = document.getElementById('id_category');
+    if (catInput) {
+      catInput.value = catName;
+      catInput.dispatchEvent(new Event('input', { bubbles: true }));
+      catInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    // Update active pill styling
+    document.querySelectorAll('.cat-pill-btn').forEach(function(btn) {
+      if (btn.textContent.indexOf(catName) !== -1) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+  // Live synchronizer for amount and category preview
+  document.addEventListener('DOMContentLoaded', function() {
+    var amountInput = document.getElementById('id_amount');
+    var catInput = document.getElementById('id_category');
+    var methodInput = document.getElementById('id_payment_method');
+    var previewAmount = document.getElementById('preview-amount');
+    var previewCat = document.getElementById('preview-category-badge');
+    var previewMethod = document.getElementById('preview-method-badge');
+
+    function updatePreview() {
+      if (amountInput && previewAmount) {
+        var val = parseFloat(amountInput.value) || 0;
+        previewAmount.textContent = 'Rs. ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      if (catInput && previewCat) {
+        previewCat.textContent = catInput.value.trim() || 'General';
+      }
+      if (methodInput && previewMethod) {
+        previewMethod.textContent = 'Method: ' + methodInput.value;
+      }
+    }
+
+    if (amountInput) {
+      amountInput.addEventListener('input', updatePreview);
+      amountInput.addEventListener('change', updatePreview);
+    }
+    if (catInput) {
+      catInput.addEventListener('input', updatePreview);
+      catInput.addEventListener('change', updatePreview);
+    }
+    if (methodInput) {
+      methodInput.addEventListener('change', updatePreview);
+    }
+
+    updatePreview();
+  });
+</script>
 {% endblock %}

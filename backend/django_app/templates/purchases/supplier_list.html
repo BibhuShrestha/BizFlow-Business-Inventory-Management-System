@@ -20,10 +20,10 @@
       <svg class="search-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
-      <input type="text" name="search" value="{{ search|default:search_query }}" placeholder="Search vendor name, phone, PAN..." class="form-control">
+      <input type="text" name="search" value="{{ search }}" placeholder="Search vendor name, phone, PAN..." class="form-control">
     </div>
     <button type="submit" class="btn btn-secondary">Search</button>
-    {% if search or search_query %}<a href="{% url 'suppliers:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
+    {% if search %}<a href="{% url 'suppliers:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
   </form>
 </div>
 
@@ -42,7 +42,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for s in page_obj|default:suppliers %}
+        {% for s in page_obj %}
         <tr>
           <td style="font-weight:600;">
             <a href="{% url 'suppliers:detail' s.id %}" style="display:inline-flex; align-items:center; gap:8px; color:var(--primary);">
@@ -92,10 +92,10 @@
     </span>
     <div style="display:flex; gap:8px;">
       {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}&search={{ search|default:search_query }}" class="btn btn-secondary btn-sm">&laquo; Previous</a>
+        <a href="?page={{ page_obj.previous_page_number }}&search={{ search }}" class="btn btn-secondary btn-sm">&laquo; Previous</a>
       {% endif %}
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}&search={{ search|default:search_query }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
+        <a href="?page={{ page_obj.next_page_number }}&search={{ search }}" class="btn btn-secondary btn-sm">Next &raquo;</a>
       {% endif %}
     </div>
   </div>

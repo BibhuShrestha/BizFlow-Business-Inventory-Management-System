@@ -32,6 +32,7 @@ def customer_list(request: HttpRequest) -> HttpResponse:
     return render(request, "sales/customer_list.html", {
         "page_obj": page_obj,
         "search": search,
+        "search_query": search,
     })
 
 
@@ -81,7 +82,7 @@ def customer_create(request: HttpRequest) -> HttpResponse:
 def customer_edit(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit existing customer."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     customer = get_object_or_404(Customer, **kwargs)
 
@@ -99,7 +100,7 @@ def customer_edit(request: HttpRequest, pk: int) -> HttpResponse:
 def customer_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Deactivate customer."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     customer = get_object_or_404(Customer, **kwargs)
 
@@ -114,7 +115,7 @@ def customer_delete(request: HttpRequest, pk: int) -> HttpResponse:
 def customer_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """View customer ledger and invoice history."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     customer = get_object_or_404(Customer, **kwargs)
     sales = customer.sales.filter(is_active=True).order_by("-sale_date")

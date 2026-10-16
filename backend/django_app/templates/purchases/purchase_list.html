@@ -18,9 +18,9 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
       Export Excel
     </a>
-    <a href="{% url 'purchases:create' %}" class="btn btn-primary btn-sm">
+    <a href="{% url 'purchases:create' %}" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-      Record Purchase
+      Record Purchase <kbd>P</kbd>
     </a>
   </div>
 </div>
@@ -33,13 +33,13 @@
       </svg>
       <input type="text" name="q" value="{{ search_query }}" placeholder="Search PO #, bill #, supplier..." class="form-control">
     </div>
-    <div style="display:flex; align-items:center; gap:6px;">
-      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">From:</span>
-      <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="width:145px;">
+    <div class="filter-date-group">
+      <span class="filter-date-label">From:</span>
+      <input type="date" name="date_from" value="{{ date_from }}" class="form-control filter-date-input">
     </div>
-    <div style="display:flex; align-items:center; gap:6px;">
-      <span style="font-size:12px; font-weight:600; color:var(--text-secondary);">To:</span>
-      <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="width:145px;">
+    <div class="filter-date-group">
+      <span class="filter-date-label">To:</span>
+      <input type="date" name="date_to" value="{{ date_to }}" class="form-control filter-date-input">
     </div>
     <select name="status" class="form-control" style="width:145px;">
       <option value="">All Statuses</option>

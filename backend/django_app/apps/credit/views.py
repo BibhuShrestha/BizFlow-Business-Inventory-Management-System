@@ -34,9 +34,18 @@ def dashboard(request: HttpRequest) -> HttpResponse:
     company_id = getattr(request.user.active_company, "id", None)
     summary = CreditService.get_credit_summary(company_id=company_id)
 
-    recent_given = Sale.objects.select_related("customer").filter(is_active=True).order_by("-sale_date")[:5]
-    recent_taken = Purchase.objects.select_related("supplier").filter(is_active=True).order_by("-purchase_date")[:5]
-    recent_payments = Payment.objects.select_related("customer", "supplier", "sale", "purchase", "created_by").order_by("-payment_date")[:6]
+    recent_given_qs = Sale.objects.select_related("customer").filter(is_active=True).order_by("-sale_date")
+    recent_taken_qs = Purchase.objects.select_related("supplier").filter(is_active=True).order_by("-purchase_date")
+    recent_payments_qs = Payment.objects.select_related("customer", "supplier", "sale", "purchase", "created_by").order_by("-payment_date")
+
+    if company_id:
+        recent_given_qs = recent_given_qs.filter(company_id=company_id)
+        recent_taken_qs = recent_taken_qs.filter(company_id=company_id)
+        recent_payments_qs = recent_payments_qs.filter(Q(sale__company_id=company_id) | Q(purchase__company_id=company_id))
+
+    recent_given = recent_given_qs[:5]
+    recent_taken = recent_taken_qs[:5]
+    recent_payments = recent_payments_qs[:6]
 
     return render(request, "credit/dashboard.html", {
         "summary": summary,
@@ -204,13 +213,17 @@ def credit_create(request: HttpRequest) -> HttpResponse:
 
             company_id = getattr(request.user.active_company, "id", None)
 
+            txn_time = timezone.now().time()
+            combined_dt = datetime.combine(txn_date, txn_time)
+            aware_txn_date = timezone.make_aware(combined_dt) if timezone.is_naive(combined_dt) else combined_dt
+
             try:
                 if credit_type == "given":
                     sale = CreditService.create_credit_given(
                         customer_id=customer.id,
                         items=items,
                         due_date=due_date,
-                        sale_date=datetime.combine(txn_date, datetime.min.time()),
+                        sale_date=aware_txn_date,
                         bill_number=bill_number,
                         discount=discount,
                         initial_paid_amount=initial_paid,
@@ -227,7 +240,7 @@ def credit_create(request: HttpRequest) -> HttpResponse:
                         supplier_id=supplier.id,
                         items=items,
                         due_date=due_date,
-                        purchase_date=datetime.combine(txn_date, datetime.min.time()),
+                        purchase_date=aware_txn_date,
                         bill_number=bill_number,
                         discount=discount,
                         initial_paid_amount=initial_paid,

@@ -11,24 +11,58 @@ from django.views.decorators.http import require_POST
 from apps.accounts.permissions import login_required_custom, admin_required
 from apps.accounts.models import User, Role
 from apps.accounts.user_forms import UserCreateForm, UserEditForm
+from apps.companies.models import Company
 from apps.core_app.pagination import paginate_queryset
 
 
 @login_required_custom
 @admin_required
 def user_list(request: HttpRequest) -> HttpResponse:
-    """List system users with search, role filtering, account status, online presence, and pagination."""
+    """List system users filtered by company with search, role filtering, account status, online presence, and pagination."""
     search = request.GET.get("search", "").strip()
     role_name = request.GET.get("role", "").strip()
     account_status = request.GET.get("status", "").strip().lower()
     online_status = request.GET.get("online", "").strip().lower()
     sort = request.GET.get("sort", "-created_at").strip()
+    company_param = request.GET.get("company", "").strip()
 
     now = timezone.now()
     timeout_minutes = getattr(settings, "USER_ONLINE_TIMEOUT_MINUTES", 15)
     online_threshold = now - timedelta(minutes=timeout_minutes)
 
-    query = User.objects.select_related("role", "active_company").all()
+    companies = Company.objects.all().order_by("company_name")
+    user_active_company = getattr(request.user, "active_company", None)
+
+    # Determine target company filter
+    target_company = None
+    show_all_companies = False
+
+    if company_param == "all" and request.user.is_superuser:
+        show_all_companies = True
+        selected_company = "all"
+    elif company_param.isdigit():
+        target_company = companies.filter(id=int(company_param)).first()
+        selected_company = str(target_company.id) if target_company else ""
+    elif not company_param:
+        if user_active_company:
+            target_company = user_active_company
+            selected_company = str(target_company.id)
+        else:
+            selected_company = "all" if request.user.is_superuser else ""
+    else:
+        selected_company = ""
+
+    query = User.objects.select_related("role", "active_company")
+    stats_query = User.objects.all()
+
+    # Scope users and stats by company unless superuser explicitly views all
+    if not show_all_companies:
+        if target_company:
+            query = query.filter(active_company=target_company)
+            stats_query = stats_query.filter(active_company=target_company)
+        elif not request.user.is_superuser:
+            query = query.none()
+            stats_query = stats_query.none()
 
     # Search filter
     if search:
@@ -70,13 +104,13 @@ def user_list(request: HttpRequest) -> HttpResponse:
     page_obj = paginate_queryset(request, query, per_page=15)
     roles = Role.objects.all().order_by("name")
 
-    # High-level user activity statistics for Admin overview
-    total_users = User.objects.count()
-    online_users = User.objects.filter(last_activity__gte=online_threshold).count()
+    # High-level user activity statistics scoped to the active company / filter
+    total_users = stats_query.count()
+    online_users = stats_query.filter(last_activity__gte=online_threshold).count()
     offline_users = max(0, total_users - online_users)
-    active_accounts = User.objects.filter(is_active=True).count()
-    disabled_accounts = User.objects.filter(is_active=False).count()
-    new_users_30d = User.objects.filter(created_at__gte=now - timedelta(days=30)).count()
+    active_accounts = stats_query.filter(is_active=True).count()
+    disabled_accounts = stats_query.filter(is_active=False).count()
+    new_users_30d = stats_query.filter(created_at__gte=now - timedelta(days=30)).count()
 
     stats = {
         "total_users": total_users,
@@ -96,6 +130,9 @@ def user_list(request: HttpRequest) -> HttpResponse:
         "selected_status": account_status,
         "selected_online": online_status,
         "selected_sort": sort,
+        "selected_company": selected_company,
+        "current_company": target_company,
+        "companies": companies,
         "roles": roles,
         "stats": stats,
     })
@@ -105,7 +142,11 @@ def user_list(request: HttpRequest) -> HttpResponse:
 @admin_required
 def user_create(request: HttpRequest) -> HttpResponse:
     """Create a new user account with strict validation and feedback."""
-    form = UserCreateForm(request.POST or None)
+    initial = {}
+    if getattr(request.user, "active_company", None):
+        initial["active_company"] = request.user.active_company
+
+    form = UserCreateForm(request.POST or None, initial=initial)
     if request.method == "POST":
         if form.is_valid():
             user = form.save()

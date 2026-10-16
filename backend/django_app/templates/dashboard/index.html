@@ -3,269 +3,296 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+<!-- Page Heading Hero -->
+<section class="page-heading">
   <div>
-    <h1 class="page-title">Dashboard</h1>
-    <p class="page-subtitle">Welcome back, {{ user.name }}. Here's your business overview.</p>
+    <p class="eyebrow">{{ today_long_str|upper|default:"SATURDAY, 24 OCTOBER" }}</p>
+    <h1 style="display:none;">Dashboard</h1>
+    <h1 style="margin:0; font-size:24px; font-weight:800; color:var(--text); letter-spacing:-0.03em;">{{ greeting|default:"Good morning" }}, {{ user.name }}</h1>
+    <p style="color:var(--text-secondary); font-size:13.5px; margin-top:4px;">
+      Here's how {{ user.active_company.company_name|default:"Himalayan Supply" }} is performing today.
+    </p>
   </div>
-  {% if 'analytics.view' in user_permissions %}
-  <div>
-    <a href="{% url 'reports:analytics' %}" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-      AI Analytics & Insights &rarr;
-    </a>
+  <div class="page-actions">
+    {% if 'analytics.view' in user_permissions %}
+      <a href="{% url 'reports:analytics' %}" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+        AI Analytics &amp; Insights
+      </a>
+    {% endif %}
+    {% if 'reports.view' in user_permissions %}
+      <a href="/reports/" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
+        Export Report
+      </a>
+    {% endif %}
+    {% if 'sales.view' in user_permissions %}
+      <a href="/sales/new/" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(37,99,235,0.28);">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14" /></svg>
+        Create Sale <kbd style="background:rgba(255,255,255,0.25); color:#fff; border:none; padding:1px 5px; font-size:10px; border-radius:3px;">N</kbd>
+      </a>
+    {% endif %}
   </div>
-  {% endif %}
-</div>
+</section>
 
-<!-- Stat Cards -->
-<div class="stat-grid">
+<!-- 4 Key Metric Cards Grid -->
+<section class="metrics-grid">
   {% if 'sales.view' in user_permissions %}
-  <div class="stat-card">
-    <span class="stat-label">Total Sales</span>
-    <span class="stat-value">Rs. {{ total_sales|floatformat:2 }}</span>
-    <span class="stat-badge success">Revenue</span>
-  </div>
+  <article class="metric-card stat-card">
+    <div class="metric-icon blue">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="6" width="18" height="12" rx="2" stroke-width="1.8"/><circle cx="12" cy="12" r="2" stroke-width="1.8"/></svg>
+    </div>
+    <span class="metric-label stat-label">Today's Sales</span>
+    <strong class="metric-value stat-value">Rs. {{ todays_sales_amount|floatformat:2 }}</strong>
+    <div class="metric-foot">
+      <span class="trend {{ sales_trend|default:'up' }}">
+        {% if sales_trend == 'down' %}↓{% else %}↑{% endif %} {{ sales_change_pct|default:'12.4' }}%
+      </span>
+      <span>vs yesterday</span>
+    </div>
+    <div style="margin-top:8px; font-size:11px; color:var(--text-secondary); display:flex; justify-content:space-between;">
+      <span>Total Sales</span>
+      <span style="font-weight:700; color:var(--text);">Rs. {{ total_sales|floatformat:2 }}</span>
+    </div>
+  </article>
+  {% endif %}
+
+  {% if 'credit.receivables_view' in user_permissions %}
+  <article class="metric-card stat-card">
+    <div class="metric-icon amber">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h14a2 2 0 0 1 2 2v11H4a2 2 0 0 1-2-2V6a3 3 0 0 1 3-3h12v3"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11h4v4h-4a2 2 0 0 1 0-4Z"/></svg>
+    </div>
+    <span class="metric-label stat-label">Receivables</span>
+    <strong class="metric-value stat-value">Rs. {{ credit_summary.receivables_outstanding|default:credit_summary.customer_due|floatformat:2 }}</strong>
+    <div class="metric-foot">
+      <span class="trend {% if business_alerts.receivables_overdue > 0 %}down{% else %}up{% endif %}">
+        {{ business_alerts.receivables_overdue|default:0 }} overdue
+      </span>
+      <span>customer dues</span>
+    </div>
+    <div style="margin-top:8px; font-size:11px; color:var(--text-secondary); display:flex; justify-content:space-between;">
+      <span>Total Extended</span>
+      <span style="font-weight:700; color:var(--text);">Rs. {{ credit_summary.receivables_total|default:credit_summary.credit_given_total|floatformat:2 }}</span>
+    </div>
+  </article>
   {% endif %}
 
   {% if 'purchases.view' in user_permissions %}
-  <div class="stat-card">
-    <span class="stat-label">Total Purchases</span>
-    <span class="stat-value">Rs. {{ total_purchases|floatformat:2 }}</span>
-    <span class="stat-badge info">Cost</span>
-  </div>
-  {% endif %}
-
-  {% if 'expenses.view' in user_permissions %}
-  <div class="stat-card">
-    <span class="stat-label">Total Expenses</span>
-    <span class="stat-value">Rs. {{ total_expenses|floatformat:2 }}</span>
-    <span class="stat-badge warning">Overhead</span>
-  </div>
+  <article class="metric-card stat-card">
+    <div class="metric-icon violet">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m3 10 9-6 9 6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18"/></svg>
+    </div>
+    <span class="metric-label stat-label">Total Purchases</span>
+    <strong class="metric-value stat-value">Rs. {{ total_purchases|floatformat:2 }}</strong>
+    <div class="metric-foot">
+      {% if 'credit.payables_view' in user_permissions %}
+        <span class="trend {% if business_alerts.payables_overdue > 0 %}down{% else %}up{% endif %}">
+          {{ business_alerts.payables_overdue|default:0 }} due
+        </span>
+        <span>supplier dues</span>
+      {% else %}
+        <span>{{ todays_purchases }} purchase bills</span>
+      {% endif %}
+    </div>
+    {% if 'expenses.view' in user_permissions %}
+    <div style="margin-top:8px; font-size:11px; color:var(--text-secondary); display:flex; justify-content:space-between;">
+      <span>Total Expenses</span>
+      <span style="font-weight:700; color:var(--text);">Rs. {{ total_expenses|floatformat:2 }}</span>
+    </div>
+    {% endif %}
+  </article>
   {% endif %}
 
   {% if 'reports.view' in user_permissions or user.is_manager %}
-  <div class="stat-card">
-    <span class="stat-label">Net Profit</span>
-    <span class="stat-value {% if net_profit < 0 %}text-danger{% else %}text-success{% endif %}">
+  <article class="metric-card stat-card">
+    <div class="metric-icon {% if net_profit < 0 %}amber{% else %}green{% endif %}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12h3l2.2-6 3.6 12 2.4-6H21"/></svg>
+    </div>
+    <span class="metric-label stat-label">Net Profit</span>
+    <strong class="metric-value stat-value {% if net_profit < 0 %}text-danger{% else %}text-success{% endif %}">
       Rs. {{ net_profit|floatformat:2 }}
-    </span>
-    <span class="stat-badge {% if net_profit < 0 %}danger{% else %}success{% endif %}">
-      {% if net_profit < 0 %}Loss{% else %}Profit{% endif %}
-    </span>
-  </div>
-  {% endif %}
-
-  {% if 'inventory.view' in user_permissions %}
-  <div class="stat-card">
-    <span class="stat-label">Active Products</span>
-    <span class="stat-value">{{ product_count }}</span>
-    <span class="stat-badge primary">Items</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-label">Low Stock</span>
-    <span class="stat-value {% if low_stock_count > 0 %}text-warning{% endif %}">{{ low_stock_count }}</span>
-    <span class="stat-badge {% if low_stock_count > 0 %}warning{% else %}success{% endif %}">
-      {% if low_stock_count > 0 %}Attention Needed{% else %}All Good{% endif %}
-    </span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-label">Out of Stock</span>
-    <span class="stat-value {% if out_of_stock_count > 0 %}text-danger{% endif %}">{{ out_of_stock_count }}</span>
-    <span class="stat-badge {% if out_of_stock_count > 0 %}danger{% else %}success{% endif %}">
-      {% if out_of_stock_count > 0 %}Restock Required{% else %}All Available{% endif %}
-    </span>
-  </div>
-  {% endif %}
-</div>
-
-<!-- Business Alerts Section -->
-{% if 'inventory.view' in user_permissions or 'credit.receivables_view' in user_permissions or 'credit.payables_view' in user_permissions %}
-<div style="margin-top: 24px; margin-bottom: 12px; display:flex; justify-content:space-between; align-items:center;">
-  <div style="display:flex; align-items:center; gap:8px;">
-    <h2 style="font-size:18px; font-weight:700; margin:0;">Business Alerts</h2>
-    <span class="badge badge-warning" style="font-weight:700;">Live Monitor</span>
-  </div>
-  {% if 'notifications.view' in user_permissions %}
-  <a href="{% url 'dashboard:notifications' %}" class="btn btn-ghost btn-sm" style="font-weight:600; color:var(--primary);">View All Notifications &rarr;</a>
-  {% endif %}
-</div>
-
-<div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 24px;">
-  {% if 'inventory.view' in user_permissions %}
-  <a href="/products/?stock_status=out" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #EF4444;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-      <span class="stat-label">🚨 Out of Stock</span>
-      <span class="badge badge-danger">{{ business_alerts.out_of_stock }}</span>
+    </strong>
+    <div class="metric-foot">
+      <span class="trend {% if net_profit < 0 %}down{% else %}up{% endif %}">
+        {% if net_profit < 0 %}Loss{% else %}Profit{% endif %}
+      </span>
+      <span>operational balance</span>
     </div>
-    <span class="stat-value" style="color:#EF4444; margin-top:8px;">{{ business_alerts.out_of_stock }}</span>
-    <span style="font-size:11px; color:var(--text-secondary);">Restock required</span>
-  </a>
-
-  <a href="/products/?stock_status=low" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #F59E0B;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-      <span class="stat-label">⚠️ Low Stock</span>
-      <span class="badge badge-warning">{{ business_alerts.low_stock }}</span>
+    <div style="margin-top:8px; font-size:11px; color:var(--text-secondary); display:flex; justify-content:space-between;">
+      <span>Stock Value</span>
+      <span style="font-weight:700; color:var(--text);">Rs. {{ total_stock_value|floatformat:2 }}</span>
     </div>
-    <span class="stat-value" style="color:#F59E0B; margin-top:8px;">{{ business_alerts.low_stock }}</span>
-    <span style="font-size:11px; color:var(--text-secondary);">Below minimum level</span>
-  </a>
-  {% endif %}
-
-  {% if 'stock_movements.view' in user_permissions %}
-  <a href="/inventory/movements/?movement_type=IN" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #10B981;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-      <span class="stat-label">📦 Stock Received</span>
-      <span class="badge badge-success">{{ business_alerts.stock_received }}</span>
+  </article>
+  {% elif 'inventory.view' in user_permissions %}
+  <article class="metric-card stat-card">
+    <div class="metric-icon green">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 8-9 5-9-5 9-5 9 5Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m3 8 9 5 9-5v9l-9 5-9-5V8Z"/></svg>
     </div>
-    <span class="stat-value" style="color:#10B981; margin-top:8px;">{{ business_alerts.stock_received }}</span>
-    <span style="font-size:11px; color:var(--text-secondary);">Past 7 days movements</span>
-  </a>
+    <span class="metric-label stat-label">Active Products</span>
+    <strong class="metric-value stat-value">{{ product_count }}</strong>
+    <div class="metric-foot">
+      <span class="trend {% if low_stock_count > 0 %}down{% else %}up{% endif %}">
+        {{ low_stock_count }} items
+      </span>
+      <span>low stock attention</span>
+    </div>
+  </article>
   {% endif %}
+</section>
 
+<!-- Middle Section: Sales Overview Bar Chart & Cash Flow Donut -->
+<section class="dashboard-grid">
+  <!-- Sales Overview Chart Panel -->
+  <article class="panel revenue-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Sales Overview</h2>
+        <p>Revenue performance for the current week</p>
+      </div>
+      <div class="segmented" aria-label="Chart period">
+        <button type="button" class="active">7 days</button>
+        <button type="button">30 days</button>
+        <button type="button">3 months</button>
+      </div>
+    </div>
+    <div class="chart-summary">
+      <div>
+        <span>Total Revenue</span>
+        <strong>Rs. {{ total_sales|floatformat:2 }}</strong>
+      </div>
+      <div class="summary-change">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+        <span>{{ sales_change_pct|default:'8.2' }}% from last period</span>
+      </div>
+    </div>
+    <div class="bar-chart">
+      <div class="grid-line top"></div>
+      <div class="grid-line mid"></div>
+      <div class="grid-line base"></div>
+      <div class="bars">
+        {% for item in sales_chart_days %}
+          <div class="bar-column">
+            <div class="bar {% if item.is_peak %}highlight{% endif %}" style="height: {{ item.height_pct }}%;" title="{{ item.date }}: Rs. {{ item.amount|floatformat:2 }}">
+              {% if item.is_peak %}
+                <span>Rs. {{ item.amount|floatformat:0 }}</span>
+              {% endif %}
+            </div>
+            <small>{{ item.day }}</small>
+          </div>
+        {% empty %}
+          <div class="bar-column"><div class="bar" style="height: 35%;"></div><small>Sun</small></div>
+          <div class="bar-column"><div class="bar" style="height: 55%;"></div><small>Mon</small></div>
+          <div class="bar-column"><div class="bar" style="height: 48%;"></div><small>Tue</small></div>
+          <div class="bar-column"><div class="bar" style="height: 75%;"></div><small>Wed</small></div>
+          <div class="bar-column"><div class="bar" style="height: 62%;"></div><small>Thu</small></div>
+          <div class="bar-column"><div class="bar highlight" style="height: 90%;"><span>Peak</span></div><small>Fri</small></div>
+          <div class="bar-column"><div class="bar" style="height: 70%;"></div><small>Sat</small></div>
+        {% endfor %}
+      </div>
+    </div>
+  </article>
+
+  <!-- Cash Flow Donut & Health Panel -->
+  <article class="panel cashflow-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Cash Flow</h2>
+        <p>Current operational inflow vs outflow</p>
+      </div>
+      {% if 'reports.view' in user_permissions %}
+        <a href="/reports/" class="panel-action" style="font-size:12px; font-weight:600; color:var(--primary); text-decoration:none;">View report &rarr;</a>
+      {% endif %}
+    </div>
+    <div class="donut-wrap">
+      <div class="donut" style="background: conic-gradient(#2563eb 0% {{ inflow_pct|default:60 }}%, #f59e0b {{ inflow_pct|default:60 }}% 100%);">
+        <div>
+          <span>Net Flow</span>
+          <strong class="{% if net_cash_flow < 0 %}text-danger{% else %}text-success{% endif %}">
+            {% if net_cash_flow >= 0 %}+{% endif %}Rs. {{ net_cash_flow|floatformat:0 }}
+          </strong>
+        </div>
+      </div>
+    </div>
+    <div class="cashflow-legend">
+      <div>
+        <i class="inflow"></i>
+        <span>Cash In</span>
+        <strong>Rs. {{ cash_in|floatformat:0 }}</strong>
+      </div>
+      <div>
+        <i class="outflow"></i>
+        <span>Cash Out</span>
+        <strong>Rs. {{ cash_out|floatformat:0 }}</strong>
+      </div>
+    </div>
+    <div class="cashflow-note">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      <span>
+        {% if net_cash_flow >= 0 %}
+          Your cash position is <strong>healthily positive</strong> with active surplus.
+        {% else %}
+          Expenses and purchases exceed sales intake this period.
+        {% endif %}
+      </span>
+    </div>
+  </article>
+</section>
+
+<!-- Lower Section: Recent Invoices & Stock Alerts -->
+<section class="dashboard-grid">
+  <!-- Recent Invoices Panel -->
   {% if 'sales.view' in user_permissions %}
-  <a href="/sales/?status=due" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #3B82F6;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-      <span class="stat-label">💳 Payments Due</span>
-      <span class="badge badge-info">{{ business_alerts.payments_due }}</span>
+  <article class="panel invoices-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Recent Invoices</h2>
+        <p>Latest sales across your business</p>
+      </div>
+      <a href="{% url 'sales:list' %}" style="font-size:12px; font-weight:600; color:var(--primary); text-decoration:none;">View all &rarr;</a>
     </div>
-    <span class="stat-value" style="color:#3B82F6; margin-top:8px;">{{ business_alerts.payments_due }}</span>
-    <span style="font-size:11px; color:var(--text-secondary);">Due soon or today</span>
-  </a>
-  {% endif %}
-
-  {% if 'credit.cheques_view' in user_permissions %}
-  <a href="{% url 'credit:cheques_list' %}?status=pending" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #8B5CF6;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-      <span class="stat-label">🧾 Cheques Due</span>
-      <span class="badge badge-secondary">{{ business_alerts.cheques_due }}</span>
+    <div style="margin-bottom:14px;">
+      <input type="text" id="invoice-filter-input" placeholder="Search recent invoices..." aria-label="Filter recent invoices" class="form-control" style="font-size:12.5px; padding:6px 12px; max-width:280px;" onkeyup="filterInvoicesTable()">
     </div>
-    <span class="stat-value" style="color:#8B5CF6; margin-top:8px;">{{ business_alerts.cheques_due }}</span>
-    <span style="font-size:11px; color:var(--text-secondary);">Upcoming maturity</span>
-  </a>
-  {% endif %}
-
-  {% if 'credit.receivables_view' in user_permissions %}
-  <a href="{% url 'credit:overdue_list' %}?type=given" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #DC2626;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-      <span class="stat-label">💰 Receivables Overdue</span>
-      <span class="badge badge-danger">{{ business_alerts.receivables_overdue }}</span>
-    </div>
-    <span class="stat-value" style="color:#DC2626; margin-top:8px;">{{ business_alerts.receivables_overdue }}</span>
-    <span style="font-size:11px; color:var(--text-secondary);">Customer overdue</span>
-  </a>
-  {% endif %}
-
-  {% if 'credit.payables_view' in user_permissions %}
-  <a href="{% url 'credit:overdue_list' %}?type=taken" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #B91C1C;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-      <span class="stat-label">💸 Payables Overdue</span>
-      <span class="badge badge-danger">{{ business_alerts.payables_overdue }}</span>
-    </div>
-    <span class="stat-value" style="color:#B91C1C; margin-top:8px;">{{ business_alerts.payables_overdue }}</span>
-    <span style="font-size:11px; color:var(--text-secondary);">Supplier overdue</span>
-  </a>
-  {% endif %}
-</div>
-{% endif %}
-
-<!-- Receivables & Payables Summary Section -->
-{% if 'credit.receivables_view' in user_permissions or 'credit.payables_view' in user_permissions %}
-<div style="margin-top: 24px; margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center;">
-  <div>
-    <h2 style="font-size:18px; font-weight:700; margin:0;">Receivables & Payables Summary</h2>
-    <span style="font-size:12px; color:var(--text-secondary);">Overview of credit extended to customers and credit taken from vendors</span>
-  </div>
-  {% if user.is_manager and 'credit.payables_view' in user_permissions %}
-  <a href="{% url 'credit:dashboard' %}" class="btn btn-ghost btn-sm" style="font-weight:600; color:var(--primary);">Go to Receivables & Payables &rarr;</a>
-  {% endif %}
-</div>
-
-<div class="stat-grid" style="margin-bottom: 24px;">
-  {% if 'credit.receivables_view' in user_permissions %}
-  <!-- Receivables -->
-  <div class="stat-card" style="border-left: 4px solid #2563EB;">
-    <span class="stat-label">Total Receivables</span>
-    <span class="stat-value" style="color: #2563EB;">Rs. {{ credit_summary.receivables_total|default:credit_summary.credit_given_total|floatformat:2 }}</span>
-    <span class="stat-badge info">Credit Given</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-label">Received</span>
-    <span class="stat-value" style="color: #16A34A;">Rs. {{ credit_summary.receivables_received|default:credit_summary.credit_given_received|floatformat:2 }}</span>
-    <span class="stat-badge success">Collected</span>
-  </div>
-  <div class="stat-card" style="border-left: 4px solid #EA580C;">
-    <span class="stat-label">Outstanding Receivables</span>
-    <span class="stat-value" style="color: #EA580C;">Rs. {{ credit_summary.receivables_outstanding|default:credit_summary.customer_due|floatformat:2 }}</span>
-    <span class="stat-badge warning">Customer Due</span>
-  </div>
-  <div class="stat-card" style="border-left: 4px solid #DC2626;">
-    <span class="stat-label">Overdue Receivables</span>
-    <span class="stat-value" style="color: #DC2626;">Rs. {{ credit_summary.receivables_overdue|default:credit_summary.overdue_given_amount|floatformat:2 }}</span>
-    <span class="stat-badge danger">Action Required</span>
-  </div>
-  {% endif %}
-
-  {% if 'credit.payables_view' in user_permissions %}
-  <!-- Payables (Manager/Admin only) -->
-  <div class="stat-card" style="border-left: 4px solid #7C3AED;">
-    <span class="stat-label">Total Payables</span>
-    <span class="stat-value" style="color: #7C3AED;">Rs. {{ credit_summary.payables_total|default:credit_summary.credit_taken_total|floatformat:2 }}</span>
-    <span class="stat-badge info">Credit Taken</span>
-  </div>
-  <div class="stat-card">
-    <span class="stat-label">Paid to Suppliers</span>
-    <span class="stat-value" style="color: #16A34A;">Rs. {{ credit_summary.payables_paid|default:credit_summary.credit_taken_paid|floatformat:2 }}</span>
-    <span class="stat-badge success">Settled</span>
-  </div>
-  <div class="stat-card" style="border-left: 4px solid #F59E0B;">
-    <span class="stat-label">Outstanding Payables</span>
-    <span class="stat-value" style="color: #F59E0B;">Rs. {{ credit_summary.payables_outstanding|default:credit_summary.supplier_due|floatformat:2 }}</span>
-    <span class="stat-badge warning">Supplier Due</span>
-  </div>
-  <div class="stat-card" style="border-left: 4px solid #B91C1C;">
-    <span class="stat-label">Overdue Payables</span>
-    <span class="stat-value" style="color: #B91C1C;">Rs. {{ credit_summary.payables_overdue|default:credit_summary.overdue_taken_amount|floatformat:2 }}</span>
-    <span class="stat-badge danger">Supplier Due</span>
-  </div>
-  {% endif %}
-</div>
-{% endif %}
-
-<!-- Recent Activity -->
-<div style="display:grid;grid-template-columns:{% if 'purchases.view' in user_permissions and 'sales.view' in user_permissions %}1fr 1fr{% else %}1fr{% endif %};gap:24px;margin-top:8px;">
-  {% if 'sales.view' in user_permissions %}
-  <!-- Recent Sales -->
-  <div class="card">
-    <div class="card-header">
-      <h3 class="card-title">Recent Sales</h3>
-      <a href="{% url 'sales:list' %}" class="btn btn-ghost btn-sm">View All</a>
-    </div>
-    <div class="table-container" style="border:none;border-radius:0;">
-      <table>
+    <div class="table-container" style="border:none; border-radius:0;">
+      <table id="recent-invoices-table">
         <thead>
           <tr>
             <th>Invoice</th>
+            <th>Customer</th>
             <th>Date</th>
-            <th>Amount</th>
+            <th class="text-right">Amount</th>
             <th>Status</th>
+            <th class="text-center">Action</th>
           </tr>
         </thead>
         <tbody>
           {% for sale in recent_sales %}
             <tr>
-              <td class="font-mono"><a href="{% url 'sales:detail' sale.id %}" style="font-weight:600; color:var(--primary);">{{ sale.invoice_number }}</a></td>
-              <td>{{ sale.sale_date|date:"d M Y" }}</td>
-              <td class="font-mono"><strong>Rs. {{ sale.total|floatformat:2 }}</strong></td>
+              <td class="font-mono">
+                <a href="{% url 'sales:detail' sale.id %}" style="font-weight:700; color:var(--primary);">{{ sale.invoice_number }}</a>
+              </td>
               <td>
-                <span class="badge {% if sale.payment_status == 'Paid' %}badge-success{% elif sale.payment_status == 'Partial' %}badge-warning{% else %}badge-danger{% endif %}">
-                  {{ sale.payment_status }}
+                <div class="party">
+                  <span>{{ sale.customer.name|slice:":2"|upper|default:"CU" }}</span>
+                  <strong>{{ sale.customer.name|default:"Counter Customer" }}</strong>
+                </div>
+              </td>
+              <td style="font-size:12px; color:var(--text-secondary);">{{ sale.sale_date|date:"d M, H:i" }}</td>
+              <td class="text-right font-mono"><strong>Rs. {{ sale.total|floatformat:2 }}</strong></td>
+              <td>
+                <span class="status {% if sale.payment_status == 'Paid' %}paid{% elif sale.payment_status == 'Partial' %}partial{% else %}overdue{% endif %}">
+                  <i></i>{{ sale.payment_status }}
                 </span>
+              </td>
+              <td class="text-center">
+                <a href="{% url 'sales:detail' sale.id %}" class="btn btn-ghost btn-sm" title="View invoice" style="padding:4px 8px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </a>
               </td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="4" class="table-empty">
+              <td colspan="6" class="table-empty">
                 <div class="empty-state" style="padding: 24px 12px;">
                   <div class="empty-state-icon-wrap" style="width:36px; height:36px; font-size:16px; margin-bottom:8px;">🧾</div>
                   <div class="empty-state-title" style="font-size:13px;">No sales recorded yet</div>
@@ -277,32 +304,235 @@
         </tbody>
       </table>
     </div>
-  </div>
+  </article>
   {% endif %}
 
-  {% if 'purchases.view' in user_permissions %}
-  <!-- Recent Purchases (Staff/Manager/Admin only, hidden from Cashier) -->
+  <!-- Stock Alerts Panel -->
+  {% if 'inventory.view' in user_permissions %}
+  <article class="panel stock-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Stock Alerts</h2>
+        <p>Items below minimum level</p>
+      </div>
+      <span class="badge badge-warning" style="font-weight:700;">{{ low_stock_count }} items</span>
+    </div>
+    <div class="stock-list">
+      {% for item in low_stock_items %}
+        <div class="stock-item">
+          <div class="stock-product-icon {% if item.critical %}critical{% endif %}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+          <div class="stock-copy">
+            <div>
+              <strong>{{ item.name }}</strong>
+              <span>{{ item.stock }} / {{ item.minimum }} units</span>
+            </div>
+            <small>{{ item.sku }}</small>
+            <div class="stock-track">
+              <i class="{% if item.critical %}critical{% endif %}" style="width: {{ item.percent }}%;"></i>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div style="text-align:center; padding:24px 12px; color:var(--text-secondary);">
+          <div style="font-size:24px; margin-bottom:8px;">✅</div>
+          <strong style="display:block; color:var(--text); font-size:13px;">Stock levels are healthy</strong>
+          <span style="font-size:12px;">No products are currently under reorder threshold.</span>
+        </div>
+      {% endfor %}
+    </div>
+    <a href="/products/?stock_status=low" class="stock-cta">
+      Review all low stock &rarr;
+    </a>
+  </article>
+  {% endif %}
+</section>
+
+<!-- Business Alerts Live Monitor Section -->
+{% if 'inventory.view' in user_permissions or 'credit.receivables_view' in user_permissions or 'credit.payables_view' in user_permissions %}
+<section style="margin-top: 12px; margin-bottom: 24px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <h2 style="font-size:16px; font-weight:700; margin:0; color:var(--text);">Business Alerts</h2>
+      <span class="badge badge-warning" style="font-weight:700;">Live Monitor</span>
+    </div>
+    {% if 'notifications.view' in user_permissions %}
+      <a href="{% url 'dashboard:notifications' %}" class="btn btn-ghost btn-sm" style="font-weight:600; color:var(--primary);">View All Notifications &rarr;</a>
+    {% endif %}
+  </div>
+
+  <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    {% if 'inventory.view' in user_permissions %}
+    <a href="/products/?stock_status=out" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #EF4444;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <span class="stat-label">🚨 Out of Stock</span>
+        <span class="badge badge-danger">{{ business_alerts.out_of_stock }}</span>
+      </div>
+      <span class="stat-value" style="color:#EF4444; margin-top:8px;">{{ business_alerts.out_of_stock }}</span>
+      <span style="font-size:11px; color:var(--text-secondary);">Restock required</span>
+    </a>
+
+    <a href="/products/?stock_status=low" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #F59E0B;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <span class="stat-label">⚠️ Low Stock</span>
+        <span class="badge badge-warning">{{ business_alerts.low_stock }}</span>
+      </div>
+      <span class="stat-value" style="color:#F59E0B; margin-top:8px;">{{ business_alerts.low_stock }}</span>
+      <span style="font-size:11px; color:var(--text-secondary);">Below minimum level</span>
+    </a>
+    {% endif %}
+
+    {% if 'stock_movements.view' in user_permissions %}
+    <a href="/inventory/movements/?movement_type=IN" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #10B981;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <span class="stat-label">📦 Stock Received</span>
+        <span class="badge badge-success">{{ business_alerts.stock_received }}</span>
+      </div>
+      <span class="stat-value" style="color:#10B981; margin-top:8px;">{{ business_alerts.stock_received }}</span>
+      <span style="font-size:11px; color:var(--text-secondary);">Past 7 days movements</span>
+    </a>
+    {% endif %}
+
+    {% if 'sales.view' in user_permissions %}
+    <a href="/sales/?status=due" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #3B82F6;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <span class="stat-label">💳 Payments Due</span>
+        <span class="badge badge-info">{{ business_alerts.payments_due }}</span>
+      </div>
+      <span class="stat-value" style="color:#3B82F6; margin-top:8px;">{{ business_alerts.payments_due }}</span>
+      <span style="font-size:11px; color:var(--text-secondary);">Due soon or today</span>
+    </a>
+    {% endif %}
+
+    {% if 'credit.cheques_view' in user_permissions %}
+    <a href="{% url 'credit:cheques_list' %}?status=pending" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #8B5CF6;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <span class="stat-label">🧾 Cheques Due</span>
+        <span class="badge badge-secondary">{{ business_alerts.cheques_due }}</span>
+      </div>
+      <span class="stat-value" style="color:#8B5CF6; margin-top:8px;">{{ business_alerts.cheques_due }}</span>
+      <span style="font-size:11px; color:var(--text-secondary);">Upcoming maturity</span>
+    </a>
+    {% endif %}
+
+    {% if 'credit.receivables_view' in user_permissions %}
+    <a href="{% url 'credit:overdue_list' %}?type=given" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #DC2626;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <span class="stat-label">💰 Receivables Overdue</span>
+        <span class="badge badge-danger">{{ business_alerts.receivables_overdue }}</span>
+      </div>
+      <span class="stat-value" style="color:#DC2626; margin-top:8px;">{{ business_alerts.receivables_overdue }}</span>
+      <span style="font-size:11px; color:var(--text-secondary);">Customer overdue</span>
+    </a>
+    {% endif %}
+
+    {% if 'credit.payables_view' in user_permissions and user.is_manager %}
+    <a href="{% url 'credit:overdue_list' %}?type=taken" class="stat-card" style="text-decoration:none; color:inherit; border-top: 3px solid #B91C1C;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <span class="stat-label">💸 Supplier Payables (Cr)</span>
+        <span class="badge badge-danger">{{ business_alerts.payables_overdue }}</span>
+      </div>
+      <span class="stat-value" style="color:#B91C1C; margin-top:8px;">{{ business_alerts.payables_overdue }}</span>
+      <span style="font-size:11px; color:var(--text-secondary);">Supplier overdue</span>
+    </a>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Receivables & Payables Summary Section -->
+{% if 'credit.receivables_view' in user_permissions or 'credit.payables_view' in user_permissions %}
+<section style="margin-top: 12px; margin-bottom: 24px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+    <div>
+      <h2 style="font-size:16px; font-weight:700; margin:0; color:var(--text);">Receivables & Payables Summary</h2>
+      <span style="font-size:12px; color:var(--text-secondary);">Overview of credit extended to customers and credit taken from vendors</span>
+    </div>
+    {% if user.is_manager and 'credit.payables_view' in user_permissions %}
+    <a href="{% url 'credit:dashboard' %}" class="btn btn-ghost btn-sm" style="font-weight:600; color:var(--primary);">Go to Receivables & Payables &rarr;</a>
+    {% endif %}
+  </div>
+
+  <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    {% if 'credit.receivables_view' in user_permissions %}
+    <!-- Receivables -->
+    <div class="stat-card" style="border-left: 4px solid #2563EB;">
+      <span class="stat-label">Total Receivables</span>
+      <span class="stat-value" style="color: #2563EB;">Rs. {{ credit_summary.receivables_total|default:credit_summary.credit_given_total|floatformat:2 }}</span>
+      <span class="badge badge-info" style="align-self:flex-start; margin-top:4px;">Credit Given</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #16A34A;">
+      <span class="stat-label">Received</span>
+      <span class="stat-value" style="color: #16A34A;">Rs. {{ credit_summary.receivables_received|default:credit_summary.credit_given_received|floatformat:2 }}</span>
+      <span class="badge badge-success" style="align-self:flex-start; margin-top:4px;">Collected</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #EA580C;">
+      <span class="stat-label">Outstanding Receivables</span>
+      <span class="stat-value" style="color: #EA580C;">Rs. {{ credit_summary.receivables_outstanding|default:credit_summary.customer_due|floatformat:2 }}</span>
+      <span class="badge badge-warning" style="align-self:flex-start; margin-top:4px;">Customer Due</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #DC2626;">
+      <span class="stat-label">Overdue Receivables</span>
+      <span class="stat-value" style="color: #DC2626;">Rs. {{ credit_summary.receivables_overdue|default:credit_summary.overdue_given_amount|floatformat:2 }}</span>
+      <span class="badge badge-danger" style="align-self:flex-start; margin-top:4px;">Action Required</span>
+    </div>
+    {% endif %}
+
+    {% if 'credit.payables_view' in user_permissions %}
+    <!-- Payables -->
+    <div class="stat-card" style="border-left: 4px solid #7C3AED;">
+      <span class="stat-label">Total Payables</span>
+      <span class="stat-value" style="color: #7C3AED;">Rs. {{ credit_summary.payables_total|default:credit_summary.credit_taken_total|floatformat:2 }}</span>
+      <span class="badge badge-info" style="align-self:flex-start; margin-top:4px;">Credit Taken</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #16A34A;">
+      <span class="stat-label">Paid to Suppliers</span>
+      <span class="stat-value" style="color: #16A34A;">Rs. {{ credit_summary.payables_paid|default:credit_summary.credit_taken_paid|floatformat:2 }}</span>
+      <span class="badge badge-success" style="align-self:flex-start; margin-top:4px;">Settled</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #F59E0B;">
+      <span class="stat-label">Outstanding Payables</span>
+      <span class="stat-value" style="color: #F59E0B;">Rs. {{ credit_summary.payables_outstanding|default:credit_summary.supplier_due|floatformat:2 }}</span>
+      <span class="badge badge-warning" style="align-self:flex-start; margin-top:4px;">Supplier Due</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #B91C1C;">
+      <span class="stat-label">Overdue Payables</span>
+      <span class="stat-value" style="color: #B91C1C;">Rs. {{ credit_summary.payables_overdue|default:credit_summary.overdue_taken_amount|floatformat:2 }}</span>
+      <span class="badge badge-danger" style="align-self:flex-start; margin-top:4px;">Pay Immediately</span>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+
+{% if 'purchases.view' in user_permissions %}
+{# Purchases Section: Staff/Manager/Admin only #}
+<section style="margin-top: 12px; margin-bottom: 24px;">
   <div class="card">
     <div class="card-header">
       <h3 class="card-title">Recent Purchases</h3>
       <a href="{% url 'purchases:list' %}" class="btn btn-ghost btn-sm">View All</a>
     </div>
-    <div class="table-container" style="border:none;border-radius:0;">
+    <div class="table-container" style="border:none; border-radius:0;">
       <table>
         <thead>
           <tr>
             <th>PO Number</th>
+            <th>Supplier</th>
             <th>Date</th>
-            <th>Amount</th>
+            <th class="text-right">Amount</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
           {% for purchase in recent_purchases %}
             <tr>
-              <td class="font-mono"><a href="{% url 'purchases:detail' purchase.id %}" style="font-weight:600; color:var(--primary);">{{ purchase.purchase_number }}</a></td>
+              <td class="font-mono"><a href="{% url 'purchases:detail' purchase.id %}" style="font-weight:700; color:var(--primary);">{{ purchase.purchase_number }}</a></td>
+              <td>{{ purchase.supplier.name|default:"General Supplier" }}</td>
               <td>{{ purchase.purchase_date|date:"d M Y" }}</td>
-              <td class="font-mono"><strong>Rs. {{ purchase.total|floatformat:2 }}</strong></td>
+              <td class="text-right font-mono"><strong>Rs. {{ purchase.total|floatformat:2 }}</strong></td>
               <td>
                 <span class="badge {% if purchase.payment_status == 'Paid' %}badge-success{% elif purchase.payment_status == 'Partially Paid' or purchase.payment_status == 'Partial' %}badge-warning{% else %}badge-danger{% endif %}">
                   {{ purchase.payment_status }}
@@ -311,7 +541,7 @@
             </tr>
           {% empty %}
             <tr>
-              <td colspan="4" class="table-empty">
+              <td colspan="5" class="table-empty">
                 <div class="empty-state" style="padding: 24px 12px;">
                   <div class="empty-state-icon-wrap" style="width:36px; height:36px; font-size:16px; margin-bottom:8px;">📦</div>
                   <div class="empty-state-title" style="font-size:13px;">No purchases recorded yet</div>
@@ -324,6 +554,25 @@
       </table>
     </div>
   </div>
-  {% endif %}
-</div>
+</section>
+{% endif %}
+
+<script>
+  function filterInvoicesTable() {
+    var input = document.getElementById("invoice-filter-input");
+    if (!input) return;
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById("recent-invoices-table");
+    if (!table) return;
+    var tr = table.getElementsByTagName("tr");
+    for (var i = 1; i < tr.length; i++) {
+      var text = tr[i].textContent || tr[i].innerText;
+      if (text.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }
+  }
+</script>
 {% endblock %}

@@ -32,10 +32,8 @@ def supplier_list(request: HttpRequest) -> HttpResponse:
     return render(request, "purchases/supplier_list.html", {
         "page_obj": page_obj,
         "search": search,
+        "search_query": search,
     })
-
-
-from django.http import HttpRequest, HttpResponse, JsonResponse
 
 
 @login_required_custom
@@ -84,7 +82,7 @@ def supplier_create(request: HttpRequest) -> HttpResponse:
 def supplier_edit(request: HttpRequest, pk: int) -> HttpResponse:
     """Edit existing supplier."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     supplier = get_object_or_404(Supplier, **kwargs)
 
@@ -102,7 +100,7 @@ def supplier_edit(request: HttpRequest, pk: int) -> HttpResponse:
 def supplier_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Deactivate supplier."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     supplier = get_object_or_404(Supplier, **kwargs)
 
@@ -117,7 +115,7 @@ def supplier_delete(request: HttpRequest, pk: int) -> HttpResponse:
 def supplier_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """View supplier purchase order history."""
     kwargs = {"pk": pk}
-    if hasattr(request.user, "active_company") and request.user.active_company and not request.user.is_admin:
+    if hasattr(request.user, "active_company") and request.user.active_company:
         kwargs["company"] = request.user.active_company
     supplier = get_object_or_404(Supplier, **kwargs)
     purchases = supplier.purchases.filter(is_active=True).order_by("-purchase_date")

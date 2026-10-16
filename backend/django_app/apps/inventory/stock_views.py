@@ -16,6 +16,8 @@ def stock_movements(request: HttpRequest) -> HttpResponse:
     """List stock movement ledger."""
     movement_type = request.GET.get("type", "")
     query = StockMovement.objects.select_related("product").all()
+    if hasattr(request.user, "active_company") and request.user.active_company:
+        query = query.filter(product__company=request.user.active_company)
 
     if movement_type in ("IN", "OUT"):
         query = query.filter(movement_type=movement_type)

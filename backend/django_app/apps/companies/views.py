@@ -17,7 +17,7 @@ from apps.core_app.security_utils import get_safe_redirect_url
 @manager_required
 def company_list(request: HttpRequest) -> HttpResponse:
     """List all companies with search and pagination."""
-    search = request.GET.get("search", "").strip()
+    search = request.GET.get("q", "").strip() or request.GET.get("search", "").strip()
     query = Company.objects.all()
 
     if search:
@@ -34,6 +34,8 @@ def company_list(request: HttpRequest) -> HttpResponse:
     page_obj = paginate_queryset(request, query, per_page=15)
     return render(request, "companies/list.html", {
         "page_obj": page_obj,
+        "companies": page_obj,
+        "search_query": search,
         "search": search,
         "sort": sort,
     })

@@ -9,4 +9,6 @@ urlpatterns = [
     path("new/", views.expense_create, name="create"),
     path("<int:pk>/edit/", views.expense_edit, name="edit"),
     path("<int:pk>/delete/", views.expense_delete, name="delete"),
+    path("export/csv/", views.expense_export_csv, name="export_csv"),
+    path("export/excel/", views.expense_export_excel, name="export_excel"),
 ]

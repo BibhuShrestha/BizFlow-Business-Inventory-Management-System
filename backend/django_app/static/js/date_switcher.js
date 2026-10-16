@@ -49,17 +49,64 @@
     if (inputEl.dataset.dateSwitcherInitialized) return;
     inputEl.dataset.dateSwitcherInitialized = 'true';
 
-    var isCompact = inputEl.closest('form')?.classList.contains('filter-form') ||
-                    inputEl.parentElement?.classList.contains('compact-date') ||
-                    inputEl.offsetWidth < 180;
+    // 1. Filter Bar Date Inputs: Keep clean, single-line, and perfectly aligned
+    var isFilter = inputEl.closest('.filter-bar') ||
+                   inputEl.closest('.filter-form') ||
+                   inputEl.classList.contains('filter-date-input') ||
+                   inputEl.name === 'date_from' ||
+                   inputEl.name === 'date_to';
 
-    // Create container
+    if (isFilter) {
+      inputEl.classList.add('filter-date-input');
+      function updateFilterTooltip() {
+        if (!inputEl.value) {
+          inputEl.title = 'Bikram Sambat (BS) date picker';
+          return;
+        }
+        fetchConversion(inputEl.value, 'ad_to_bs', function(data) {
+          if (data && data.bs_date) {
+            inputEl.title = data.bs_date + ' BS (' + data.bs_month_name + ')';
+          }
+        });
+      }
+      inputEl.addEventListener('change', updateFilterTooltip);
+      inputEl.addEventListener('input', updateFilterTooltip);
+      if (inputEl.value) updateFilterTooltip();
+      return; // Do not inject stacked header into filter bars
+    }
+
+    // 2. Regular Form Date Input: Find label slot or label row for horizontal alignment
+    var formGroup = inputEl.closest('.form-group');
+    var targetHeaderSlot = null;
+
+    if (formGroup) {
+      targetHeaderSlot = formGroup.querySelector('.date-header-slot');
+      if (!targetHeaderSlot) {
+        var labelRow = formGroup.querySelector('.form-label-row');
+        if (labelRow) {
+          targetHeaderSlot = document.createElement('div');
+          targetHeaderSlot.className = 'date-header-slot';
+          labelRow.appendChild(targetHeaderSlot);
+        } else {
+          var lbl = formGroup.querySelector('label');
+          if (lbl) {
+            labelRow = document.createElement('div');
+            labelRow.className = 'form-label-row';
+            lbl.parentNode.insertBefore(labelRow, lbl);
+            labelRow.appendChild(lbl);
+            targetHeaderSlot = document.createElement('div');
+            targetHeaderSlot.className = 'date-header-slot';
+            labelRow.appendChild(targetHeaderSlot);
+          }
+        }
+      }
+    }
+
+    // Create container for inputs
     var wrapper = document.createElement('div');
-    wrapper.className = 'bizflow-date-switcher ' + (isCompact ? 'compact' : '');
-    wrapper.style.display = 'flex';
-    wrapper.style.flexDirection = 'column';
-    wrapper.style.gap = '4px';
+    wrapper.className = 'bizflow-date-switcher';
     wrapper.style.position = 'relative';
+    wrapper.style.width = '100%';
 
     inputEl.parentNode.insertBefore(wrapper, inputEl);
     wrapper.appendChild(inputEl);
@@ -67,11 +114,10 @@
     // Create header with AD/BS toggle and badge
     var header = document.createElement('div');
     header.className = 'bizflow-date-header';
-    header.style.display = 'flex';
+    header.style.display = 'inline-flex';
     header.style.alignItems = 'center';
-    header.style.justifyContent = 'space-between';
+    header.style.gap = '6px';
     header.style.fontSize = '11px';
-    header.style.marginBottom = '2px';
 
     // Segmented toggle button
     var toggleGroup = document.createElement('div');
@@ -100,33 +146,42 @@
     // Live converted badge
     var badge = document.createElement('span');
     badge.className = 'date-preview-badge';
-    badge.style.fontSize = '11px';
+    badge.style.fontSize = '10.5px';
     badge.style.fontWeight = '500';
-    badge.style.color = '#3730a3';
-    badge.style.background = '#e0e7ff';
-    badge.style.padding = '1px 6px';
+    badge.style.color = '#1E40AF';
+    badge.style.background = '#DBEAFE';
+    badge.style.padding = '2px 7px';
     badge.style.borderRadius = '4px';
     badge.style.whiteSpace = 'nowrap';
     badge.textContent = 'BS Date...';
 
     header.appendChild(toggleGroup);
     header.appendChild(badge);
-    wrapper.insertBefore(header, inputEl);
+
+    if (targetHeaderSlot) {
+      targetHeaderSlot.appendChild(header);
+    } else {
+      wrapper.style.display = 'flex';
+      wrapper.style.flexDirection = 'column';
+      wrapper.style.gap = '4px';
+      wrapper.insertBefore(header, inputEl);
+    }
 
     // Create BS inputs container
     var bsContainer = document.createElement('div');
     bsContainer.className = 'bizflow-bs-input-group';
     bsContainer.style.display = 'none';
-    bsContainer.style.gap = '4px';
+    bsContainer.style.gap = '6px';
     bsContainer.style.alignItems = 'center';
+    bsContainer.style.width = '100%';
 
     // BS Year select (2070 to 2090)
     var selYear = document.createElement('select');
     selYear.className = 'form-control bs-sel-year';
-    selYear.style.padding = '4px 6px';
-    selYear.style.fontSize = '12px';
-    selYear.style.height = '34px';
-    selYear.style.width = '80px';
+    selYear.style.padding = '6px 8px';
+    selYear.style.fontSize = '13px';
+    selYear.style.height = '38px';
+    selYear.style.width = '85px';
     for (var y = 2070; y <= 2090; y++) {
       var optY = document.createElement('option');
       optY.value = y;
@@ -138,11 +193,11 @@
     // BS Month select
     var selMonth = document.createElement('select');
     selMonth.className = 'form-control bs-sel-month';
-    selMonth.style.padding = '4px 6px';
-    selMonth.style.fontSize = '12px';
-    selMonth.style.height = '34px';
+    selMonth.style.padding = '6px 8px';
+    selMonth.style.fontSize = '13px';
+    selMonth.style.height = '38px';
     selMonth.style.flex = '1';
-    selMonth.style.minWidth = '95px';
+    selMonth.style.minWidth = '110px';
     NEPALI_MONTHS.forEach(function (m) {
       var optM = document.createElement('option');
       optM.value = m.id;
@@ -153,10 +208,10 @@
     // BS Day select (1 to 32)
     var selDay = document.createElement('select');
     selDay.className = 'form-control bs-sel-day';
-    selDay.style.padding = '4px 6px';
-    selDay.style.fontSize = '12px';
-    selDay.style.height = '34px';
-    selDay.style.width = '60px';
+    selDay.style.padding = '6px 8px';
+    selDay.style.fontSize = '13px';
+    selDay.style.height = '38px';
+    selDay.style.width = '65px';
     for (var d = 1; d <= 32; d++) {
       var optD = document.createElement('option');
       optD.value = d;

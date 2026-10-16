@@ -1,86 +1,241 @@
 {% extends "base/base.html" %}
 {% load nepali_tags %}
-{% block title %}Expenses - BizFlow{% endblock %}
+{% block title %}Operational Expenses - BizFlow{% endblock %}
 {% block page_title %}Operational Expenses{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
   <div>
-    <h1 class="page-title">Operating Expenses</h1>
-    <p class="page-subtitle">Track rent, utilities, salaries, office supplies, and general overhead.</p>
+    <h1 class="page-title">Operational Expenses</h1>
+    <p class="page-subtitle">Track company overheads, utilities, rent, salaries, and daily operational expenditures.</p>
   </div>
-  <a href="{% url 'expenses:create' %}" class="btn btn-primary btn-sm">+ Record Expense</a>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <a href="{% url 'expenses:export_csv' %}" class="btn btn-secondary btn-sm" title="Export current company expenses to CSV">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+      Export CSV
+    </a>
+    <a href="{% url 'expenses:export_excel' %}" class="btn btn-secondary btn-sm" title="Export current company expenses to Excel (.xlsx)">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+      Export Excel
+    </a>
+    <a href="{% url 'expenses:create' %}" class="btn btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+      + Record Expense
+    </a>
+  </div>
 </div>
 
-<div class="card" style="margin-bottom: 20px; padding: 16px;">
-  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-    <input type="text" name="q" value="{{ search_query }}" placeholder="Search description, reference, or category..." class="form-control" style="max-width:260px;">
+<!-- 4 Executive KPI Metric Cards -->
+<div class="metrics-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:20px;">
+  <!-- Card 1: This Month Total -->
+  <div class="metric-card" style="padding:18px 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span class="metric-label" style="font-size:12px; font-weight:600; text-transform:uppercase; color:#64748B;">This Month Overhead</span>
+      <div class="metric-icon" style="background:#EFF6FF; color:#2563EB; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+      </div>
+    </div>
+    <div class="metric-value font-mono" style="font-size:22px; font-weight:700; color:#0F172A;">Rs. {{ total_this_month|floatformat:2 }}</div>
+    <div style="font-size:11.5px; color:#64748B; margin-top:4px; display:flex; align-items:center; gap:6px;">
+      <span class="badge" style="background:#DBEAFE; color:#1E40AF; font-size:10.5px; padding:2px 6px;">{{ count_this_month }} entries</span>
+      <span>current calendar month</span>
+    </div>
+  </div>
+
+  <!-- Card 2: Today's Spend -->
+  <div class="metric-card" style="padding:18px 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span class="metric-label" style="font-size:12px; font-weight:600; text-transform:uppercase; color:#64748B;">Today's Expenses</span>
+      <div class="metric-icon" style="background:#FEF3C7; color:#D97706; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      </div>
+    </div>
+    <div class="metric-value font-mono" style="font-size:22px; font-weight:700; color:#0F172A;">Rs. {{ total_today|floatformat:2 }}</div>
+    <div style="font-size:11.5px; color:#64748B; margin-top:4px;">
+      <span class="badge" style="background:#FEF9C3; color:#854D0E; font-size:10.5px; padding:2px 6px;">{{ count_today }} logged today</span>
+    </div>
+  </div>
+
+  <!-- Card 3: Top Category -->
+  <div class="metric-card" style="padding:18px 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span class="metric-label" style="font-size:12px; font-weight:600; text-transform:uppercase; color:#64748B;">Top Expense Category</span>
+      <div class="metric-icon" style="background:#F5F3FF; color:#7C3AED; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+      </div>
+    </div>
+    <div class="metric-value" style="font-size:18px; font-weight:700; color:#0F172A; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">{{ top_category_name }}</div>
+    <div style="font-size:11.5px; color:#64748B; margin-top:4px;" class="font-mono">
+      Rs. {{ top_category_amount|floatformat:2 }} cumulative
+    </div>
+  </div>
+
+  <!-- Card 4: Cash vs Bank/QR -->
+  <div class="metric-card" style="padding:18px 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span class="metric-label" style="font-size:12px; font-weight:600; text-transform:uppercase; color:#64748B;">Disbursement Split</span>
+      <div class="metric-icon" style="background:#DCFCE7; color:#15803D; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+      <span style="font-size:12.5px; color:#475569;">Cash Outflow:</span>
+      <strong class="font-mono" style="font-size:13px; color:#0F172A;">Rs. {{ cash_total|floatformat:2 }}</strong>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+      <span style="font-size:12.5px; color:#475569;">Bank / Online:</span>
+      <strong class="font-mono" style="font-size:13px; color:#0F172A;">Rs. {{ bank_online_total|floatformat:2 }}</strong>
+    </div>
+  </div>
+</div>
+
+<!-- Standard Filter Bar with Exact Alignment -->
+<div class="filter-bar" style="margin-bottom:20px;">
+  <form method="get" class="filter-form" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; width:100%;">
+    <div class="search-input-wrap" style="flex:1; min-width:220px;">
+      <svg class="search-input-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Search description, reference, or category..." class="form-control">
+    </div>
+
     {% if categories %}
-    <select name="category" class="form-control" style="width:160px;">
+    <select name="category" class="form-control" style="width:170px;">
       <option value="">All Categories</option>
       {% for cat in categories %}
         <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
       {% endfor %}
     </select>
-    {% else %}
-    <input type="text" name="category" value="{{ selected_category }}" placeholder="Filter category..." class="form-control" style="width:160px;">
     {% endif %}
-    <div style="display:flex; align-items:center; gap:6px;">
-      <span style="font-size:13px; color:var(--text-secondary);">From:</span>
-      <input type="date" name="date_from" value="{{ date_from }}" class="form-control" style="width:145px;">
+
+    <div class="filter-date-group">
+      <span class="filter-date-label">From:</span>
+      <input type="date" name="date_from" value="{{ date_from }}" class="form-control filter-date-input">
     </div>
-    <div style="display:flex; align-items:center; gap:6px;">
-      <span style="font-size:13px; color:var(--text-secondary);">To:</span>
-      <input type="date" name="date_to" value="{{ date_to }}" class="form-control" style="width:145px;">
+
+    <div class="filter-date-group">
+      <span class="filter-date-label">To:</span>
+      <input type="date" name="date_to" value="{{ date_to }}" class="form-control filter-date-input">
     </div>
-    <button type="submit" class="btn btn-secondary">Filter</button>
-    {% if search_query or selected_category or date_from or date_to %}<a href="{% url 'expenses:list' %}" class="btn btn-ghost">Reset</a>{% endif %}
+
+    <button type="submit" class="btn btn-secondary" style="height:38px;">Filter</button>
+    {% if search_query or selected_category or date_from or date_to %}
+      <a href="{% url 'expenses:list' %}" class="btn btn-ghost" style="height:38px;">Reset</a>
+    {% endif %}
   </form>
 </div>
 
+<!-- Main Expenses Data Card & Table -->
 <div class="card">
   <div class="table-container">
     <table>
       <thead>
         <tr>
-          <th>Date</th>
-          <th>Title / Description</th>
-          <th>Category</th>
-          <th>Payee</th>
+          <th style="width:130px;">Date (AD / BS)</th>
+          <th style="width:150px;">Category</th>
+          <th>Title & Notes</th>
+          <th>Payee / Voucher Ref</th>
           <th>Payment Method</th>
           <th style="text-align:right;">Amount</th>
-          <th style="text-align:right;">Actions</th>
+          <th style="text-align:right; width:110px;">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for e in page_obj %}
         <tr>
           <td>
-            <div>{{ e.expense_date|date:"Y-m-d" }}</div>
+            <div style="font-weight:600; font-size:13px; color:#0F172A;">{{ e.expense_date|date:"Y-m-d" }}</div>
             <div style="font-size:11px; margin-top:2px;">
-              <span class="badge" style="background:#e0e7ff; color:#3730a3; font-size:10px; padding:1px 5px; font-weight:500;">{{ e.expense_date|nepali_date }} BS</span>
+              <span class="badge" style="background:#EFF6FF; color:#1D4ED8; font-size:10px; padding:1px 6px; font-weight:500;">{{ e.expense_date|nepali_date }} BS</span>
             </div>
           </td>
-          <td style="font-weight:600;">{{ e.description|default:e.category }}</td>
-          <td><span class="badge badge-info">{{ e.category }}</span></td>
-          <td>{{ e.reference|default:"—" }}</td>
-          <td>{{ e.payment_method }}</td>
-          <td style="text-align:right;" class="font-mono"><strong>Rs. {{ e.amount|floatformat:2 }}</strong></td>
+          <td>
+            <span class="badge" style="background:#F1F5F9; color:#334155; font-size:11.5px; font-weight:600; padding:3px 8px; border:1px solid #E2E8F0;">
+              {{ e.category }}
+            </span>
+          </td>
+          <td>
+            <div style="font-weight:600; color:#0F172A; font-size:13px;">{{ e.description|default:e.category }}</div>
+            {% if e.description and e.category != e.description %}
+              <div style="font-size:11.5px; color:#64748B; margin-top:2px;">{{ e.category }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if e.reference %}
+              <span style="font-weight:500; color:#334155;">{{ e.reference }}</span>
+            {% else %}
+              <span style="color:#94A3B8;">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if e.payment_method == "Cash" %}
+              <span class="badge" style="background:#DCFCE7; color:#15803D; font-size:11px;">💵 Cash</span>
+            {% elif e.payment_method == "Bank Transfer" %}
+              <span class="badge" style="background:#E0F2FE; color:#0369A1; font-size:11px;">🏦 Bank</span>
+            {% elif "Online" in e.payment_method or "QR" in e.payment_method %}
+              <span class="badge" style="background:#FEF3C7; color:#92400E; font-size:11px;">📱 Online/QR</span>
+            {% elif e.payment_method == "Cheque" %}
+              <span class="badge" style="background:#F5F3FF; color:#6D28D9; font-size:11px;">📑 Cheque</span>
+            {% else %}
+              <span class="badge" style="background:#F1F5F9; color:#475569; font-size:11px;">{{ e.payment_method }}</span>
+            {% endif %}
+          </td>
+          <td style="text-align:right;" class="font-mono">
+            <strong style="color:#0F172A; font-size:14px;">Rs. {{ e.amount|floatformat:2 }}</strong>
+          </td>
           <td style="text-align:right;">
             <div style="display:inline-flex; gap:6px;">
-              <a href="{% url 'expenses:edit' e.id %}" class="btn btn-ghost btn-sm">Edit</a>
-              <form method="post" action="{% url 'expenses:delete' e.id %}" style="display:inline;" onsubmit="return confirm('Delete this expense?');">
+              <a href="{% url 'expenses:edit' e.id %}" class="btn btn-ghost btn-sm" title="Edit expense record">Edit</a>
+              <form method="post" action="{% url 'expenses:delete' e.id %}" style="display:inline;" onsubmit="return confirm('Delete this expense record (Rs. {{ e.amount }})?');">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-ghost btn-sm text-danger">Delete</button>
+                <button type="submit" class="btn btn-ghost btn-sm text-danger" title="Delete record">Delete</button>
               </form>
             </div>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="7" class="table-empty">No expenses logged yet</td></tr>
+        <tr>
+          <td colspan="7" style="padding:0; border:none;">
+            <div class="empty-state" style="padding:48px 24px; text-align:center;">
+              <div class="empty-state-icon-wrap" style="width:52px; height:52px; border-radius:50%; background:#F1F5F9; display:inline-flex; align-items:center; justify-content:center; margin-bottom:12px; font-size:24px;">
+                💸
+              </div>
+              <h3 style="margin:0 0 6px; font-size:16px; font-weight:700; color:#0F172A;">No operational expenses found</h3>
+              <p style="margin:0 auto 16px; font-size:13px; color:#64748B; max-width:380px;">
+                {% if search_query or selected_category or date_from or date_to %}
+                  No expense records match your current filter criteria. Try clearing filters or searching another keyword.
+                {% else %}
+                  Track company overheads, utilities, salaries, and office supplies with instant daybook & profit loss synchronization.
+                {% endif %}
+              </p>
+              {% if search_query or selected_category or date_from or date_to %}
+                <a href="{% url 'expenses:list' %}" class="btn btn-secondary btn-sm">Clear Active Filters</a>
+              {% else %}
+                <a href="{% url 'expenses:create' %}" class="btn btn-primary btn-sm">+ Record First Expense</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  <!-- Standardized Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 20px; border-top:1px solid #E2E8F0; background:#F8FAFC; flex-wrap:wrap; gap:10px;">
+    <span style="font-size:12.5px; color:#64748B;">
+      Showing page <strong>{{ page_obj.number }}</strong> of <strong>{{ page_obj.paginator.num_pages }}</strong> ({{ page_obj.paginator.count }} total records)
+    </span>
+    <div style="display:flex; gap:6px;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

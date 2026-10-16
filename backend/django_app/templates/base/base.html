@@ -41,15 +41,60 @@
   <!-- Sidebar -->
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-brand flex-between">
-      <div>
-        <h1>BizFlow</h1>
-        {% if user.active_company %}
-          <span>{{ user.active_company.company_name }}</span>
-        {% else %}
-          <span>Business Management</span>
-        {% endif %}
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div>
+          <h1 style="margin:0; font-size:18px; line-height:1.2;">BizFlow</h1>
+          <span style="font-size:10.5px; opacity:0.8;">Business, in motion</span>
+        </div>
       </div>
       <button id="sidebar-close" class="sidebar-close-btn" type="button" aria-label="Close navigation">&times;</button>
+    </div>
+
+    <!-- Active Company Switcher Card & Dropdown -->
+    <div style="position:relative; margin: 14px 12px 10px;">
+      <div id="company-switcher-btn" class="company-switcher" style="margin:0; cursor:pointer;" onclick="toggleCompanyDropdown(event)" title="Click to switch active company">
+        <div class="company-logo">
+          {{ user.active_company.company_name|slice:":2"|upper|default:"BF" }}
+        </div>
+        <div class="company-copy">
+          <span>Current Company</span>
+          <strong>{{ user.active_company.company_name|default:"BizFlow Demo Corp" }}</strong>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+
+      <!-- Company Dropdown Menu -->
+      <div id="company-dropdown-menu" style="display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:999; background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:10px; box-shadow:0 12px 24px rgba(0,0,0,0.35); padding:8px 0; overflow:hidden;">
+        <div style="padding:6px 14px; font-size:11px; text-transform:uppercase; color:#94a3b8; font-weight:700; letter-spacing:0.5px; border-bottom:1px solid rgba(255,255,255,0.08); margin-bottom:4px;">
+          Switch Workspace
+        </div>
+        {% for c in user_companies %}
+          <a href="{% url 'companies:switch' c.id %}" style="display:flex; align-items:center; justify-content:space-between; padding:8px 14px; color:{% if user.active_company_id == c.id %}#60a5fa{% else %}#e2e8f0{% endif %}; text-decoration:none; font-size:13px; font-weight:500; transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:{% if user.active_company_id == c.id %}#3b82f6{% else %}transparent{% endif %};"></span>
+              <span>{{ c.company_name }}</span>
+            </div>
+            {% if user.active_company_id == c.id %}
+              <span style="font-size:11px; background:#1e3a8a; color:#93c5fd; padding:1px 6px; border-radius:4px; font-weight:600;">Active</span>
+            {% endif %}
+          </a>
+        {% empty %}
+          <div style="padding:8px 14px; font-size:12px; color:#94a3b8;">No companies found</div>
+        {% endfor %}
+        <div style="border-top:1px solid rgba(255,255,255,0.08); margin-top:6px; padding-top:4px;">
+          <a href="{% url 'companies:list' %}" style="display:flex; align-items:center; gap:8px; padding:6px 14px; color:#94a3b8; text-decoration:none; font-size:12px;" onmouseover="this.style.color='#f8fafc'" onmouseout="this.style.color='#94a3b8'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+            Manage Companies
+          </a>
+        </div>
+      </div>
     </div>
 
     <div class="sidebar-nav">
@@ -63,7 +108,7 @@
       {% else %}
         <!-- Internal Staff / Cashier / Manager / Admin Navigation -->
         {% if 'dashboard.view' in user_permissions %}
-          <span class="nav-section-label">Main</span>
+          <span class="nav-section-label">Workspace</span>
           <a href="{% url 'dashboard:index' %}" class="nav-item {% if request.resolver_match.namespace == 'dashboard' and request.resolver_match.url_name == 'index' %}active{% endif %}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             Dashboard
@@ -147,7 +192,7 @@
         {% endif %}
 
         {% if 'credit.receivables_view' in user_permissions or 'credit.payables_view' in user_permissions or 'credit.cheques_view' in user_permissions or 'credit.payments_view' in user_permissions %}
-          <span class="nav-section-label">Receivables & Payables</span>
+          <span class="nav-section-label">Debit & Credit</span>
           {% if 'credit.payables_view' in user_permissions and 'credit.receivables_view' in user_permissions and user.is_manager %}
             <a href="{% url 'credit:dashboard' %}" class="nav-item {% if request.resolver_match.namespace == 'credit' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -211,24 +256,57 @@
         {% endif %}
       {% endif %}
     </div>
+
+    <!-- Sidebar User Footer -->
+    <div class="sidebar-user">
+      <div class="avatar">{{ user.name|first|upper|default:"U" }}</div>
+      <div>
+        <strong>{{ user.name|default:"Administrator" }}</strong>
+        <span>{{ user.role_name|default:"Owner"|title }}</span>
+      </div>
+      <a href="{% url 'accounts:logout' %}" style="color:#93c5fd; padding:4px;" title="Logout">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </a>
+    </div>
   </nav>
 
   <!-- Main Content -->
   <div class="main-content">
     <!-- Header -->
     <header class="header">
-      <div class="flex gap-2" style="align-items:center;">
+      <div class="flex gap-3" style="align-items:center;">
         <button id="sidebar-toggle" type="button" aria-label="Toggle navigation" title="Toggle Sidebar">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
-        <span class="header-title">{% block page_title %}BizFlow{% endblock %}</span>
+        <!-- Global Search Bar with keyboard shortcut -->
+        <label class="global-search" for="bizflow-global-search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <circle cx="11" cy="11" r="7" stroke-width="2" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m20 20-4-4" />
+          </svg>
+          <input id="bizflow-global-search" type="search" placeholder="Search in invoices, items, parties..." aria-label="Search BizFlow">
+          <kbd>Ctrl+K</kbd>
+        </label>
       </div>
+
       <div class="header-actions" style="display:flex; align-items:center; gap:12px;">
-        <!-- Notification Bell (Staff, Cashier, Manager, Admin only) -->
+        <!-- Dual Calendar Date Chip (Bikram Sambat & Gregorian) -->
+        <div class="date-chip">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <rect x="3" y="5" width="18" height="16" rx="2" stroke-width="1.8" />
+            <path stroke-linecap="round" stroke-width="1.8" d="M16 3v4M8 3v4M3 10h18" />
+          </svg>
+          <span>{{ nepali_date_str|default:"27 Ashwin 2083" }}</span>
+          <small>{{ today_long_str|default:"13 Oct 2026" }}</small>
+        </div>
+
+        <!-- Notification Bell Dropdown Panel -->
         {% if not user.is_customer and 'notifications.view' in user_permissions %}
-        <div style="position:relative;">
-          <a href="{% url 'dashboard:notifications' %}" class="btn btn-ghost btn-sm" id="notification-bell-btn" style="position:relative; padding:6px 10px;" title="Notification Center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="notification-wrap">
+          <button type="button" class="btn btn-ghost btn-sm" id="notification-bell-btn" style="position:relative; padding:6px 10px;" title="Notification Center" onclick="document.getElementById('notification-dropdown-panel').classList.toggle('active')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
             {% if notifications > 0 or unread_count > 0 %}
@@ -236,19 +314,64 @@
                 {{ notifications|default:unread_count }}
               </span>
             {% endif %}
-          </a>
+          </button>
+          <div class="notification-panel" id="notification-dropdown-panel">
+            <div class="notification-heading">
+              <div>
+                <strong>Notifications</strong>
+                <span>{{ notifications|default:0 }} unread alerts</span>
+              </div>
+              <a href="{% url 'dashboard:notifications' %}" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 6px;">Mark all read</a>
+            </div>
+            {% if business_alerts.low_stock > 0 %}
+            <a href="/products/?stock_status=low" class="notice">
+              <div class="notice-icon danger">🚨</div>
+              <div>
+                <strong>Low Stock Warning</strong>
+                <p>{{ business_alerts.low_stock }} products are currently below reorder threshold.</p>
+                <span>Live Monitor</span>
+              </div>
+            </a>
+            {% endif %}
+            {% if business_alerts.payments_due > 0 %}
+            <a href="/sales/?status=due" class="notice">
+              <div class="notice-icon warning">📅</div>
+              <div>
+                <strong>Payments Due</strong>
+                <p>{{ business_alerts.payments_due }} invoices have payment due dates approaching.</p>
+                <span>Action Required</span>
+              </div>
+            </a>
+            {% endif %}
+            {% if business_alerts.stock_received > 0 %}
+            <a href="/inventory/movements/?movement_type=IN" class="notice">
+              <div class="notice-icon info">📦</div>
+              <div>
+                <strong>Stock Received</strong>
+                <p>{{ business_alerts.stock_received }} inbound inventory batches processed recently.</p>
+                <span>Inventory Flow</span>
+              </div>
+            </a>
+            {% endif %}
+            <a href="{% url 'dashboard:notifications' %}" class="view-all-notif">View Notification Center &rarr;</a>
+          </div>
         </div>
         {% endif %}
 
-        <a href="{% url 'accounts:logout' %}" class="btn btn-ghost btn-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          Logout
-        </a>
+        <!-- Keyboard Shortcuts Help Button -->
+        <button type="button" class="btn btn-ghost btn-sm" onclick="toggleShortcutsModal()" title="Keyboard Shortcuts (?)" style="display:inline-flex; align-items:center; gap:5px; padding:5px 8px; color:var(--text-secondary);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <rect x="2" y="4" width="20" height="16" rx="2.5" stroke-width="1.8"/>
+            <path stroke-linecap="round" stroke-width="1.8" d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/>
+          </svg>
+          <kbd style="font-size:10px; padding:1px 5px;">?</kbd>
+        </button>
+
         <div class="header-user">
-          <div class="avatar">{{ user.name|first|upper }}</div>
+          <div class="avatar">{{ user.name|first|upper|default:"U" }}</div>
           <div style="display:flex;flex-direction:column;line-height:1.2;">
-            <span style="font-weight:600;font-size:13px;">{{ user.name }}</span>
-            <span style="font-size:11px;color:var(--text-secondary);">{{ user.role_name|title }}</span>
+            <span style="font-weight:600;font-size:13px;">{{ user.name|default:"User" }}</span>
+            <span style="font-size:11px;color:var(--text-secondary);">{{ user.role_name|default:"Staff"|title }}</span>
           </div>
         </div>
       </div>
@@ -403,7 +526,230 @@
       }
     });
   }
+
+  // Toggle Keyboard Shortcuts Modal
+  function toggleShortcutsModal() {
+    var modal = document.getElementById('bizflow-shortcuts-modal');
+    if (modal) {
+      modal.style.display = (modal.style.display === 'none' || !modal.style.display) ? 'flex' : 'none';
+    }
+  }
+
+  // Company Switcher Dropdown Toggle
+  function toggleCompanyDropdown(e) {
+    if (e) e.stopPropagation();
+    var menu = document.getElementById('company-dropdown-menu');
+    if (menu) {
+      menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'block' : 'none';
+    }
+  }
+
+  // Central Keyboard Shortcuts Handler
+  document.addEventListener('keydown', function(e) {
+    var tag = (e.target.tagName || '').toLowerCase();
+    var isInput = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
+
+    // 1. Ctrl+K or Cmd+K: Focus Global Search
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      var input = document.getElementById('bizflow-global-search');
+      if (input) {
+        input.focus();
+        input.select();
+      }
+      return;
+    }
+
+    // 2. Ctrl+Enter or Cmd+Enter: Save / Submit Active Form
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      var form = e.target.closest('form') || document.querySelector('form[method="post"]');
+      if (form) {
+        e.preventDefault();
+        var submitBtn = form.querySelector('button[type="submit"]') || form.querySelector('input[type="submit"]');
+        if (submitBtn) {
+          submitBtn.click();
+        } else {
+          form.submit();
+        }
+      }
+      return;
+    }
+
+    // 3. Escape: Close open modals, dropdowns, popups
+    if (e.key === 'Escape') {
+      var compMenu = document.getElementById('company-dropdown-menu');
+      if (compMenu) compMenu.style.display = 'none';
+      var shortcutModal = document.getElementById('bizflow-shortcuts-modal');
+      if (shortcutModal) shortcutModal.style.display = 'none';
+      document.querySelectorAll('.um-modal-overlay').forEach(function(m) { m.style.display = 'none'; });
+      var notifPanel = document.getElementById('notification-dropdown-panel');
+      if (notifPanel) notifPanel.classList.remove('active');
+      return;
+    }
+
+    // Single-key shortcuts below ONLY fire when NOT typing inside an input field
+    if (isInput || e.ctrlKey || e.altKey || e.metaKey) return;
+
+    // 4. '?' or 'Shift+/' : Open Keyboard Shortcuts Modal
+    if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+      e.preventDefault();
+      toggleShortcutsModal();
+      return;
+    }
+
+    // 5. 'N' : Quick New Sale Invoice
+    if (e.key === 'n' || e.key === 'N') {
+      e.preventDefault();
+      window.location.href = '/sales/new/';
+      return;
+    }
+
+    // 6. 'P' : Quick New Purchase Bill
+    if (e.key === 'p' || e.key === 'P') {
+      e.preventDefault();
+      window.location.href = '/purchases/new/';
+      return;
+    }
+
+    // 7. 'I' : Quick Add Inventory Product
+    if (e.key === 'i' || e.key === 'I') {
+      e.preventDefault();
+      window.location.href = '/products/new/';
+      return;
+    }
+
+    // 8. 'C' : Quick Add New Customer
+    if (e.key === 'c' || e.key === 'C') {
+      e.preventDefault();
+      window.location.href = '/customers/new/';
+      return;
+    }
+
+    // 9. 'W' : Toggle Workspace / Company Switcher
+    if (e.key === 'w' || e.key === 'W') {
+      e.preventDefault();
+      toggleCompanyDropdown();
+      return;
+    }
+
+    // 10. 'D' : Go to Dashboard
+    if (e.key === 'd' || e.key === 'D') {
+      e.preventDefault();
+      window.location.href = '/dashboard/';
+      return;
+    }
+  });
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function(e) {
+    var compMenu = document.getElementById('company-dropdown-menu');
+    var compBtn = document.getElementById('company-switcher-btn');
+    if (compMenu && compMenu.style.display === 'block') {
+      if (!compMenu.contains(e.target) && (!compBtn || !compBtn.contains(e.target))) {
+        compMenu.style.display = 'none';
+      }
+    }
+
+    var panel = document.getElementById('notification-dropdown-panel');
+    var bellBtn = document.getElementById('notification-bell-btn');
+    if (panel && panel.classList.contains('active')) {
+      if (!panel.contains(e.target) && (!bellBtn || !bellBtn.contains(e.target))) {
+        panel.classList.remove('active');
+      }
+    }
+  });
 </script>
+
+<!-- Global Keyboard Shortcuts Cheat Sheet Modal -->
+<div id="bizflow-shortcuts-modal" class="um-modal-overlay" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.65); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:20px;" onclick="if(event.target===this) toggleShortcutsModal();">
+  <div style="background:#ffffff; border-radius:16px; max-width:620px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #cbd5e1; overflow:hidden;">
+    <div style="padding:18px 24px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:20px;">⌨️</span>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:700; color:#0f172a;">Keyboard Shortcuts & Rapid Navigation</h3>
+          <p style="margin:0; font-size:12px; color:#64748b;">High-speed workflows designed for cashiers, accountants, and power users.</p>
+        </div>
+      </div>
+      <button type="button" onclick="toggleShortcutsModal()" style="background:none; border:none; color:#94a3b8; font-size:24px; cursor:pointer; line-height:1; padding:4px 8px; border-radius:6px;">&times;</button>
+    </div>
+
+    <div style="padding:22px 24px; display:grid; grid-template-columns:1fr 1fr; gap:20px; font-size:13px; max-height:70vh; overflow-y:auto;">
+      <!-- Quick Transactions -->
+      <div>
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#2563eb; letter-spacing:0.05em; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+          <span>⚡</span> Quick Transactions
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">New Sale Invoice</span>
+            <kbd>N</kbd>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">New Purchase Bill</span>
+            <kbd>P</kbd>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">Add Inventory Item</span>
+            <kbd>I</kbd>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">Add New Customer</span>
+            <kbd>C</kbd>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation & Search -->
+      <div>
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#059669; letter-spacing:0.05em; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+          <span>🧭</span> Navigation & Search
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">Focus Global Search</span>
+            <div><kbd>Ctrl</kbd> + <kbd>K</kbd></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">Go to Dashboard</span>
+            <kbd>D</kbd>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">Switch Workspace</span>
+            <kbd>W</kbd>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">Shortcuts Help</span>
+            <kbd>?</kbd>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forms & Dialogs -->
+      <div style="grid-column:1 / -1; border-top:1px solid #e2e8f0; padding-top:14px;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#7c3aed; letter-spacing:0.05em; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+          <span>📝</span> Forms & Dialogs
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">Save / Submit Form</span>
+            <div><kbd>Ctrl</kbd> + <kbd>Enter</kbd></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:#f8fafc; border-radius:6px; border:1px solid #f1f5f9;">
+            <span style="color:#1e293b; font-weight:500;">Close Modal / Dropdown</span>
+            <kbd>Esc</kbd>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:14px 24px; border-top:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:12px; color:#64748b;">Single-key shortcuts are active when not typing inside text fields.</span>
+      <button type="button" onclick="toggleShortcutsModal()" class="btn btn-primary btn-sm">Close</button>
+    </div>
+  </div>
+</div>
+
 <script src="{% static 'js/date_switcher.js' %}"></script>
 {% block extra_js %}{% endblock %}
 </body>
