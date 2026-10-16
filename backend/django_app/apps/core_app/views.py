@@ -16,9 +16,28 @@ def error_404(request: HttpRequest, exception=None) -> HttpResponse:
     return render(request, "errors/404.html", status=404)
 
 
+import logging
+import sys
+import traceback
+
+logger = logging.getLogger("django.request")
+
+
 def error_500(request: HttpRequest) -> HttpResponse:
-    """Render secure, friendly 500 Server Error page without exposing stack traces."""
-    return render(request, "errors/500.html", status=500)
+    """Render 500 page and log diagnostic stack traces."""
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    error_msg = str(exc_value) if exc_value is not None else ""
+    error_trace = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback)) if exc_type else ""
+
+    if error_trace:
+        logger.error("Unhandled 500 error at %s:\n%s", getattr(request, "path", "/"), error_trace)
+
+    context = {
+        "error_message": error_msg,
+        "error_trace": error_trace,
+    }
+    return render(request, "errors/500.html", context, status=500)
+
 
 
 def error_403(request: HttpRequest, exception=None) -> HttpResponse:

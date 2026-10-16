@@ -3,10 +3,26 @@
 {% block page_title %}System Error{% endblock %}
 
 {% block content %}
-<div class="empty-state" style="max-width: 520px; margin: 60px auto;">
-  <div style="font-size: 64px; font-weight: 800; color: var(--danger); line-height: 1; margin-bottom: 16px;">500</div>
-  <h2 class="empty-state-title" style="font-size: 20px;">An Unexpected Error Occurred</h2>
-  <p class="empty-state-desc">Our technical team has been notified. Internal stack traces and server parameters are protected for security.</p>
+<div class="empty-state" style="max-width: 640px; margin: 40px auto; text-align: left;">
+  <div style="text-align: center;">
+    <div style="font-size: 64px; font-weight: 800; color: var(--danger); line-height: 1; margin-bottom: 16px;">500</div>
+    <h2 class="empty-state-title" style="font-size: 20px;">An Unexpected Error Occurred</h2>
+    <p class="empty-state-desc">Our technical team has been notified.</p>
+  </div>
+
+  {% if user.is_authenticated and error_message %}
+  <div class="card" style="margin-top: 24px; padding: 16px; border-left: 4px solid var(--danger); background: #fef2f2; border-radius: 8px;">
+    <h4 style="color: #991b1b; margin-top: 0; font-size: 13px; font-weight: 700; text-transform: uppercase;">Diagnostic Exception Details:</h4>
+    <p style="color: #7f1d1d; font-family: ui-monospace, monospace; font-size: 13px; word-break: break-all; margin-bottom: 8px;">{{ error_message }}</p>
+    {% if error_trace %}
+    <details style="margin-top: 8px;">
+      <summary style="cursor: pointer; color: #b91c1c; font-size: 12px; font-weight: 600;">View Call Stack</summary>
+      <pre style="background: #0f172a; color: #f8fafc; padding: 12px; border-radius: 6px; font-size: 11px; overflow-x: auto; margin-top: 8px; white-space: pre-wrap; font-family: ui-monospace, monospace;">{{ error_trace }}</pre>
+    </details>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
     <a href="{% url 'dashboard:index' %}" class="btn btn-primary">Return to Dashboard</a>
   </div>
