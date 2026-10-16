@@ -12,22 +12,13 @@ sys.path.append(str(BASE_DIR))
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
 
-try:
-    import django
-    from django.apps import apps
-    if not apps.ready:
-        django.setup()
+import django
+from django.apps import apps
+if not apps.ready:
+    django.setup()
 
-    from backend.api.main import app
-    application = app
-except Exception:
-    import traceback
-    traceback.print_exc()
-    from fastapi import FastAPI
-    from fastapi.responses import JSONResponse
-    app = FastAPI()
-    _err = traceback.format_exc()
+from backend.api.main import app as fastapi_app
 
-    @app.get("/{full_path:path}")
-    async def error_catch(full_path: str):
-        return JSONResponse(status_code=500, content={"error": "FastAPI Startup Error", "details": _err})
+# Vercel static AST parser looks for top-level module assigns 'app' or 'application'
+app = fastapi_app
+application = app
