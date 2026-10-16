@@ -33,7 +33,7 @@ if _BACKEND_DIR not in sys.path:
 # ---------------------------------------------------------------------------
 env = environ.Env(
     DEBUG=(bool, False),
-    ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
+    DJANGO_DEBUG=(bool, False),
 )
 # Load .env from project root (business_new/.env) if present
 environ.Env.read_env(REPO_ROOT / ".env", overwrite=False)
@@ -42,8 +42,15 @@ environ.Env.read_env(REPO_ROOT / ".env", overwrite=False)
 # Core Django settings
 # ---------------------------------------------------------------------------
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="change-this-in-production")
-DEBUG = env("DEBUG", default=False)
-ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+DEBUG = env.bool("DJANGO_DEBUG", default=env.bool("DEBUG", default=False))
+_raw_hosts = env("DJANGO_ALLOWED_HOSTS", default=env("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"]))
+ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(",")] if isinstance(_raw_hosts, str) else list(_raw_hosts)
+
+_raw_csrf_origins = env("CSRF_TRUSTED_ORIGINS", default="")
+if _raw_csrf_origins:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in _raw_csrf_origins.split(",") if o.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = []
 
 # ---------------------------------------------------------------------------
 # Installed applications
@@ -107,6 +114,13 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# Support WhiteNoise for production static file serving if installed
+try:
+    import whitenoise  # noqa: F401
+    MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+except ImportError:
+    pass
+
 # Configurable user online activity threshold (minutes)
 USER_ONLINE_TIMEOUT_MINUTES = env.int("USER_ONLINE_TIMEOUT_MINUTES", default=15)
 
@@ -169,9 +183,29 @@ if not _db_url:
 
 if _db_url:
     _cleaned_url = _db_url.replace("mysql+mysqlconnector://", "mysql://")
+    _cleaned_url = _cleaned_url.replace("postgres://", "postgresql://")
     _parsed = environ.Env.db_url_config(_cleaned_url)
-    if "mysql" in _parsed.get("ENGINE", ""):
-        _parsed.setdefault("OPTIONS", {})["charset"] = "utf8mb4"
+    _engine = _parsed.get("ENGINE", "")
+    _options = _parsed.setdefault("OPTIONS", {})
+
+    if "mysql" in _engine:
+        _options["charset"] = "utf8mb4"
+    elif "postgresql" in _engine or "postgres" in _engine:
+        # Supabase and managed PostgreSQL optimizations
+        is_supabase = "supabase" in _db_url.lower()
+        ssl_require = env.bool("DB_SSL_REQUIRE", default=is_supabase)
+        if ssl_require and "sslmode" not in _options:
+            _options["sslmode"] = env("DB_SSLMODE", default="require")
+
+        # Connection pooler / PgBouncer mode (Supabase transaction pooler port 6543)
+        is_pooler = env.bool("DB_IS_POOLER", default=(_parsed.get("PORT") == 6543))
+        if is_pooler:
+            # Transaction poolers cannot handle prepared statements / server-side cursors
+            _parsed["DISABLE_SERVER_SIDE_CURSORS"] = True
+            _parsed["CONN_MAX_AGE"] = 0
+        else:
+            _parsed["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=600)
+
     DATABASES = {"default": _parsed}
 else:
     # Default: SQLite (development / CI)
@@ -231,7 +265,7 @@ USE_TZ = True
 # ---------------------------------------------------------------------------
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "static" / "collected"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ---------------------------------------------------------------------------
 # Media files (user uploads — company logos, etc.)

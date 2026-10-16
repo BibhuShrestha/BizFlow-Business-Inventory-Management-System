@@ -55,10 +55,17 @@ function showToast(message, type = 'success') {
   toast.style.fontSize = '14px';
   toast.style.transition = 'all 0.3s ease';
 
-  toast.innerHTML = `
-    <span>${message}</span>
-    <button type="button" style="background:transparent; border:none; color:#FFF; font-size:18px; cursor:pointer; margin-left:12px; line-height:1;" onclick="this.parentElement.remove()">&times;</button>
-  `;
+  const msgSpan = document.createElement('span');
+  msgSpan.textContent = message;
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.style.cssText = 'background:transparent; border:none; color:#FFF; font-size:18px; cursor:pointer; margin-left:12px; line-height:1;';
+  closeBtn.innerHTML = '&times;';
+  closeBtn.onclick = function() { toast.remove(); };
+
+  toast.appendChild(msgSpan);
+  toast.appendChild(closeBtn);
 
   container.appendChild(toast);
   setTimeout(() => {
@@ -160,7 +167,12 @@ function submitQuickForm(event, form, targetSelectId, modalId, callback) {
   .catch((err) => {
     if (errorBox) {
       errorBox.style.display = 'block';
-      errorBox.innerHTML = `<div class="alert alert-danger" style="margin-bottom:12px; font-size:13px;">${err.message}</div>`;
+      errorBox.innerHTML = '';
+      const errAlert = document.createElement('div');
+      errAlert.className = 'alert alert-danger';
+      errAlert.style.cssText = 'margin-bottom:12px; font-size:13px;';
+      errAlert.textContent = err.message;
+      errorBox.appendChild(errAlert);
     } else {
       showToast(err.message, 'danger');
     }

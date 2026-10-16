@@ -255,3 +255,36 @@ The Credit Management system is architected to avoid duplicate tables by leverag
     - `0 < current_stock <= effective_critical_stock` ➔ `critical`
     - `effective_critical_stock < current_stock <= minimum_stock` ➔ `low`
     - `current_stock > minimum_stock` ➔ `normal`
+
+---
+
+## 8. Supabase PostgreSQL Production Migration & Operation
+
+### 8.1 MySQL to PostgreSQL Type Mapping
+
+| MySQL Datatype | PostgreSQL / Supabase Datatype | Django Field Mapping | Preservation Note |
+|---|---|---|---|
+| `AUTO_INCREMENT` / `INT` / `BIGINT` | `BIGSERIAL` / `IDENTITY` | `models.BigAutoField` | Sequences preserved via `setval(pg_get_serial_sequence())`. |
+| `TINYINT(1)` | `BOOLEAN` | `models.BooleanField` | Values `1` ➔ `true`, `0` ➔ `false`. |
+| `DATETIME` | `TIMESTAMP WITH TIME ZONE` | `models.DateTimeField` | Stored in UTC, localized via `TIME_ZONE="Asia/Kathmandu"`. |
+| `JSON` | `JSONB` | `models.JSONField` | Native binary indexed JSON in PostgreSQL. |
+| `DECIMAL(14,2)` | `NUMERIC(14,2)` | `models.DecimalField` | Exact financial monetary precision guaranteed. |
+| `VARCHAR(N)` | `VARCHAR(N)` | `models.CharField` | Preserves character lengths and collation. |
+| `LONGTEXT` / `TEXT` | `TEXT` | `models.TextField` | Unbounded text support. |
+
+### 8.2 Supabase Connection Architectures
+
+1. **Direct Connection (Port 5432)**:
+   - URL: `postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres?sslmode=require`
+   - Used for: Schema migrations (`python manage.py migrate`), data imports, long-lived background jobs.
+   - Pool settings: `CONN_MAX_AGE = 600`, prepared statements enabled.
+
+2. **Transaction Pooler (Port 6543 / Supavisor / PgBouncer)**:
+   - URL: `postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?sslmode=require`
+   - Used for: High-concurrency web traffic and container autoscaling.
+   - Pool settings: `DB_IS_POOLER=True`, `CONN_MAX_AGE = 0`, `DISABLE_SERVER_SIDE_CURSORS = True`.
+
+### 8.3 Migration Tooling Suite (`scripts/`)
+- `scripts/backup_mysql.py`: Non-destructive backup of source database into versioned JSON fixture format.
+- `scripts/migrate_mysql_to_supabase.py`: Schema construction, data import, and primary key sequence alignment (`setval`).
+- `scripts/verify_database_migration.py`: 4-tier audit tool checking tables, record counts, auth hashes, tenant isolation, and aggregations.
