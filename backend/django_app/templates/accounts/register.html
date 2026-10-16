@@ -95,5 +95,19 @@
     </div>
   </div>
 </div>
+<script>
+  document.getElementById("register-form")?.addEventListener("submit", function() {
+    const btn = document.getElementById("register-submit");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerText = "Creating account...";
+      // Re-enable after 8 seconds in case validation or network halted submission
+      setTimeout(function() {
+        btn.disabled = false;
+        btn.innerText = "Create Account";
+      }, 8000);
+    }
+  });
+</script>
 </body>
 </html>

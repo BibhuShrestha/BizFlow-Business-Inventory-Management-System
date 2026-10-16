@@ -32,6 +32,15 @@ class RegisterForm(forms.Form):
         widget=forms.PasswordInput(attrs={"placeholder": "Repeat your password", "class": "form-control"}),
     )
 
+    def clean_email(self):
+        email = self.cleaned_data.get("email", "").strip().lower()
+        if not email:
+            return email
+        from apps.accounts.models import User
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account with this email address already exists. Please sign in instead.")
+        return email
+
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")

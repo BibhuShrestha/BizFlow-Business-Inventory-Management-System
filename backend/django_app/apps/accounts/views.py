@@ -3,6 +3,7 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth import login, logout
+from django.db import IntegrityError
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
@@ -61,30 +62,8 @@ def login_view(request: HttpRequest) -> HttpResponse:
             return render(request, "accounts/login.html", {"form": form})
 
         if form.is_valid():
-            email = form.cleaned_data["email"]
+            email = form.cleaned_data["email"].strip().lower()
             password = form.cleaned_data["password"]
-
-            from django.conf import settings
-            from apps.accounts.models import User, Role
-            from apps.companies.models import Company
-
-            # Auto-activate in development mode if user enters correct password
-            if settings.DEBUG:
-                try:
-                    dev_user = User.objects.get(email=email.lower().strip())
-                    if dev_user.check_password(password) and (not dev_user.is_active or not dev_user.email_verified):
-                        dev_user.is_active = True
-                        dev_user.email_verified = True
-                        if not dev_user.active_company:
-                            dev_user.active_company = Company.objects.first()
-                        if not dev_user.role or dev_user.role.name == "staff":
-                            admin_role = Role.objects.filter(name="admin").first()
-                            if admin_role:
-                                dev_user.role = admin_role
-                                dev_user.is_staff = True
-                        dev_user.save()
-                except User.DoesNotExist:
-                    pass
 
             try:
                 user = AuthService.authenticate(
@@ -104,6 +83,14 @@ def login_view(request: HttpRequest) -> HttpResponse:
             except AuthenticationError as exc:
                 increment_rate_limit(rate_key, period_seconds=900)
                 record_login_attempt(email=email, request=request, success=False, method="web", message=str(exc))
+                # If account is pending verification, redirect directly to OTP screen
+                if "verified" in str(exc).lower() or "check your inbox" in str(exc).lower():
+                    request.session["verify_user_email"] = email
+                    messages.warning(
+                        request,
+                        "Your email has not been verified yet. Please enter the 6-digit verification code sent to your email."
+                    )
+                    return redirect("accounts:verify_otp")
                 messages.error(request, str(exc))
 
     return render(request, "accounts/login.html", {"form": form})
@@ -145,48 +132,109 @@ def register_view(request: HttpRequest) -> HttpResponse:
 
         if form.is_valid():
             try:
-                user, token = AuthService.register(
+                user, otp = AuthService.register(
                     name=form.cleaned_data["name"],
                     email=form.cleaned_data["email"],
                     password=form.cleaned_data["password"],
                 )
-                from apps.companies.models import Company
-                from apps.accounts.models import Role
+                from core.email import EmailService
+                EmailService.send_verification_otp(user, otp, request)
 
-                # Auto-activate immediately and log in without requiring email confirmation
-                user.is_active = True
-                user.email_verified = True
-                first_co = Company.objects.first()
-                if first_co and not user.active_company:
-                    user.active_company = first_co
-                elif not user.active_company:
-                    # Create initial default company if none exists
-                    company_name = f"{user.name}'s Business"
-                    first_co = Company.objects.create(
-                        company_name=company_name,
-                        company_phone="",
-                        vat_pan_number="",
-                        address="",
-                    )
-                    user.active_company = first_co
+                # Store pending verification in session
+                request.session["verify_user_id"] = user.id
+                request.session["verify_user_email"] = user.email
 
-                # Grant admin privileges to first/primary users
-                admin_role = Role.objects.filter(name="admin").first()
-                if admin_role and (not user.role or user.role.name == "staff"):
-                    user.role = admin_role
-                    user.is_staff = True
-
-                user.save()
-                login(request, user)
                 messages.success(
                     request,
-                    f"Welcome to BizFlow, {user.name}! Your account is active and ready.",
+                    f"Account created! We have sent a 6-digit verification code to {user.email}.",
                 )
-                return redirect(_get_dashboard_url())
-            except (DuplicateEmailError, ValidationError) as exc:
+                return redirect("accounts:verify_otp")
+            except DuplicateEmailError as exc:
+                form.add_error("email", str(exc))
                 messages.error(request, str(exc))
+            except ValidationError as exc:
+                form.add_error(None, str(exc))
+                messages.error(request, str(exc))
+            except IntegrityError:
+                err_msg = f"An account with email '{form.cleaned_data.get('email')}' already exists. Please sign in instead."
+                form.add_error("email", err_msg)
+                messages.error(request, err_msg)
 
     return render(request, "accounts/register.html", {"form": form})
+
+
+def verify_otp_view(request: HttpRequest) -> HttpResponse:
+    """Verify 6-digit OTP code to activate account and access dashboard."""
+    if request.user.is_authenticated:
+        return redirect(_get_dashboard_url())
+
+    session_email = request.session.get("verify_user_email") or ""
+    query_email = request.GET.get("email") or ""
+    email = (query_email or session_email).strip().lower()
+
+    if email:
+        from apps.accounts.models import User
+        existing = User.objects.filter(email__iexact=email).first()
+        if existing and getattr(existing, "email_verified", False) and getattr(existing, "is_active", False):
+            request.session.pop("verify_user_id", None)
+            request.session.pop("verify_user_email", None)
+            messages.info(request, "Your email is already verified. Please sign in with your password.")
+            return redirect("accounts:login")
+
+    if request.method == "POST":
+        otp = request.POST.get("otp", "").strip()
+        target_email = (request.POST.get("email", "").strip() or email).lower()
+
+        if not otp:
+            messages.error(request, "Please enter the 6-digit verification code.")
+            return render(request, "accounts/verify_otp.html", {"email": target_email})
+
+        try:
+            user = AuthService.verify_otp(target_email, otp)
+            login(request, user)
+            request.session.pop("verify_user_id", None)
+            request.session.pop("verify_user_email", None)
+            messages.success(
+                request,
+                f"Welcome to BizFlow, {user.name}! Your account has been verified and is ready.",
+            )
+            return redirect(_get_dashboard_url())
+        except TokenInvalidError as exc:
+            messages.error(request, str(exc))
+        except Exception as exc:
+            messages.error(request, f"Verification failed: {exc}")
+
+        return render(request, "accounts/verify_otp.html", {"email": target_email})
+
+    return render(request, "accounts/verify_otp.html", {"email": email})
+
+
+def resend_otp_view(request: HttpRequest) -> HttpResponse:
+    """Resend a new 6-digit OTP code with rate limiting."""
+    client_ip = get_client_ip(request)
+    rate_key = f"resend_otp:{client_ip}"
+    if is_rate_limited(rate_key, max_attempts=5, period_seconds=300):
+        messages.error(request, "Too many requests. Please wait a few minutes before resending.")
+        return redirect("accounts:verify_otp")
+
+    increment_rate_limit(rate_key, period_seconds=300)
+
+    email = request.POST.get("email") or request.session.get("verify_user_email") or ""
+    if not email:
+        messages.error(request, "Unable to find your email. Please register again.")
+        return redirect("accounts:register")
+
+    try:
+        user, otp = AuthService.resend_otp(email)
+        from core.email import EmailService
+        EmailService.send_verification_otp(user, otp, request)
+        request.session["verify_user_id"] = user.id
+        request.session["verify_user_email"] = user.email
+        messages.success(request, f"A new 6-digit code has been sent to {user.email}.")
+    except Exception as exc:
+        messages.error(request, str(exc))
+
+    return redirect("accounts:verify_otp")
 
 
 def verify_email_view(request: HttpRequest, token: str) -> HttpResponse:

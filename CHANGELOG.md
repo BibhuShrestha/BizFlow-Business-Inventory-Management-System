@@ -5,6 +5,27 @@ All notable changes to the **BizFlow** project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-10-16
+
+### Fixed & Enhanced
+- **Unique Email Constraint & IntegrityError Handling**:
+  - Added case-insensitive `clean_email()` in `RegisterForm` rejecting existing accounts with helpful user feedback.
+  - Wrapped `user.save()` in `AuthService.register()` in `IntegrityError` try-except block converting database unique constraint collisions into `DuplicateEmailError`.
+  - Added explicit handling in `register_view` and FastAPI `/api/v1/auth/register` avoiding 500 server crashes.
+- **6-Digit OTP Email Verification System**:
+  - Implemented `create_otp(user, expires_minutes=15)` and `verify_otp(user, otp)` on `EmailVerificationToken`.
+  - Created `/auth/verify-otp/` and `/auth/resend-otp/` views and modern OTP entry template (`verify_otp.html`).
+  - Added `/api/v1/auth/verify-otp` and `/api/v1/auth/resend-otp` REST endpoints in FastAPI auth router.
+  - Prevented race conditions and double submission via idempotent verification and debounced form submit handlers.
+- **Production & Vercel Deployment Hardening**:
+  - Configured `WHITENOISE_USE_FINDERS = True` and updated `vercel.json` static routing to serve assets directly from `backend/django_app/static/`.
+  - Added automatic Vercel domain detection for `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and FastAPI `CORSMiddleware` (`*.vercel.app`).
+  - Validated production deployment via `manage.py check --deploy` with 0 issues.
+- **Testing**:
+  - Full test suite passes with **252 tests green (100% pass rate)**.
+
+---
+
 ## [2.6.0] - 2026-10-16
 
 ### Added & Production-Ready

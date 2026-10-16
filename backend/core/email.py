@@ -12,6 +12,38 @@ class EmailService:
     """Sends system emails (verification, reset, notifications)."""
 
     @staticmethod
+    def send_verification_otp(user, otp: str, request=None) -> bool:
+        """Send 6-digit OTP verification email to user and log it for developer convenience."""
+        subject = f"{otp} is your BizFlow verification code"
+        message = (
+            f"Hello {user.name},\n\n"
+            f"Thank you for registering with BizFlow.\n\n"
+            f"Your 6-digit verification code is:\n\n"
+            f"    {otp}\n\n"
+            f"Enter this code on the verification screen to activate your account and access your dashboard.\n"
+            f"This code will expire in 15 minutes.\n\n"
+            f"If you did not request this code, you can safely ignore this email.\n\n"
+            f"BizFlow Team"
+        )
+        logger.info("==================================================")
+        logger.info(">>> VERIFICATION OTP for %s: %s <<<", user.email, otp)
+        logger.info("==================================================")
+        try:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            logger.info("Verification OTP email successfully sent via SMTP to %s", user.email)
+            return True
+        except Exception as exc:
+            logger.error("Failed to send verification OTP email to %s: %s", user.email, exc, exc_info=True)
+            return False
+
+
+    @staticmethod
     def send_verification_email(user, token: str, request=None) -> bool:
         """Send account verification email with activation link."""
         host = request.get_host() if request else "localhost:8000"

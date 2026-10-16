@@ -115,15 +115,16 @@ class SupabaseAuthClient:
         }
 
         try:
-            resp = requests.post(url, json=payload, headers=cls._headers(), timeout=10)
+            resp = requests.post(url, json=payload, headers=cls._headers(), timeout=2.5)
         except requests.RequestException as e:
-            logger.error("Supabase sign-up request failed: %s", e)
-            raise AuthenticationError("Registration service is temporarily unavailable.")
+            logger.warning("Supabase sign-up request timed out or unavailable: %s", e)
+            return {}
 
         if resp.status_code not in (200, 201):
             data = resp.json() if resp.text else {}
             err_msg = data.get("error_description") or data.get("msg") or data.get("message") or "Registration failed."
-            raise ValidationError(err_msg)
+            logger.warning("Supabase sign-up response status %s: %s", resp.status_code, err_msg)
+            return {}
 
         return resp.json()
 

@@ -224,11 +224,35 @@ class EmailVerificationToken(models.Model):
         return obj, raw_token
 
     @classmethod
+    def create_otp(cls, user, expires_minutes: int = 15):
+        """Generate a secure 6-digit numeric OTP and save its hash."""
+        raw_otp = f"{secrets.randbelow(900000) + 100000}"
+        token_hash = hashlib.sha256(raw_otp.encode()).hexdigest()
+        expires_at = timezone.now() + timedelta(minutes=expires_minutes)
+        cls.objects.filter(user=user, used=False).update(used=True)
+        obj = cls.objects.create(user=user, token_hash=token_hash, expires_at=expires_at)
+        return obj, raw_otp
+
+    @classmethod
     def verify_token(cls, raw_token: str):
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         obj = cls.objects.filter(token_hash=token_hash, used=False).first()
         if obj and obj.is_valid():
             return obj
+        return None
+
+    @classmethod
+    def verify_otp(cls, user, raw_otp: str):
+        """Verify 6-digit OTP code for a user."""
+        token_hash = hashlib.sha256(raw_otp.strip().encode()).hexdigest()
+        obj = cls.objects.filter(user=user, token_hash=token_hash, used=False).order_by("-id").first()
+        if obj and obj.is_valid():
+            return obj
+        # Support idempotent verification if already verified within validity window
+        if getattr(user, "email_verified", False) and getattr(user, "is_active", False):
+            recent = cls.objects.filter(user=user, token_hash=token_hash).order_by("-id").first()
+            if recent and timezone.now() <= recent.expires_at:
+                return recent
         return None
 
     def mark_used(self):

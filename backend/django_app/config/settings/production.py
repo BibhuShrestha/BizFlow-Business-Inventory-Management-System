@@ -30,6 +30,9 @@ STORAGES = {
     },
 }
 
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_USE_FINDERS = env.bool("WHITENOISE_USE_FINDERS", default=True)
+
 # Structured console logging for production
 LOGGING = {
     "version": 1,

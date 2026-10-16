@@ -26,6 +26,7 @@ from core.security import (
     revoke_token,
 )
 from domain.services.auth_service import AuthService
+from domain.exceptions import DuplicateEmailError
 from api.main import app
 
 User = get_user_model()
@@ -465,3 +466,112 @@ class TestAuthFlows:
         # Reusing token must fail
         with pytest.raises(Exception):
             AuthService.reset_password(raw_token, "AnotherPassword123!")
+
+    def test_registration_duplicate_email_raises_duplicate_email_error(self, db):
+        """Registering an existing email raises DuplicateEmailError."""
+        AuthService.register(
+            name="Original User",
+            email="unique@bizflow.com",
+            password="Password123!",
+        )
+        with pytest.raises(DuplicateEmailError):
+            AuthService.register(
+                name="Duplicate User",
+                email="unique@bizflow.com",
+                password="Password123!",
+            )
+        # Case insensitive check
+        with pytest.raises(DuplicateEmailError):
+            AuthService.register(
+                name="Duplicate User Upper",
+                email="UNIQUE@bizflow.com",
+                password="Password123!",
+            )
+
+    def test_web_registration_duplicate_email_shows_error(self, db, client):
+        """Web registration view displays form error for duplicate email without 500 IntegrityError."""
+        AuthService.register(
+            name="First User",
+            email="existing@bizflow.com",
+            password="ValidPass123!",
+        )
+        response = client.post(
+            reverse("accounts:register"),
+            {
+                "name": "Second User",
+                "email": "existing@bizflow.com",
+                "password": "ValidPass123!",
+                "password_confirm": "ValidPass123!",
+            },
+        )
+        assert response.status_code == 200
+        # Form error should be present
+        assert "An account with this email address already exists" in response.content.decode()
+
+    @pytest.mark.django_db(transaction=True)
+    def test_api_registration_duplicate_email_returns_409(self):
+        """API registration returns HTTP 409 Conflict when email exists."""
+        AuthService.register(
+            name="API User",
+            email="api_dup@bizflow.com",
+            password="ValidPass123!",
+        )
+        test_client = TestClient(app)
+        res = test_client.post(
+            "/api/v1/auth/register",
+            json={
+                "name": "Duplicate API User",
+                "email": "api_dup@bizflow.com",
+                "password": "ValidPass123!",
+            },
+        )
+        assert res.status_code == 409
+        assert "already registered" in res.json()["detail"]
+
+    def test_web_registration_redirects_to_otp_and_verifies(self, db, client):
+        """Web registration creates inactive account, redirects to verify-otp, and verifies with OTP."""
+        res = client.post(
+            reverse("accounts:register"),
+            {
+                "name": "OTP User",
+                "email": "otp_test@bizflow.com",
+                "password": "ValidPassword123!",
+                "password_confirm": "ValidPassword123!",
+            },
+        )
+        assert res.status_code == 302
+        assert reverse("accounts:verify_otp") in res.url
+
+        # User is inactive before OTP verification
+        user = User.objects.get(email="otp_test@bizflow.com")
+        assert user.is_active is False
+        assert user.email_verified is False
+
+        # Get generated OTP
+        from apps.accounts.models import EmailVerificationToken
+        token_obj = EmailVerificationToken.objects.filter(user=user, used=False).first()
+        assert token_obj is not None
+
+        # Verify with wrong OTP fails
+        fail_res = client.post(
+            reverse("accounts:verify_otp"),
+            {"email": "otp_test@bizflow.com", "otp": "000000"},
+        )
+        assert fail_res.status_code == 200
+        user.refresh_from_db()
+        assert user.is_active is False
+
+        # Verify with correct OTP
+        # Simulate knowing the raw_otp: generate a known OTP for test
+        _, known_otp = EmailVerificationToken.create_otp(user)
+        success_res = client.post(
+            reverse("accounts:verify_otp"),
+            {"email": "otp_test@bizflow.com", "otp": known_otp},
+        )
+        assert success_res.status_code == 302
+
+        user.refresh_from_db()
+        assert user.is_active is True
+        assert user.email_verified is True
+
+

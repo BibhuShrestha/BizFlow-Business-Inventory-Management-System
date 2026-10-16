@@ -17,8 +17,13 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.serveousercontent.com",
 ]
 
-# Show emails in the console instead of sending them
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Use real SMTP if credentials are configured in .env; otherwise fallback to console
+_mail_user = env("MAIL_USERNAME", default="").strip()
+_mail_pass = env("MAIL_PASSWORD", default="").strip()
+if _mail_user and _mail_pass and "your_email" not in _mail_user:
+    EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+else:
+    EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 
 # Disable browser-side caching during development
 CACHES = {

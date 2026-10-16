@@ -4,10 +4,11 @@ AuthService — Authentication business logic shared between Django and FastAPI.
 This service does NOT import from Django views or FastAPI routers.
 It only uses Django models and the ORM.
 """
+import hashlib
 import logging
 from typing import Any
 
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.contrib.auth.hashers import make_password, check_password
 
 from domain.exceptions import (
@@ -102,8 +103,8 @@ class AuthService:
 
         email = email.lower().strip()
 
-        if User.objects.filter(email=email).exists():
-            raise DuplicateEmailError(f"An account with email '{email}' already exists.")
+        if User.objects.filter(email__iexact=email).exists():
+            raise DuplicateEmailError(email)
 
         try:
             validate_password(password)
@@ -133,14 +134,100 @@ class AuthService:
             email_verified=False,
         )
         user.set_password(password)
-        user.save()
+        try:
+            user.save()
+        except IntegrityError:
+            logger.warning("IntegrityError on user registration for email %s (likely duplicate concurrent insert)", email)
+            raise DuplicateEmailError(email)
 
-        # Create email verification token
-        token_obj, raw_token = EmailVerificationToken.create_token(user)
-        token_obj.save()
+        # Create 6-digit email verification OTP
+        token_obj, raw_token = EmailVerificationToken.create_otp(user)
 
-        logger.info("New user registered: %s (id=%s)", email, user.id)
+        logger.info("New user registered: %s (id=%s), verification OTP generated", email, user.id)
         return user, raw_token
+
+    @staticmethod
+    @transaction.atomic
+    def verify_otp(email_or_user, otp: str):
+        """
+        Verify a user's 6-digit OTP code and activate their account.
+
+        Args:
+            email_or_user: Email string or User instance.
+            otp: 6-digit verification code entered by the user.
+
+        Returns:
+            Activated User instance.
+
+        Raises:
+            TokenInvalidError: If OTP is invalid or expired.
+        """
+        from apps.accounts.models import User, EmailVerificationToken, Role
+        from apps.companies.models import Company
+
+        if isinstance(email_or_user, str):
+            user = User.objects.filter(email__iexact=email_or_user.strip()).first()
+        else:
+            user = email_or_user
+
+        if not user:
+            raise TokenInvalidError("User account not found.")
+
+        token_obj = EmailVerificationToken.verify_otp(user, otp)
+        if not token_obj:
+            raise TokenInvalidError("Invalid or expired 6-digit verification code. Please request a new code.")
+
+        token_obj.mark_used()
+        user.email_verified = True
+        user.is_active = True
+
+        # Ensure active company and role are configured upon first activation
+        first_co = Company.objects.first()
+        if first_co and not user.active_company:
+            user.active_company = first_co
+        elif not user.active_company:
+            first_co = Company.objects.create(
+                company_name=f"{user.name}'s Business",
+                company_phone="",
+                vat_pan_number="",
+                address="",
+            )
+            user.active_company = first_co
+
+        admin_role = Role.objects.filter(name="admin").first()
+        if admin_role and (not user.role or user.role.name == "staff"):
+            user.role = admin_role
+            user.is_staff = True
+
+        user.save()
+        logger.info("Email verified via OTP for user %s (id=%s)", user.email, user.id)
+        return user
+
+    @staticmethod
+    def resend_otp(email: str):
+        """
+        Generate and return a new 6-digit OTP for an unverified user.
+
+        Args:
+            email: User's email address.
+
+        Returns:
+            Tuple of (User, raw_otp_string).
+
+        Raises:
+            ValidationError: If user is not found or already verified.
+        """
+        from apps.accounts.models import User, EmailVerificationToken
+
+        user = User.objects.filter(email__iexact=email.strip()).first()
+        if not user:
+            raise ValidationError("No registered account found with that email address.")
+        if user.email_verified and user.is_active:
+            raise ValidationError("This account is already verified. Please sign in.")
+
+        token_obj, raw_otp = EmailVerificationToken.create_otp(user)
+        logger.info("Resent new verification OTP for %s", user.email)
+        return user, raw_otp
 
     @staticmethod
     @transaction.atomic
@@ -161,7 +248,13 @@ class AuthService:
 
         token_obj = EmailVerificationToken.verify_token(token)
         if not token_obj:
-            raise TokenInvalidError("Verification link is invalid or has expired.")
+            # Check if token was an OTP
+            token_obj = EmailVerificationToken.objects.filter(
+                token_hash=hashlib.sha256(token.strip().encode()).hexdigest(),
+                used=False
+            ).first()
+            if not token_obj or not token_obj.is_valid():
+                raise TokenInvalidError("Verification link is invalid or has expired.")
 
         user = token_obj.user
         user.email_verified = True

@@ -29,6 +29,7 @@ from domain.exceptions import (
     TokenInvalidError,
     ValidationError,
 )
+from django.db import IntegrityError
 from domain.services.auth_service import AuthService
 from api.deps import get_current_user, security_bearer
 from api.schemas.auth import (
@@ -41,6 +42,8 @@ from api.schemas.auth import (
     ResetPasswordRequest,
     TokenResponse,
     UserOut,
+    VerifyOTPRequest,
+    ResendOTPRequest,
     GoogleAuthUrlResponse,
     GoogleCallbackRequest,
 )
@@ -221,20 +224,60 @@ def register(req: RegisterRequest, request: Request):
     increment_rate_limit(rate_key, period_seconds=900)
 
     try:
-        user, token = AuthService.register(
+        user, otp = AuthService.register(
             name=req.name,
             email=req.email,
             password=req.password,
         )
         from core.email import EmailService
-        EmailService.send_verification_email(user, token)
+        EmailService.send_verification_otp(user, otp, request)
         return MessageResponse(
-            detail="Account created successfully. Please verify your email."
+            detail="Account created successfully. A 6-digit verification code has been sent to your email."
         )
     except DuplicateEmailError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Email address '{req.email}' is already registered.",
+        )
     except ValidationError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
+
+@router.post("/verify-otp", response_model=TokenResponse)
+def verify_otp(req: VerifyOTPRequest, request: Request):
+    """Verify 6-digit OTP code and return authentication JWT tokens."""
+    try:
+        user = AuthService.verify_otp(req.email, req.otp)
+        access_token = create_access_token(user.id, user.role_name)
+        refresh_token = create_refresh_token(user.id)
+        from api.schemas.auth import UserOut
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            user=UserOut.model_validate(user),
+        )
+    except TokenInvalidError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.post("/resend-otp", response_model=MessageResponse)
+def resend_otp(req: ResendOTPRequest, request: Request):
+    """Resend a new 6-digit OTP code to user's email."""
+    try:
+        user, otp = AuthService.resend_otp(req.email)
+        from core.email import EmailService
+        EmailService.send_verification_otp(user, otp, request)
+        return MessageResponse(
+            detail="A new 6-digit verification code has been sent to your email."
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 @router.post("/forgot-password", response_model=MessageResponse)
