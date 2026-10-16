@@ -1,0 +1,27 @@
+{% extends "base/base.html" %}
+{% block title %}Session Expired (CSRF) | BizFlow{% endblock %}
+{% block page_title %}Security Token Refresh{% endblock %}
+
+{% block content %}
+<div class="empty-state" style="max-width: 580px; margin: 40px auto; text-align: center;">
+  <div style="font-size: 54px; font-weight: 800; color: #d97706; line-height: 1; margin-bottom: 16px;">403</div>
+  <h2 class="empty-state-title" style="font-size: 22px; margin-bottom: 8px;">Security Verification Required</h2>
+  <p class="empty-state-desc" style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px;">
+    Your browser's session or security token was refreshed or expired. This is an automatic protection to keep your account safe.
+  </p>
+
+  <div class="card" style="margin-bottom: 24px; padding: 14px 18px; border-left: 4px solid #f59e0b; background: #fffbeb; text-align: left; border-radius: 8px;">
+    <span style="font-size: 11px; text-transform: uppercase; color: #92400e; font-weight: 700; letter-spacing: 0.5px;">Reason:</span>
+    <p style="font-family: ui-monospace, monospace; font-size: 13px; color: #78350f; margin: 4px 0 0;">{{ reason|default:"Session token missing or mismatched with browser cookie." }}</p>
+  </div>
+
+  <div style="display: flex; gap: 12px; justify-content: center;">
+    <a href="{% url 'accounts:login' %}" class="btn btn-primary" style="padding: 10px 24px; font-weight: 600;">
+      Refresh & Sign In
+    </a>
+    <a href="{% url 'dashboard:index' %}" class="btn btn-secondary" style="padding: 10px 20px;">
+      Home
+    </a>
+  </div>
+</div>
+{% endblock %}

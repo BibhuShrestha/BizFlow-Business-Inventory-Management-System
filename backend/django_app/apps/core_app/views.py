@@ -55,6 +55,16 @@ def error_403(request: HttpRequest, exception=None) -> HttpResponse:
     return render(request, "errors/403.html", status=403)
 
 
+def csrf_failure(request: HttpRequest, reason: str = "") -> HttpResponse:
+    """Custom, helpful CSRF failure handler providing quick re-authentication."""
+    logger.warning("CSRF validation failed on %s (reason: %s)", getattr(request, "path", "/"), reason)
+    return render(request, "errors/403_csrf.html", {
+        "reason": reason,
+        "request_path": getattr(request, "path", "/"),
+    }, status=403)
+
+
+
 def error_400(request: HttpRequest, exception=None) -> HttpResponse:
     """Render 400 Bad Request page."""
     return render(request, "errors/400.html", status=400)

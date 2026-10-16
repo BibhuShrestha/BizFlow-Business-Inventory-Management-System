@@ -43,6 +43,9 @@ def _get_dashboard_url() -> str:
         return "/dashboard/"
 
 
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+@ensure_csrf_cookie
 def login_view(request: HttpRequest) -> HttpResponse:
     """Email + password login form with rate limiting, audit logging, and open redirect defense."""
     if request.user.is_authenticated:

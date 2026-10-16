@@ -35,6 +35,11 @@ def wsgi_handler(environ, start_response):
     if _init_error:
         start_response("500 Internal Server Error", [("Content-Type", "text/plain; charset=utf-8")])
         return [f"Django Startup Error:\n\n{_init_error}".encode("utf-8")]
+
+    # Guarantee HTTPS and forwarded proto for Vercel Serverless
+    environ["wsgi.url_scheme"] = "https"
+    environ["HTTP_X_FORWARDED_PROTO"] = "https"
+
     try:
         return _django_app(environ, start_response)
     except Exception:

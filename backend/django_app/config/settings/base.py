@@ -53,10 +53,15 @@ else:
     CSRF_TRUSTED_ORIGINS = []
 
 # Always support Vercel preview and production domains
-if ".vercel.app" not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(".vercel.app")
-if "https://*.vercel.app" not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append("https://*.vercel.app")
+for host in [".vercel.app", "localhost", "127.0.0.1", "0.0.0.0"]:
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
+
+for origin in ["https://*.vercel.app", "http://*.vercel.app"]:
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+
+CSRF_FAILURE_VIEW = "apps.core_app.views.csrf_failure"
 
 # ---------------------------------------------------------------------------
 # Installed applications
