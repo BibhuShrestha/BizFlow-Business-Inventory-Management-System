@@ -10,13 +10,13 @@
     <p class="empty-state-desc">Our technical team has been notified.</p>
   </div>
 
-  {% if error_message %}
+  {% if is_debug and error_message %}
   <div class="card" style="margin-top: 24px; padding: 16px; border-left: 4px solid var(--danger); background: #fef2f2; border-radius: 8px;">
-    <h4 style="color: #991b1b; margin-top: 0; font-size: 13px; font-weight: 700; text-transform: uppercase;">Diagnostic Exception Details:</h4>
+    <h4 style="color: #991b1b; margin-top: 0; font-size: 13px; font-weight: 700; text-transform: uppercase;">Development Diagnostic Details:</h4>
     <p style="font-size: 12px; color: #991b1b; margin-bottom: 6px;"><strong>Request Path:</strong> <code>{{ request_path }}</code></p>
     <p style="color: #7f1d1d; font-family: ui-monospace, monospace; font-size: 13px; word-break: break-all; margin-bottom: 8px;">{{ error_message }}</p>
     {% if error_trace %}
-    <details style="margin-top: 8px;" open>
+    <details style="margin-top: 8px;">
       <summary style="cursor: pointer; color: #b91c1c; font-size: 12px; font-weight: 600;">View Call Stack</summary>
       <pre style="background: #0f172a; color: #f8fafc; padding: 12px; border-radius: 6px; font-size: 11px; overflow-x: auto; margin-top: 8px; white-space: pre-wrap; font-family: ui-monospace, monospace;">{{ error_trace }}</pre>
     </details>

@@ -181,4 +181,6 @@ def parse_uploaded_file(uploaded_file) -> Tuple[Optional[List[str]], Optional[Li
         return headers, rows_data, None
 
     except Exception as e:
-        return None, None, f"Error parsing uploaded file: {str(e)}"
+        import logging
+        logging.getLogger("bizflow.exports").error("File parsing error: %s", e)
+        return None, None, "Error parsing uploaded file: The file format is invalid or corrupted."

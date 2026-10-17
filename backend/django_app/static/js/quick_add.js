@@ -20,6 +20,8 @@ function getCookie(name) {
 }
 
 const getCsrfToken = () => {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta && meta.content) return meta.content;
   const input = document.querySelector('[name=csrfmiddlewaretoken]');
   return input ? input.value : getCookie('csrftoken') || '';
 };

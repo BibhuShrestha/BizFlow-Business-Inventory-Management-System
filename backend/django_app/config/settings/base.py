@@ -46,6 +46,9 @@ DEBUG = env.bool("DJANGO_DEBUG", default=env.bool("DEBUG", default=False))
 _raw_hosts = env("DJANGO_ALLOWED_HOSTS", default=env("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"]))
 ALLOWED_HOSTS = [h.strip() for h in _raw_hosts.split(",")] if isinstance(_raw_hosts, str) else list(_raw_hosts)
 
+DEFAULT_ADMIN_EMAIL = env("DEFAULT_ADMIN_EMAIL", default="admin@bizflow.com")
+DEFAULT_ADMIN_PASSWORD = env("DEFAULT_ADMIN_PASSWORD", default="")
+
 _raw_csrf_origins = env("CSRF_TRUSTED_ORIGINS", default="")
 if _raw_csrf_origins:
     CSRF_TRUSTED_ORIGINS = [o.strip() for o in _raw_csrf_origins.split(",") if o.strip()]

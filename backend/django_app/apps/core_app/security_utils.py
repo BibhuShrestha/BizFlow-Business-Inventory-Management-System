@@ -94,10 +94,18 @@ def clear_rate_limit(key: str) -> None:
 
 
 def get_client_ip(request: HttpRequest) -> str:
-    """Extract client IP address considering proxy headers."""
+    """Extract client IP address considering proxy headers safely."""
+    # Check trusted proxy headers first (Vercel, Cloudflare, Nginx reverse proxy)
+    real_ip = request.META.get("HTTP_X_REAL_IP") or request.META.get("HTTP_CF_CONNECTING_IP")
+    if real_ip:
+        return real_ip.strip()
+
     x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
-        return x_forwarded_for.split(",")[0].strip()
+        parts = [p.strip() for p in x_forwarded_for.split(",") if p.strip()]
+        if parts:
+            return parts[0]
+
     return request.META.get("REMOTE_ADDR", "127.0.0.1")
 
 

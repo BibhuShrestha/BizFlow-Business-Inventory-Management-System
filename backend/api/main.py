@@ -95,13 +95,20 @@ _allowed_origins = (
     else ["http://localhost:8000", "http://127.0.0.1:8000"]
 )
 
+_cors_regex = os.getenv("CORS_ALLOWED_ORIGIN_REGEX", None)
+
+cors_kwargs = {
+    "allow_origins": _allowed_origins,
+    "allow_credentials": True,
+    "allow_methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    "allow_headers": ["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
+}
+if _cors_regex:
+    cors_kwargs["allow_origin_regex"] = _cors_regex
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_allowed_origins,
-    allow_origin_regex=r"^https://.*\.vercel\.app$",
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
+    **cors_kwargs,
 )
 
 # ---------------------------------------------------------------------------

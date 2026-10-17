@@ -34,16 +34,21 @@ def error_500(request: HttpRequest) -> HttpResponse:
             exc = exc_value
             trace = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
 
-    error_msg = str(exc) if exc else "An unexpected exception occurred during request execution."
+    # Always log the full exception and traceback to server logs
     error_trace = trace or ""
-
     if error_trace:
         logger.error("Unhandled 500 error at %s:\n%s", getattr(request, "path", "/"), error_trace)
+    elif exc:
+        logger.error("Unhandled 500 error at %s: %s", getattr(request, "path", "/"), exc)
+
+    from django.conf import settings
+    is_debug = bool(getattr(settings, "DEBUG", False))
 
     context = {
-        "error_message": error_msg,
-        "error_trace": error_trace,
-        "request_path": getattr(request, "path", "/"),
+        "is_debug": is_debug,
+        "error_message": str(exc) if (is_debug and exc) else "",
+        "error_trace": error_trace if is_debug else "",
+        "request_path": getattr(request, "path", "/") if is_debug else "",
     }
     return render(request, "errors/500.html", context, status=500)
 

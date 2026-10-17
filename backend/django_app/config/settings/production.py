@@ -35,10 +35,15 @@ STORAGES = {
 WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_USE_FINDERS = env.bool("WHITENOISE_USE_FINDERS", default=True)
 
-# Structured console logging for production
+# Structured console logging for production with sensitive data redaction
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "filters": {
+        "sensitive_data_filter": {
+            "()": "apps.core_app.logging_filters.SensitiveDataFilter",
+        },
+    },
     "formatters": {
         "verbose": {
             "format": "[{asctime}] {levelname} {name} {process:d} {thread:d} {message}",
@@ -53,6 +58,7 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
+            "filters": ["sensitive_data_filter"],
         },
     },
     "root": {
@@ -68,6 +74,11 @@ LOGGING = {
         "django.security": {
             "handlers": ["console"],
             "level": "WARNING",
+            "propagate": False,
+        },
+        "bizflow": {
+            "handlers": ["console"],
+            "level": "INFO",
             "propagate": False,
         },
     },

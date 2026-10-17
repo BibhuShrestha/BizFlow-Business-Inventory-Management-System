@@ -51,8 +51,10 @@ def seed():
         print(f"Created default company: {company.company_name}")
 
     # Create default admin user if none exists
-    admin_email = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@bizflow.com")
-    admin_pass = os.getenv("DEFAULT_ADMIN_PASSWORD")
+    from django.conf import settings
+    raw_admin_email = getattr(settings, "DEFAULT_ADMIN_EMAIL", None) or os.getenv("DEFAULT_ADMIN_EMAIL", "admin@bizflow.com")
+    admin_email = raw_admin_email.strip().lower()
+    admin_pass = getattr(settings, "DEFAULT_ADMIN_PASSWORD", None) or os.getenv("DEFAULT_ADMIN_PASSWORD")
     admin_role = Role.objects.get(name=Role.ROLE_ADMIN)
 
     if not User.objects.filter(email=admin_email).exists():

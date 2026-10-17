@@ -30,11 +30,16 @@ except Exception:
     _init_error = traceback.format_exc()
 
 
+import logging
+
+_logger = logging.getLogger("vercel.wsgi")
+
 def wsgi_handler(environ, start_response):
     global _django_app, _init_error
     if _init_error:
+        _logger.error("Django Startup Error:\n%s", _init_error)
         start_response("500 Internal Server Error", [("Content-Type", "text/plain; charset=utf-8")])
-        return [f"Django Startup Error:\n\n{_init_error}".encode("utf-8")]
+        return [b"Internal Server Error: Application failed to initialize."]
 
     # Guarantee HTTPS and forwarded proto for Vercel Serverless
     environ["wsgi.url_scheme"] = "https"
@@ -44,8 +49,9 @@ def wsgi_handler(environ, start_response):
         return _django_app(environ, start_response)
     except Exception:
         err = traceback.format_exc()
+        _logger.error("Django Request Error:\n%s", err)
         start_response("500 Internal Server Error", [("Content-Type", "text/plain; charset=utf-8")])
-        return [f"Django Request Error:\n\n{err}".encode("utf-8")]
+        return [b"Internal Server Error: An unexpected error occurred."]
 
 
 # Vercel static AST parser looks for module-level 'app' or 'application'

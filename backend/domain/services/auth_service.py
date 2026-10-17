@@ -56,7 +56,7 @@ class AuthService:
 
         # 2. Local database authentication fallback
         try:
-            user = User.objects.select_related("role", "active_company").get(email=email.lower().strip())
+            user = User.objects.select_related("role", "active_company").get(email__iexact=email.strip())
         except User.DoesNotExist:
             logger.info("Login failed: email %s not found", email)
             raise AuthenticationError("Invalid email or password.")

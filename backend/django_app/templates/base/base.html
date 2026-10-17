@@ -9,6 +9,7 @@
 
   {# Robots: Default strictly blocks crawlers from indexing private app data #}
   <meta name="robots" content="{% block meta_robots %}noindex, nofollow, noarchive, nosnippet{% endblock %}">
+  <meta name="csrf-token" content="{{ csrf_token }}">
 
   {# Canonical URL: override per-page to prevent duplicate content #}
   {% block canonical_url %}{% endblock %}
@@ -264,11 +265,14 @@
         <strong>{{ user.name|default:"Administrator" }}</strong>
         <span>{{ user.role_name|default:"Owner"|title }}</span>
       </div>
-      <a href="{% url 'accounts:logout' %}" style="color:#93c5fd; padding:4px;" title="Logout">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-        </svg>
-      </a>
+      <form method="post" action="{% url 'accounts:logout' %}" style="display:inline; margin:0; padding:0;">
+        {% csrf_token %}
+        <button type="submit" style="background:none; border:none; color:#93c5fd; padding:4px; cursor:pointer; display:flex; align-items:center;" title="Logout" aria-label="Logout">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+      </form>
     </div>
   </nav>
 

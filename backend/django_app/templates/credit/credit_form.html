@@ -428,10 +428,20 @@ document.addEventListener("DOMContentLoaded", function () {
   radioGiven.addEventListener("change", updateTypeView);
   radioTaken.addEventListener("change", updateTypeView);
 
+  function escapeHtml(text) {
+    if (!text) return "";
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   function createProductOptions() {
     let opts = '<option value="">-- Select Product --</option>';
     products.forEach(p => {
-      opts += `<option value="${p.id}">${p.name} (Stock: ${p.current_stock})</option>`;
+      opts += `<option value="${p.id}">${escapeHtml(p.name)} (Stock: ${p.current_stock})</option>`;
     });
     return opts;
   }
